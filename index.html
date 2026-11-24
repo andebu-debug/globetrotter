@@ -57,6 +57,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold)}
 #top .brand{font-family:var(--head);font-weight:700;font-size:20px;margin-right:auto;white-space:nowrap}
 #top .stat{background:#ffffff14;border:1px solid #ffffff22;border-radius:999px;padding:4px 11px;font-weight:800;font-size:14px;white-space:nowrap}
 #musicBtn{color:#fbe9c4;cursor:pointer}
+#netChip{background:#c8372d;border-color:#c8372d;color:#fff}
 #mapbox{position:relative;border-bottom:3px solid var(--leather)}
 #mapwrap{overflow:auto;background:var(--sea);height:44vh;-webkit-overflow-scrolling:touch}
 #map{display:block;height:auto}
@@ -191,6 +192,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold)}
     <span class="stat" id="sDay">📅</span>
     <span class="stat" id="sDone">📦</span>
     <span class="stat" id="sStamps">🛂</span>
+    <span class="stat hidden" id="netChip">📴 Offline</span>
     <button class="stat" id="musicBtn">🎵</button>
   </div>
   <div id="mapbox">
@@ -2297,9 +2299,23 @@ function openPass(){
   modal(h);
 }
 
+/* --- Offline --- */
+function offlineStatus(){
+  const ready=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
+  const on=navigator.onLine;
+  return (on?'📶 '+L('Du er på nett.','You are online.'):'📴 '+L('Du er uten nett.','You are offline.'))+'<br>'+
+    (ready?'✅ '+L('Spillet er lagret på enheten og kan spilles helt uten nett. Reisen din lagres automatisk.','The game is saved on this device and can be played fully offline. Your journey is saved automatically.')
+          :'ℹ️ '+L('Åpne spillet én gang med nett fra appen på hjemskjermen, så lagres det og kan spilles uten nett.','Open the game once with internet from the home-screen app, and it will be saved for offline play.'));
+}
+function updNet(show){const off=!navigator.onLine;$('netChip').classList.toggle('hidden',!off);
+  if(show)toast(off?L('📴 Du er offline – spillet fungerer fortsatt!','📴 You are offline – the game still works!'):L('📶 Tilbake på nett','📶 Back online'));}
+window.addEventListener('online',()=>updNet(true));
+window.addEventListener('offline',()=>updNet(true));
+
 /* --- Meny --- */
 function openMenu(){
   modal(`<h2>⚙️ ${L('Meny','Menu')}</h2><p>${L('Spillet lagres automatisk.','The game saves automatically.')}</p>
+  <div class="fact" style="margin-bottom:10px">${offlineStatus()}</div>
   <p><b>${L('Språk','Language')}</b></p><div style="display:flex;gap:8px"><button class="mini ${LANG==='no'?'':'gray'}" onclick="setLang('no');openMenu()">Norsk</button><button class="mini ${LANG==='en'?'':'gray'}" onclick="setLang('en');openMenu()">English</button></div>
   <button class="btn blue" onclick="toStart()">${L('Til startskjermen','Back to start screen')}</button>
   <button class="btn" onclick="askRestart()">${L('Start helt på nytt','Start all over')}</button>
@@ -2344,8 +2360,8 @@ $('tbSkip').onclick=()=>{SKIP=true;};
 $('zIn').onclick=()=>{ZOOM=Math.min(3,ZOOM+0.5);applyZoom();};
 $('zOut').onclick=()=>{ZOOM=Math.max(1,ZOOM-0.5);applyZoom();};
 window.addEventListener('resize',()=>{if(S)applyZoom();});
-drawMap();toStart();loadWorld();
-try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
+drawMap();toStart();loadWorld();updNet(false);
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
 
 </script>
 </body>
