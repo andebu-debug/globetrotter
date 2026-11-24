@@ -136,6 +136,7 @@ input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--l
     <span class="stat" id="sDay">📅</span>
     <span class="stat" id="sDone">📦</span>
     <span class="stat" id="sStamps">🛂</span>
+    <button class="stat" id="musicBtn" style="border:none;color:#fbe9c4;cursor:pointer">🎵 På</button>
   </div>
   <div id="mapwrap"><svg id="map" viewBox="0 0 1000 395"></svg></div>
   <div id="panel">
@@ -372,11 +373,88 @@ function itemSource(item){return CITIES.find(c=>c.item===item);}
 function bagCount(){return Object.values(S.inv).reduce((a,b)=>a+b,0);}
 
 let AC=null;
-function beep(f,d=0.12,type='square',vol=0.06,delay=0){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(AC.destination);const t=AC.currentTime+delay;o.start(t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.stop(t+d+0.02);}catch(e){}}
+function beep(f,d=0.12,type='square',vol=0.06,delay=0){try{ac();const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(AC.destination);const t=AC.currentTime+delay;o.start(t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.stop(t+d+0.02);}catch(e){}}
 const sndOk=()=>{beep(660,.1);beep(880,.15,'square',.06,.1);};
 const sndBad=()=>{beep(200,.25,'sawtooth',.05);};
 const sndCoin=()=>{beep(988,.08,'square',.05);beep(1319,.2,'square',.05,.08);};
 const sndStamp=()=>{beep(120,.15,'triangle',.15);};
+
+
+/* ================= MUSIKK ================= */
+const MUS={on:true,started:false,next:0,step:0,timer:null,bus:null,lounge:null,dark:false};
+try{MUS.on=localStorage.getItem('globetrotter_music')!=='av';}catch(e){}
+const mf=m=>440*Math.pow(2,(m-69)/12);
+function ac(){AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+let NOISE=null;
+function noiseBuf(){if(NOISE)return NOISE;const a=ac(),b=a.createBuffer(1,a.sampleRate*0.3,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return NOISE=b;}
+function setupMusic(){
+  const a=ac();if(MUS.bus)return;
+  MUS.bus=a.createGain();MUS.bus.gain.value=MUS.on?1:0;MUS.bus.connect(a.destination);
+  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;lp.connect(MUS.bus);
+  MUS.lounge=a.createGain();MUS.lounge.gain.value=0.55;MUS.lounge.connect(lp);
+  // litt romklang med ekko
+  const dl=a.createDelay();dl.delayTime.value=0.33;const fb=a.createGain();fb.gain.value=0.28;
+  MUS.lounge.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(lp);
+}
+function epiano(m,t,dur,vol){const a=AC;[0,7].forEach((det,i)=>{const o=a.createOscillator(),g=a.createGain();o.type=i?'triangle':'sine';o.frequency.value=mf(m);o.detune.value=i?det:-3;
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol*(i?0.35:1),t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(MUS.lounge);o.start(t);o.stop(t+dur+0.05);});}
+function bassN(m,t,dur){const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=mf(m);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.015);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(MUS.lounge);o.start(t);o.stop(t+dur+0.05);}
+function brush(t,vol){const s=AC.createBufferSource();s.buffer=noiseBuf();const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=AC.createGain();
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.09);s.connect(f);f.connect(g);g.connect(MUS.lounge);s.start(t);s.stop(t+0.12);}
+function vibes(m,t){const o=AC.createOscillator(),g=AC.createGain(),tr=AC.createOscillator(),tg=AC.createGain();o.type='sine';o.frequency.value=mf(m);
+  tr.frequency.value=5.5;tg.gain.value=0.025;tr.connect(tg);tg.connect(g.gain);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.07,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+1.4);
+  o.connect(g);g.connect(MUS.lounge);o.start(t);tr.start(t);o.stop(t+1.5);tr.stop(t+1.5);}
+// Akkorder: Dmaj7 – Bm7 – Em7 – A7(13)  ·  rolig 82 bpm, swing
+const CH=[[62,66,69,73],[59,62,66,69],[64,67,71,74],[61,64,67,71]],RT=[38,35,40,33];
+const MEL=[74,76,78,81,83,86,88];
+function scheduleStep(t){
+  const beat=60/82,i=MUS.step,bar=Math.floor(i/8)%4,e=i%8;
+  const sw=(e%2)?beat*0.17:0; // swing på åttendelene
+  const tt=t+sw,ch=CH[bar];
+  if(e===0)ch.forEach(m=>epiano(m,tt,beat*3.2,0.045));
+  if(e===3)ch.forEach(m=>epiano(m+(bar===3?0:0),tt,beat*0.9,0.03));
+  if(e===0)bassN(RT[bar],tt,beat*1.6);
+  if(e===4)bassN(RT[bar]+7,tt,beat*1.2);
+  if(e===7)bassN(RT[(bar+1)%4]+1,tt,beat*0.4);
+  brush(tt,e%2?0.025:0.012);
+  if(e%2===0&&Math.random()<0.22)vibes(rnd(MEL),tt);
+  MUS.step++;
+}
+function musicTick(){if(!AC)return;const beat=60/82;while(MUS.next<AC.currentTime+0.15){scheduleStep(MUS.next);MUS.next+=beat/2;}}
+function startMusic(){
+  try{ac();setupMusic();if(MUS.started)return;MUS.started=true;MUS.next=AC.currentTime+0.1;MUS.timer=setInterval(musicTick,40);}catch(e){}
+}
+function setMusic(on){MUS.on=on;try{localStorage.setItem('globetrotter_music',on?'på':'av');}catch(e){}
+  $('musicBtn').textContent=on?'🎵 På':'🔇 Av';
+  if(on)startMusic();
+  if(MUS.bus)MUS.bus.gain.setTargetAtTime(on?1:0,AC.currentTime,0.1);}
+// Dyster «mordmusikk» når noe går galt
+function murderSting(){
+  if(!MUS.on)return;try{ac();setupMusic();}catch(e){return;}
+  const a=AC,t=a.currentTime+0.05,out=a.createGain();out.gain.value=0.9;out.connect(MUS.bus);
+  MUS.lounge.gain.cancelScheduledValues(t);MUS.lounge.gain.setTargetAtTime(0.0001,t,0.08);
+  // lav, truende drone (to toner som skurrer mot hverandre)
+  [41,42].forEach(m=>{const o=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();o.type='sawtooth';o.frequency.value=mf(m);
+    f.type='lowpass';f.frequency.setValueAtTime(200,t);f.frequency.linearRampToValueAtTime(900,t+2.5);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.12,t+0.6);g.gain.setValueAtTime(0.12,t+2.6);g.gain.exponentialRampToValueAtTime(0.0001,t+3.6);
+    o.connect(f);f.connect(g);g.connect(out);o.start(t);o.stop(t+3.7);});
+  // tre skarpe, skjærende stikk
+  [0,0.45,0.9].forEach((d,k)=>{[69,70,76].forEach(m=>{const o=a.createOscillator(),g=a.createGain();o.type='sawtooth';o.frequency.value=mf(m+k);
+    g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(0.06,t+d+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.3);
+    o.connect(g);g.connect(out);o.start(t+d);o.stop(t+d+0.35);});});
+  // dyp pauke-dunk
+  [0,1.8].forEach(d=>{const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.setValueAtTime(90,t+d);o.frequency.exponentialRampToValueAtTime(35,t+d+0.6);
+    g.gain.setValueAtTime(0.5,t+d);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.9);o.connect(g);g.connect(out);o.start(t+d);o.stop(t+d+1);});
+  // synkende, uhyggelig tone til slutt
+  {const o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.setValueAtTime(mf(75),t+1.4);o.frequency.exponentialRampToValueAtTime(mf(63),t+3.2);
+   g.gain.setValueAtTime(0.0001,t+1.4);g.gain.exponentialRampToValueAtTime(0.07,t+1.6);g.gain.exponentialRampToValueAtTime(0.0001,t+3.4);o.connect(g);g.connect(out);o.start(t+1.4);o.stop(t+3.5);}
+  // loungen kommer rolig tilbake
+  MUS.lounge.gain.setTargetAtTime(0.55,t+4,0.8);
+}
 
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2200);}
 function diary(t){S.diary=t;$('diary').textContent='📓 '+t;}
@@ -549,7 +627,7 @@ function arrive(id,m){
   let news=[];let stamp=false;
   if(!S.visited.includes(id)){S.visited.push(id);S.stampDay[id]=S.day;stamp=true;}
   let ev='';
-  if(Math.random()<0.3){const e=rnd(EVENTS);S.money=Math.max(0,S.money+e[1]);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
+  if(Math.random()<0.3){const e=rnd(EVENTS);S.money=Math.max(0,S.money+e[1]);if(e[1]<0)setTimeout(murderSting,600);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
   const night=sleepNight();
   makeOffers();
   diary(`Kom fram til ${c.n} etter ${m.days} ${m.days>1?'dager':'dag'} med ${m.n.toLowerCase()}. ${night}`);
@@ -615,7 +693,7 @@ function win(){
 function showHS(){let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
   $('hsBox').innerHTML=hs.length?'<b>🏆 Beste reisende</b><ol>'+hs.map(h=>`<li>${h.n} – ${h.s} poeng (${h.d} dager)</li>`).join('')+'</ol>':'';}
 function toStart(){closeModal();$('game').classList.add('hidden');$('start').classList.remove('hidden');$('contBtn').classList.toggle('hidden',!load());showHS();}
-function startGame(st){S=st;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();}
+function startGame(st){startMusic();S=st;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();}
 function askRestart(){modal(`<h2>Start på nytt?</h2><p>Reisen du holder på med forsvinner.</p><button class="btn" onclick="clearSave();toStart();">Ja, slett reisen</button><button class="btn gray" onclick="closeModal()">Nei, avbryt</button>`);}
 $('newBtn').onclick=()=>{
   if(load()){modal(`<h2>Ny reise?</h2><p>Du har en reise som ikke er ferdig. Vil du starte en ny? Den gamle forsvinner.</p><button class="btn" onclick="clearSave();closeModal();$('newBtn').click()">Ja, start ny reise</button><button class="btn green" onclick="closeModal();$('contBtn').click()">Nei, fortsett den gamle</button>`);return;}
@@ -627,6 +705,8 @@ $('newBtn').onclick=()=>{
 $('contBtn').onclick=()=>{const s=load();if(s)startGame(s);};
 document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:openTravel,bag:openBag,pass:openPass,menu:openMenu})[b.dataset.a]();});
 
+$('musicBtn').onclick=()=>setMusic(!MUS.on);
+$('musicBtn').textContent=MUS.on?'🎵 På':'🔇 Av';
 drawMap();toStart();
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
 </script>
