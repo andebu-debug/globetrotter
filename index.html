@@ -20,9 +20,10 @@ button{font:inherit;cursor:pointer}
 .hidden{display:none!important}
 
 /* START */
-#start{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+#start{min-height:100%;display:flex;align-items:center;justify-content:center;padding:12px}
+@media(max-width:480px){.card{padding:16px 14px}.globe{font-size:48px}#top{font-size:13px;padding:6px}#top .stat{padding:3px 7px}#cityhead h2{font-size:22px}#mbox{padding:14px}}
 .card{background:var(--paper);border:4px solid var(--leather);border-radius:14px;box-shadow:0 10px 40px #000a,inset 0 0 40px #c9b07a55;padding:24px;max-width:560px;width:100%}
-.logo{font-family:Georgia,serif;font-size:42px;font-weight:bold;text-align:center;color:var(--red);letter-spacing:2px;text-shadow:2px 2px 0 #f0b42988;margin:0}
+.logo{font-family:Georgia,serif;font-size:clamp(24px,8.5vw,42px);font-weight:bold;text-align:center;color:var(--red);letter-spacing:1px;overflow-wrap:anywhere;text-shadow:2px 2px 0 #f0b42988;margin:0}
 .sub{text-align:center;font-style:italic;margin:4px 0 18px;color:#6b4c2c}
 .globe{font-size:64px;text-align:center;animation:spin 6s linear infinite;display:block}
 @keyframes spin{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
@@ -120,7 +121,7 @@ input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--l
     <div class="how">
       <h3>Slik spiller du</h3>
       Du starter i Oslo med 2000 kr i lomma. Ta på deg <b>oppdrag</b> fra oppslagstavla: kjøp en ting i én by og lever den til noen i en annen by.
-      Mangler du penger? <b>Ta en jobb</b> – svar riktig på spørsmål om stedet og tjen penger.
+      Mangler du penger? <b>Ta en jobb</b> – svar på 5–10 spørsmål om landet, og har du minst 80 % riktig, får du lønn. Helt blakk? <b>Ring hjem</b> og lån penger!
       Reis med fly, tog eller båt, samle stempler i <b>passet</b> og fullfør <b>8 oppdrag</b> på færrest mulig dager!
     </div>
     <div class="hs" id="hsBox"></div>
@@ -149,6 +150,7 @@ input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--l
       <button class="act" data-a="travel"><span>✈️</span>Reis</button>
       <button class="act" data-a="bag"><span>🎒</span>Ryggsekk</button>
       <button class="act" data-a="pass"><span>🛂</span>Passet</button>
+      <button class="act" data-a="home"><span>📞</span>Ring hjem</button>
       <button class="act" data-a="menu"><span>⚙️</span>Meny</button>
     </div>
     <div id="diary"></div>
@@ -286,6 +288,42 @@ const EVENTS=[
 ['Du fikk rabatt på rommet fordi du hjalp til på kjøkkenet.',150],['Du mistet solbrillene og kjøpte nye.',-90],
 ['En turist kjøpte bildet du tegnet av byen.',180],['Du ble med på en gratis byvandring og lærte masse.',0]
 ];
+// Ekstra spørsmål om landet du er i (brukes på jobb)
+const EXTRA={
+oslo:[['Hva heter Norges høyeste fjell?','Galdhøpiggen','Glittertind','Snøhetta'],['Hva heter Norges lengste elv?','Glomma','Numedalslågen','Tana'],['Hvilken dag er Norges nasjonaldag?','17. mai','1. mai','24. juni'],['Hva heter Norges konge?','Harald V','Olav V','Carl Gustaf'],['Hva heter Norges største innsjø?','Mjøsa','Femunden','Tyrifjorden'],['Hva er Norges valuta?','Krone','Euro','Mark'],['Hvilken by er Norges nest største?','Bergen','Trondheim','Stavanger']],
+stockholm:[['Hva heter Sveriges konge?','Carl XVI Gustaf','Harald V','Frederik X'],['Hva er Sveriges nasjonaldag?','6. juni','17. mai','1. august'],['Hvilken svensk gruppe vant Eurovision i 1974?','ABBA','Roxette','Ace of Base'],['Hva heter Sveriges nest største by?','Göteborg','Malmö','Uppsala'],['Hvilken bro går fra Malmö til Danmark?','Øresundsbroen','Svinesundbrua','Storebæltsbroen'],['Hvilket møbelfirma kommer fra Sverige?','IKEA','Jysk','Bohus'],['Hva er Sveriges valuta?','Krona','Euro','Daler']],
+reykjavik:[['Hvilken islandsk vulkan stanset flytrafikken i 2010?','Eyjafjallajökull','Etna','Vesuv'],['Hvem kom først og bosatte seg på Island?','Nordmenn','Spanjoler','Russere'],['Hva heter Islands største isbre?','Vatnajökull','Jostedalsbreen','Svartisen'],['Hvilken hesterase er kjent fra Island?','Islandshest','Fjordhest','Shetlandsponni'],['Hva er Islands valuta?','Islandsk krone','Euro','Pund'],['Hva kalles det grønne lyset på vinterhimmelen?','Nordlys','Regnbue','Stjerneskudd'],['Omtrent hvor mange bor på Island?','400 000','4 millioner','40 000']],
+london:[['Hvilke land er med i Storbritannia?','England, Skottland, Wales og Nord-Irland','England, Irland, Wales og Island','England, Skottland, Norge og Wales'],['Hva heter Storbritannias konge?','Charles III','William','George VI'],['Hva er valutaen i Storbritannia?','Pund','Euro','Dollar'],['Hvilken side av veien kjører britene på?','Venstre','Høyre','Midten'],['Hvilket kjent band kom fra Liverpool?','The Beatles','ABBA','a-ha'],['Hva heter tunnelen under havet til Frankrike?','Kanaltunnelen','Øresundstunnelen','Seikantunnelen'],['Hvilken drikk er britene kjent for å elske?','Te','Kaffe','Melk']],
+paris:[['Hvilket sykkelritt arrangeres i Frankrike hver sommer?','Tour de France','Giro d\'Italia','Vuelta'],['Hva heter Frankrikes høyeste fjell?','Mont Blanc','Matterhorn','Etna'],['Hva kalles det halvmåneformede franske bakverket?','Croissant','Bagel','Kanelbolle'],['Hvilken kjent fransk keiser var kort av vekst?','Napoleon','Cæsar','Karl den store'],['Hva er Frankrikes nasjonaldag?','14. juli','4. juli','17. mai'],['Hvilke farger har Frankrikes flagg?','Blå, hvit og rød','Grønn, hvit og rød','Svart, rød og gul'],['Hvilken fornøyelsespark ligger ved Paris?','Disneyland Paris','Tivoli','Liseberg']],
+berlin:[['Hvilke farger har Tysklands flagg?','Svart, rød og gull','Blå, hvit og rød','Grønn, hvit og rød'],['Hvilken bilprodusent er tysk?','Volkswagen','Volvo','Toyota'],['Hva heter den store folkefesten i München?','Oktoberfest','Karneval','Midtsommer'],['Hvilken elv renner gjennom mange tyske byer?','Rhinen','Seinen','Themsen'],['Hvilken kjent komponist var tysk?','Beethoven','Grieg','Chopin'],['Hvor mange ganger har Tysklands herrer vunnet fotball-VM?','4','1','7'],['Hva er en bratwurst?','En pølse','En kake','En hatt']],
+madrid:[['Hva heter Barcelonas berømte uferdige kirke?','Sagrada Família','Notre-Dame','Peterskirken'],['Hvilke spanske øyer drar mange nordmenn til?','Kanariøyene','Færøyene','Lofoten'],['Hva heter Spanias kjente dans med kastanjetter?','Flamenco','Tango','Polka'],['Hva kalles små spanske smakebiter?','Tapas','Sushi','Lefser'],['Hvilken kjent kunstner var fra Spania?','Pablo Picasso','Edvard Munch','Van Gogh'],['Hvilket hav ligger øst for Spania?','Middelhavet','Nordsjøen','Østersjøen'],['Hva heter Barcelonas store fotballstadion?','Camp Nou','Wembley','Ullevaal']],
+roma:[['Hvilken italiensk by har kanaler og gondoler?','Venezia','Milano','Napoli'],['Hvilket kjent tårn i Italia heller?','Tårnet i Pisa','Big Ben','Eiffeltårnet'],['Hvilken vulkan begravde byen Pompeii?','Vesuv','Etna','Hekla'],['Hvilken mat kommer fra Italia?','Pizza','Taco','Sushi'],['Hvem malte «Den siste nattverd»?','Leonardo da Vinci','Picasso','Munch'],['Hva heter den store øya sør for Italia?','Sicilia','Kreta','Mallorca'],['Hvilken bilprodusent med røde biler er italiensk?','Ferrari','Volvo','BMW']],
+istanbul:[['Hva heter Tyrkias hovedstad?','Ankara','Istanbul','Izmir'],['Hva heter den kjente moskeen med seks minareter i Istanbul?','Den blå moské','Taj Mahal','Alhambra'],['Hva heter det søte tyrkiske godteriet?','Lokum','Kvikk Lunsj','Smash'],['Hvordan ser Tyrkias flagg ut?','Rødt med hvit halvmåne og stjerne','Grønt med sol','Blått med kors'],['Hva heter det store markedet i Istanbul?','Grand Bazaar','Harrods','Mall of Scandinavia'],['Hvilken rett med grillet kjøtt kommer fra Tyrkia?','Kebab','Pizza','Sushi'],['Hvilket hav ligger nord for Tyrkia?','Svartehavet','Rødehavet','Nordsjøen']],
+moskva:[['Hva heter den store plassen ved Kreml?','Den røde plass','Times Square','Karl Johan'],['Hva heter Russlands nest største by?','St. Petersburg','Kyiv','Minsk'],['Hvem var første menneske i verdensrommet?','Jurij Gagarin','Neil Armstrong','Buzz Aldrin'],['Hvilken ballett skrev russeren Tsjajkovskij?','Svanesjøen','Peer Gynt','Carmen'],['Hva heter Russlands valuta?','Rubel','Krone','Euro'],['Hvor mange tidssoner har Russland?','11','2','24'],['Hva heter verdens dypeste innsjø, som ligger i Russland?','Bajkal','Mjøsa','Victoriasjøen']],
+kairo:[['Hva heter havet øst for Egypt?','Rødehavet','Svartehavet','Østersjøen'],['Hvilken kanal i Egypt forbinder to hav?','Suezkanalen','Panamakanalen','Telemarkskanalen'],['Hvilken faraos grav full av gull ble funnet i 1922?','Tutankhamon','Kleopatra','Ramses'],['Hva kalles den gamle egyptiske bildeskriften?','Hieroglyfer','Runer','Kyrillisk'],['Hva er en mumie?','En balsamert død kropp','En dans','En pyramide'],['Hvilket språk snakkes i Egypt?','Arabisk','Fransk','Gresk'],['Hvilken egyptisk dronning er verdenskjent?','Kleopatra','Elizabeth','Sonja']],
+marrakech:[['Hva heter Marokkos hovedstad?','Rabat','Marrakech','Casablanca'],['Hvilket hav ligger vest for Marokko?','Atlanterhavet','Stillehavet','Indiahavet'],['Hvilket sund skiller Marokko fra Spania?','Gibraltarstredet','Bosporos','Øresund'],['Hva er en tagine?','En gryterett og leirgryte','En hatt','En kamel'],['Hvilke språk snakkes mye i Marokko?','Arabisk og berbisk','Spansk og tysk','Engelsk og russisk'],['Hvilket dyr brukes til turer i ørkenen?','Kamel','Elg','Isbjørn'],['Hvilken drikk er veldig populær i Marokko?','Myntete','Melk','Cola']],
+lagos:[['Hva heter Nigerias hovedstad?','Abuja','Lagos','Kano'],['Hvilken stor elv renner gjennom Nigeria?','Niger','Nilen','Amazonas'],['Hva heter den populære risretten i Vest-Afrika?','Jollof-ris','Paella','Risotto'],['Hvilke farger har Nigerias flagg?','Grønt og hvitt','Rødt og gult','Blått og hvitt'],['Hvilket språk er offisielt i Nigeria?','Engelsk','Fransk','Portugisisk'],['Hva kalles Nigerias fotballandslag?','Super Eagles','All Blacks','Løvene'],['Nigeria er en av Afrikas største produsenter av …','Olje','Snø','Laks']],
+nairobi:[['Hvilken stor innsjø deler Kenya med Uganda og Tanzania?','Victoriasjøen','Mjøsa','Bajkal'],['Hva betyr «hakuna matata» på swahili?','Ingen problemer','God morgen','Takk for maten'],['Hvilket språk snakkes mye i Kenya?','Swahili','Hindi','Spansk'],['Hvilke dyr er «de store fem» på safari?','Løve, leopard, elefant, bøffel, neshorn','Elg, rev, ulv, bjørn, gaupe','Panda, tiger, koala, kenguru, lama'],['Hvilken drikk dyrker Kenya mye av?','Te','Kakao','Brus'],['Hva heter Kenyas høyeste fjell?','Mount Kenya','Kilimanjaro','Atlas'],['Hvilken linje går gjennom Kenya?','Ekvator','Polarsirkelen','Datolinjen']],
+kapp:[['Hvor mange hovedsteder har Sør-Afrika?','3','1','5'],['Hva heter det kjente neset ved Cape Town?','Kapp det gode håp','Nordkapp','Kapp Horn'],['Hvilket år arrangerte Sør-Afrika fotball-VM?','2010','1998','2022'],['Hva het det bråkete plasthornet fra VM 2010?','Vuvuzela','Didgeridoo','Lur'],['Hvilke verdifulle steiner graves ut i Sør-Afrika?','Diamanter','Granitt','Rav'],['Hvor lenge satt Nelson Mandela i fengsel?','27 år','2 år','50 år'],['Hvilke to hav møtes ved sørspissen av Afrika?','Atlanterhavet og Indiahavet','Nordsjøen og Østersjøen','Stillehavet og Middelhavet']],
+dubai:[['Hvor mange emirater er det i De forente arabiske emirater?','7','3','12'],['Hva heter landets hovedstad?','Abu Dhabi','Dubai','Doha'],['Hva heter den kunstige øya formet som et palmetre?','Palm Jumeirah','Hawaii','Maldivene'],['Hvilket språk snakkes i Dubai?','Arabisk','Persisk','Tyrkisk'],['Hvor kan man stå på ski i Dubai?','I en innendørs skihall','På sanddynene','Ingen steder'],['Hvilket hav ligger ved Dubai?','Persiabukta','Middelhavet','Rødehavet'],['Hvilken fugl brukes til jakt i tradisjonen her?','Falk','Struts','Pingvin']],
+delhi:[['Hva heter Indias hellige elv?','Ganges','Nilen','Donau'],['Hvilken sport er mest populær i India?','Cricket','Ishockey','Håndball'],['Hvem ledet Indias fredelige kamp for selvstendighet?','Mahatma Gandhi','Nelson Mandela','Martin Luther King'],['Hva heter Indias valuta?','Rupi','Yen','Dollar'],['Hva er karri?','En krydderblanding og rett','En dans','En båt'],['Hva heter Indias fargerike fargefestival?','Holi','Halloween','Midtsommer'],['Hva er Indias nasjonaldyr?','Tiger','Løve','Elefant']],
+kathmandu:[['Hva er spesielt med Nepals flagg?','Det er ikke firkantet','Det er helt hvitt','Det har et lønneblad'],['I hvilket land ble Buddha født?','Nepal','Japan','Thailand'],['Hvilke to land ligger rundt Nepal?','India og Kina','Russland og Japan','Brasil og Peru'],['Hvem kom først til toppen av Everest i 1953?','Hillary og Tenzing','Amundsen og Nansen','Armstrong og Aldrin'],['Omtrent hvor høyt er Mount Everest?','8849 meter','4800 meter','12 000 meter'],['Hva heter de populære dumplingene i Nepal?','Momo','Taco','Lefse'],['Hvilket dyr bærer ofte last i Himalaya?','Jak','Kamel','Kenguru']],
+beijing:[['Omtrent hvor lang er Den kinesiske mur?','Over 20 000 km','2 km','200 km'],['Hvilket år hadde Beijing sommer-OL?','2008','1994','2016'],['Hva er Kinas valuta?','Yuan','Yen','Won'],['Hva heter Kinas lengste elv?','Yangtze','Mekong','Ganges'],['Hva kalles det kinesiske nyttåret også?','Vårfestivalen','Høstfesten','Lysfesten'],['Hvilken oppfinnelse kommer fra Kina?','Papir','Telefonen','Lyspæra'],['Hva heter den store leirhæren som ble funnet i Kina?','Terrakottahæren','Vikinghæren','Romerhæren']],
+tokyo:[['Hva heter Japans valuta?','Yen','Yuan','Won'],['Hva kalles festen når kirsebærtrærne blomstrer?','Hanami','Halloween','Holi'],['Hvilket spillselskap er japansk?','Nintendo','Microsoft','Apple'],['Hva heter japansk bryting med svære brytere?','Sumo','Boksing','Fekting'],['Japan kalles «den … sols land»','oppgående','nedgående','varme'],['Hva kalles kunsten å brette papir?','Origami','Karaoke','Manga'],['Hva heter japanske tegneserier?','Manga','Comics','Tintin']],
+bangkok:[['Hva heter Thailands valuta?','Baht','Rupi','Yen'],['Hvilken nudelrett kommer fra Thailand?','Pad thai','Ramen','Spaghetti'],['Hvilken kampsport kommer fra Thailand?','Thaiboksing','Judo','Taekwondo'],['Hvilken thailandsk ferieøy drar mange nordmenn til?','Phuket','Mallorca','Kreta'],['Hva kalles de buddhistiske templene i Thailand?','Wat','Moské','Katedral'],['Hvem er statsoverhode i Thailand?','En konge','En president','En keiser'],['Hvilken elv renner gjennom Bangkok?','Chao Phraya','Mekong','Ganges']],
+singapore:[['Hvilke språk er offisielle i Singapore?','Engelsk, malayisk, kinesisk og tamil','Bare engelsk','Fransk og spansk'],['Hva er det forbudt å selge i Singapore?','Tyggegummi','Is','Brus'],['Hva heter hotellet med basseng på taket?','Marina Bay Sands','Burj Al Arab','Grand Hotel'],['Hvilket billøp kjøres om natten i Singapore?','Formel 1','Rally','Le Mans'],['Hva heter de store kunstige trærne i Singapore?','Supertrees','Megapalmer','Kjempebjørker'],['Hvilket land er Singapores nabo i nord?','Malaysia','Japan','Australia'],['Hvordan er været i Singapore?','Varmt og fuktig hele året','Snø om vinteren','Tørt som en ørken']],
+sydney:[['Hva heter det store korallrevet i Australia?','Great Barrier Reef','Rødehavsrevet','Nordsjørevet'],['Hva heter den store røde klippen midt i Australia?','Uluru','Preikestolen','Taffelberget'],['Hvilket blåseinstrument spiller Australias urfolk?','Didgeridoo','Sekkepipe','Lur'],['Når er det sommer i Australia?','Desember–februar','Juni–august','Aldri'],['Hvilket dyr sover nesten hele dagen i eukalyptustrær?','Koala','Kenguru','Krokodille'],['Hva er Australias valuta?','Australsk dollar','Pund','Euro'],['Hvilken verdensdel hører Australia til?','Oseania','Asia','Afrika']],
+auckland:[['Hva heter New Zealands hovedstad?','Wellington','Auckland','Christchurch'],['Hvilken dans gjør All Blacks før kamp?','Haka','Tango','Halling'],['Hvor mange hovedøyer har New Zealand?','2','5','1'],['Hvilke kjente filmer ble spilt inn i New Zealand?','Ringenes herre','Harry Potter','Frost'],['Hvilket dyr finnes det mange flere av enn mennesker i New Zealand?','Sauer','Kenguruer','Løver'],['Hva er New Zealands valuta?','New Zealand-dollar','Euro','Yen'],['Hvilken newzealender var først på toppen av Everest?','Edmund Hillary','Peter Jackson','Russell Crowe']],
+newyork:[['Hvor mange stater har USA?','50','52','30'],['Hvem var USAs første president?','George Washington','Abraham Lincoln','Theodore Roosevelt'],['Hva er USAs nasjonaldag?','4. juli','17. mai','14. juli'],['Hva heter den travle plassen med store reklameskjermer?','Times Square','Den røde plass','Piccadilly Circus'],['Hva heter broen mellom Manhattan og Brooklyn?','Brooklyn Bridge','Golden Gate','Tower Bridge'],['Hva kalles USAs flagg?','Stars and Stripes','Union Jack','Dannebrog'],['Hvilken idrett spilles i NBA?','Basketball','Ishockey','Fotball']],
+toronto:[['Hva heter Canadas hovedstad?','Ottawa','Toronto','Vancouver'],['Hvilken idrett er størst i Canada?','Ishockey','Cricket','Rugby'],['Hva heter det høye tårnet i Toronto?','CN Tower','Eiffeltårnet','Burj Khalifa'],['Hvilken provins i Canada snakker mest fransk?','Québec','Ontario','Alberta'],['Hva kalles Canadas ridende politi?','Mounties','Bobbies','Carabinieri'],['Hvilket land grenser Canada til?','USA','Mexico','Russland'],['Hvilket stort dyr ser man ofte i Canadas skoger?','Elg','Løve','Sebra']],
+losangeles:[['Hvilken delstat ligger Los Angeles i?','California','Texas','Florida'],['Hva står det med store bokstaver i åsen over Los Angeles?','HOLLYWOOD','LOS ANGELES','AMERICA'],['Hvilken fornøyelsespark åpnet ved Los Angeles i 1955?','Disneyland','Tusenfryd','Legoland'],['Hvilket basketlag er fra Los Angeles?','Lakers','Celtics','Bulls'],['Hvilken by i California har Golden Gate-broen?','San Francisco','San Diego','Las Vegas'],['Hva hender ofte i California og får bakken til å riste?','Jordskjelv','Snøskred','Flodbølge av sjokolade'],['Hva heter gaten med kjendisstjerner i fortauet?','Walk of Fame','Champs-Élysées','Karl Johan']],
+mexico:[['Hva heter Mexicos valuta?','Peso','Dollar','Real'],['Hva er en piñata?','En figur fylt med godteri','En dans','En hatt'],['Hvilken høytid minnes de døde i Mexico?','Día de Muertos','Jul','Påske'],['Hvilket folk bygde Chichén Itzá?','Mayaene','Inkaene','Egypterne'],['Hva er guacamole laget av?','Avokado','Tomat','Potet'],['Hvilket land ligger nord for Mexico?','USA','Canada','Brasil'],['Hva heter halvøya med Cancún og maya-ruiner?','Yucatán','Krim','Jylland']],
+havana:[['Hva er Cuba kjent for å lage?','Sigarer','Biler','Datamaskiner'],['Hvilket hav ligger Cuba i?','Det karibiske hav','Nordsjøen','Middelhavet'],['Hvem ledet revolusjonen på Cuba i 1959?','Fidel Castro','Napoleon','Simón Bolívar'],['Hvilken idrett er størst på Cuba?','Baseball','Ishockey','Cricket'],['Hva dyrkes det mye av på Cuba?','Sukkerrør','Poteter','Epler'],['Hvilket land ligger like nord for Cuba?','USA','Canada','Brasil'],['Hvilket språk snakkes på Cuba?','Spansk','Engelsk','Fransk']],
+lima:[['Hva heter den høyt beliggende innsjøen mellom Peru og Bolivia?','Titicacasjøen','Mjøsa','Bajkal'],['Hvilket språk snakket inkaene?','Quechua','Latin','Spansk'],['Hvilken grønnsak kommer opprinnelig fra Andes i Peru?','Potet','Brokkoli','Gulrot'],['Hva heter Perus valuta?','Sol','Peso','Euro'],['Hvilken regnskog dekker øst i Peru?','Amazonas','Kongo','Taigaen'],['Hva heter den gamle inkahovedstaden i fjellene?','Cusco','Lima','Quito'],['Hva kalles rå fisk marinert i sitron i Peru?','Ceviche','Sushi','Lutefisk']],
+rio:[['Hva heter Brasils hovedstad?','Brasília','Rio de Janeiro','São Paulo'],['Hvilken dans danses på karnevalet i Rio?','Samba','Tango','Vals'],['Hva heter den kjente stranden i Rio?','Copacabana','Bondi Beach','Waikiki'],['Hvilken stor elv renner gjennom Brasil?','Amazonas','Nilen','Mississippi'],['Hvilken brasiliansk fotballegende vant tre VM?','Pelé','Maradona','Zidane'],['Hva produserer Brasil mest av i verden?','Kaffe','Epler','Ris'],['Hva heter fjellet med taubane i Rio?','Sukkertoppen','Matterhorn','Fløyen']],
+buenos:[['Hva heter den sørlige delen av Argentina med isbreer?','Patagonia','Sibir','Sahara'],['Hva er Argentinas valuta?','Peso','Dollar','Real'],['Hvilken fotballspiller scoret «Guds hånd»-målet?','Diego Maradona','Pelé','Lionel Messi'],['Hva er argentinerne kjent for å grille?','Biff','Fisk','Tofu'],['Hvilke store fosser ligger mellom Argentina og Brasil?','Iguazúfallene','Niagarafallene','Vøringsfossen'],['Hva heter Amerikas høyeste fjell, i Argentina?','Aconcagua','Denali','Kilimanjaro'],['Hva heter teen som drikkes av en kalebass?','Mate','Chai','Matcha']]
+};
+CITIES.forEach(c=>{c.q=c.q.concat(EXTRA[c.id]||[]);});
 const DEF={EU:[350,320],NA:[350,320],OC:[330,300],AS:[180,200],AF:[150,170],SA:[170,190]};
 CITIES.forEach(c=>{c.h=c.h||DEF[c.k][0];c.p=c.p||DEF[c.k][1];});
 const byId=Object.fromEntries(CITIES.map(c=>[c.id,c]));
@@ -356,7 +394,7 @@ function updateMap(){
 /* ================= STATE ================= */
 let S=null;
 function newState(name){
-  return {name:name||'Reisende',money:2000,day:1,at:'oslo',visited:['oslo'],stampDay:{oslo:1},inv:{},missions:[],done:0,offers:[],diary:'Du står på Oslo S med ryggsekken på ryggen. Eventyret begynner!',seq:1};
+  return {name:name||'Reisende',money:2000,day:1,at:'oslo',visited:['oslo'],stampDay:{oslo:1},inv:{},missions:[],done:0,offers:[],debt:0,diary:'Du står på Oslo S med ryggsekken på ryggen. Eventyret begynner!',seq:1};
 }
 function save(){try{localStorage.setItem(SAVEKEY,JSON.stringify(S));}catch(e){}}
 function load(){try{return JSON.parse(localStorage.getItem(SAVEKEY));}catch(e){return null;}}
@@ -460,7 +498,7 @@ function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');
 function diary(t){S.diary=t;$('diary').textContent='📓 '+t;}
 
 function modal(html){$('mcontent').innerHTML=html;$('modal').classList.remove('hidden');$('mbox').scrollTop=0;}
-function closeModal(){$('modal').classList.add('hidden');}
+function closeModal(){if(S&&S.needNight&&!$('game').classList.contains('hidden')){openNight();return;}$('modal').classList.add('hidden');}
 $('mclose').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
 
@@ -473,7 +511,7 @@ function render(){
   $('sDone').textContent='📦 '+S.done+'/'+GOAL+' oppdrag';
   $('sStamps').textContent='🛂 '+S.visited.length+'/'+CITIES.length;
   $('cFlag').textContent=c.f;$('cName').textContent=c.n;
-  $('cSub').textContent=c.c+' · Hostell: '+kr(c.h)+' per natt';
+  $('cSub').textContent=c.c+' · Hostell '+kr(c.h)+' · Hotell '+kr(r50(c.h*2.2));
   $('diary').textContent='📓 '+S.diary;
   const canDeliver=S.missions.some(m=>m.to===S.at&&(S.inv[m.item]||0)>0);
   $('boardBtn').classList.toggle('badge',canDeliver);
@@ -487,11 +525,44 @@ function sleepNight(){
   return 'Du hadde ikke råd til hostell og sov på en parkbenk. Brrr!';
 }
 
+
+/* --- Overnatting --- */
+function nightOpts(c){return [
+ {k:'hotell',ic:'🏨',n:'Hotell',price:r50(c.h*2.2),risk:0.02,d:'Eget rom med lås. Nesten helt trygt.'},
+ {k:'hostell',ic:'🛏️',n:'Hostell',price:c.h,risk:0.10,d:'Køyeseng på sovesal. Litt fare for tyveri.'},
+ {k:'ute',ic:'🌳',n:'Sove ute',price:0,risk:0.35,d:'Gratis på en parkbenk … men stor fare for å bli ranet!'}];}
+function openNight(){
+  const c=byId[S.at];S.needNight=true;save();
+  let h=`<h2>🌙 Hvor vil du sove i ${c.n}?</h2>`;
+  nightOpts(c).forEach(o=>{h+=`<div class="row"><div><span style="font-size:24px">${o.ic}</span> <b>${o.n}</b><div class="small">${o.d}</div></div><button class="mini ${o.k==='ute'?'gray':''}" ${S.money<o.price?'disabled':''} onclick="sleepAt('${o.k}')">${o.price?kr(o.price):'Gratis'}</button></div>`;});
+  h+=`<p class="small">Du har ${kr(S.money)}.</p>`;
+  modal(h);
+}
+function sleepAt(k){
+  const c=byId[S.at],o=nightOpts(c).find(x=>x.k===k);if(!o||S.money<o.price)return;
+  S.money-=o.price;S.needNight=false;
+  let h,txt;
+  if(Math.random()<o.risk&&(S.money>0||bagCount()>0)){
+    const lost=Math.min(S.money,Math.max(100,Math.round(S.money*(0.3+Math.random()*0.2))));
+    S.money-=lost;let item='';
+    if(bagCount()>0&&Math.random()<0.5){item=rnd(Object.keys(S.inv));S.inv[item]--;if(!S.inv[item])delete S.inv[item];}
+    murderSting();
+    const where={hotell:'Noen dirket opp døra til hotellrommet i natt!',hostell:'En på sovesalen rotet i sekken din mens du sov!',ute:'Mens du sov på benken, kom en skummel skikkelse snikende …'}[k];
+    txt=`Ble ranet i ${c.n}! Mistet ${kr(lost)}${item?' og '+item:''}.`;
+    h=`<h2 style="color:#000">🔪 RANET!</h2><div class="fact" style="background:#2b2118;color:#f3c1bb">${where}<br><br>Du mistet <b>${kr(lost)}</b>${item?' og <b>'+item+'</b> fra ryggsekken':''}.</div><p class="small">Tips: Hotell er tryggest – men koster mer.</p><button class="btn" onclick="closeModal()">Puh … en ny dag</button>`;
+  }else{
+    const good={hotell:'Du sov som en stein i en myk hotellseng. Frokosten var nydelig!',hostell:'Litt snorking fra køya over, men du sov greit.',ute:'Stjernene lyste, og ingen plaget deg. Du våknet stiv i ryggen, men med alt i behold.'}[k];
+    txt=`Sov på ${o.n.toLowerCase()} i ${c.n}${o.price?' for '+kr(o.price):''}.`;
+    h=`<h2>☀️ God morgen!</h2><div class="fact">${o.ic} ${good}</div>${o.price?`<p>Du betalte ${kr(o.price)}.</p>`:''}<button class="btn green" onclick="closeModal()">Ut og opplev ${c.n}!</button>`;
+  }
+  diary(txt);render();modal(h);
+}
+
 /* --- Om byen --- */
 function openAbout(){
   const c=byId[S.at];
   modal(`<h2>${c.f} ${c.n}</h2><div class="fact">${c.fact}</div>
-  <p><span class="tag">Land: ${c.c}</span><span class="tag">Hostell: ${kr(c.h)}</span><span class="tag">Lønn: ${kr(c.p)} per riktig svar</span><span class="tag">Suvenir: ${c.item}</span>${c.port?'<span class="tag">⚓ Havneby</span>':''}</p>
+  <p><span class="tag">Land: ${c.c}</span><span class="tag">Hostell: ${kr(c.h)}</span><span class="tag">Hotell: ${kr(r50(c.h*2.2))}</span><span class="tag">Jobb: 5–10 spørsmål, 80 % riktig</span><span class="tag">Suvenir: ${c.item}</span>${c.port?'<span class="tag">⚓ Havneby</span>':''}</p>
   <button class="btn blue" onclick="closeModal()">Lukk</button>`);
 }
 
@@ -499,16 +570,20 @@ function openAbout(){
 let JOB=null;
 function openJob(){
   const c=byId[S.at];
-  const qs=shuffle(c.q).slice(0,2).concat([rnd(GENERAL)]);
-  JOB={title:rnd(JOBS),qs:shuffle(qs),i:0,right:0};
-  modal(`<h2>💼 Jobb i ${c.n}</h2><p>Du har fått jobb som <b>${JOB.title.toLowerCase()}</b> for en dag!</p>
-  <p>Svar på 3 spørsmål. Du får <b>${kr(c.p)}</b> for hvert riktige svar. Jobben tar én dag, og du sover på hostellet etterpå.</p>
+  const n=5+Math.floor(Math.random()*6); // 5–10 spørsmål
+  const gen=n>=8?2:1;
+  const qs=shuffle(c.q).slice(0,n-gen).concat(shuffle(GENERAL).slice(0,gen));
+  const need=Math.ceil(n*0.8), pay=r50(n*c.p*0.5);
+  JOB={title:rnd(JOBS),qs:shuffle(qs),i:0,right:0,n,need,pay};
+  modal(`<h2>💼 Jobb i ${c.n}</h2><p>Du kan få jobb som <b>${JOB.title.toLowerCase()}</b> for en dag!</p>
+  <div class="fact">Sjefen vil teste hva du kan om <b>${c.c}</b>. Du får <b>${n} spørsmål</b> og må ha minst <b>${need} riktige (80 %)</b> for å få lønn.<br><br>💰 Lønn: <b>${kr(pay)}</b><br>❌ Klarer du det ikke, får du ingenting.</div>
+  <p class="small">Jobben tar én dag, og du sover på hostellet etterpå.</p>
   <button class="btn green" onclick="jobQ()">Start arbeidsdagen</button>`);
 }
 function jobQ(){
   const q=JOB.qs[JOB.i];const opts=shuffle(q.slice(1));
-  let h=`<h2>Spørsmål ${JOB.i+1} av 3</h2><div class="q">${q[0]}</div>`;
-  opts.forEach((o,k)=>{h+=`<button class="ans" data-o="${encodeURIComponent(o)}">${o}</button>`;});
+  let h=`<h2>Spørsmål ${JOB.i+1} av ${JOB.n}</h2><p class="small">Riktige så langt: ${JOB.right} · Du trenger ${JOB.need}</p><div class="q">${q[0]}</div>`;
+  opts.forEach(o=>{h+=`<button class="ans" data-o="${encodeURIComponent(o)}">${o}</button>`;});
   h+='<div id="jobfb"></div>';
   modal(h);
   document.querySelectorAll('.ans').forEach(b=>b.onclick=()=>{
@@ -516,18 +591,40 @@ function jobQ(){
     document.querySelectorAll('.ans').forEach(x=>{x.disabled=true;if(decodeURIComponent(x.dataset.o)===q[1])x.classList.add('ok');});
     if(ok){JOB.right++;sndOk();}else{b.classList.add('bad');sndBad();}
     JOB.i++;
-    $('jobfb').innerHTML=`<p class="big">${ok?'✅ Riktig!':'❌ Feil – riktig svar er «'+q[1]+'»'}</p><button class="btn" onclick="${JOB.i<3?'jobQ()':'jobEnd()'}">${JOB.i<3?'Neste spørsmål':'Ferdig for i dag'}</button>`;
+    const last=JOB.i>=JOB.n;
+    $('jobfb').innerHTML=`<p class="big">${ok?'✅ Riktig!':'❌ Feil – riktig svar er «'+q[1]+'»'}</p><button class="btn" onclick="${last?'jobEnd()':'jobQ()'}">${last?'Ferdig for i dag':'Neste spørsmål'}</button>`;
   });
 }
 function jobEnd(){
-  const c=byId[S.at];const pay=JOB.right*c.p;
-  S.money+=pay;S.day++;const night=sleepNight();
-  if(pay>0)sndCoin();
-  const msg=JOB.right===3?'Sjefen var kjempefornøyd og ga deg full lønn!':JOB.right>0?'Ikke verst for en dags jobb.':'Sjefen var ikke fornøyd i dag …';
-  diary(`Jobbet som ${JOB.title.toLowerCase()} i ${c.n} og tjente ${kr(pay)}. ${night}`);
-  modal(`<h2>Arbeidsdagen er over</h2><p class="big">${JOB.right} av 3 riktige</p><p class="big" style="color:var(--green)">+ ${kr(pay)}</p><p>${msg}</p><p>${night}</p><button class="btn green" onclick="closeModal()">OK</button>`);
+  const c=byId[S.at];const passed=JOB.right>=JOB.need;const pay=passed?JOB.pay:0;
+  const pct=Math.round(JOB.right/JOB.n*100);
+  S.money+=pay;S.day++;S.needNight=true;const night='';
+  if(passed)sndCoin();else sndBad();
+  const msg=passed?(JOB.right===JOB.n?'Alt riktig! Sjefen klappet deg på skulderen.':'Godkjent! Sjefen betalte deg lønna.'):'Sjefen ristet på hodet: «Du må lære mer om landet vårt.» Ingen lønn i dag …';
+  diary(passed?`Jobbet som ${JOB.title.toLowerCase()} i ${c.n} og tjente ${kr(pay)}. ${night}`:`Strøk på jobben i ${c.n} (${JOB.right} av ${JOB.n}) og fikk ingen lønn. ${night}`);
+  modal(`<h2>${passed?'Arbeidsdagen er over':'Ikke godkjent'}</h2><p class="big">${JOB.right} av ${JOB.n} riktige (${pct} %)</p><p class="big" style="color:${passed?'var(--green)':'var(--red)'}">${passed?'+ '+kr(pay):'0 kr'}</p><p>${msg}</p><button class="btn green" onclick="openNight()">🌙 Finn overnatting</button>`);
   render();
 }
+
+/* --- Ring hjem --- */
+const HOME_HI=['Mamma: «Hei vennen! Har du husket å spise ordentlig?»','Pappa: «Jaså, er det deg? Hvor i all verden er du nå?»','Mamma: «Så hyggelig at du ringer! Har du det fint?»','Pappa: «Hallo? Det skurrer litt … er du i utlandet fortsatt?»','Mamma: «Har du med deg nok ullsokker?»'];
+const HOME_LOAN=['Pappa: «Greit da, jeg setter inn 1000 kr. Men du må betale tilbake, hører du!»','Mamma: «Selvfølgelig, vennen. 1000 kr er på vei. Ikke bruk alt på suvenirer!»','Pappa: «Hmm … OK. 1000 kr. Jeg skriver det opp i boka.»'];
+function openHome(){
+  const debt=S.debt||0;ring();
+  let h=`<h2>📞 Ring hjem</h2><div class="fact">📱 Ring ring … ring ring …<br><br><i>${rnd(HOME_HI)}</i></div>
+  <p>Du skylder hjemme: <b>${kr(debt)}</b> (maks ${kr(3000)})</p>`;
+  h+=`<button class="btn green" onclick="borrow()" ${debt>=3000?'disabled':''}>💸 Lån 1000 kr</button>`;
+  if(debt>=3000)h+='<p class="small" style="color:var(--red)"><b>Pappa: «Nå får du klare deg selv en stund! Ta deg en jobb.»</b></p>';
+  if(debt>0)h+=`<button class="btn blue" onclick="repay()" ${S.money<1000?'disabled':''}>Betal tilbake 1000 kr</button>`;
+  h+=`<p class="small">Gjeld som ikke er betalt tilbake, trekkes fra poengsummen når du er ferdig.</p><button class="btn gray" onclick="closeModal()">Legg på</button>`;
+  modal(h);
+}
+function ring(){[0,.35,1.2,1.55].forEach(d=>{beep(880,.25,'sine',.05,d);beep(1100,.25,'sine',.03,d);});}
+function borrow(){if((S.debt||0)>=3000)return;S.debt=(S.debt||0)+1000;S.money+=1000;sndCoin();
+  const t=rnd(HOME_LOAN);diary('Ringte hjem og lånte 1000 kr.');render();
+  modal(`<h2>📞 Ring hjem</h2><div class="fact"><i>${t}</i></div><p class="big" style="color:var(--green)">+ ${kr(1000)}</p><p>Du skylder nå hjemme: <b>${kr(S.debt)}</b></p><button class="btn gray" onclick="closeModal()">Ha det! 👋</button>`);}
+function repay(){if(!S.debt||S.money<1000)return;S.debt-=1000;S.money-=1000;sndOk();diary('Betalte tilbake 1000 kr til mamma og pappa.');render();
+  modal(`<h2>📞 Ring hjem</h2><div class="fact"><i>Mamma: «Så flink du er! Takk for pengene.»</i></div><p>Du skylder nå: <b>${kr(S.debt)}</b></p><button class="btn gray" onclick="closeModal()">Ha det! 👋</button>`);}
 
 /* --- Marked --- */
 function openMarket(){
@@ -628,24 +725,23 @@ function arrive(id,m){
   if(!S.visited.includes(id)){S.visited.push(id);S.stampDay[id]=S.day;stamp=true;}
   let ev='';
   if(Math.random()<0.3){const e=rnd(EVENTS);S.money=Math.max(0,S.money+e[1]);if(e[1]<0)setTimeout(murderSting,600);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
-  const night=sleepNight();
+  S.needNight=true;
   makeOffers();
-  diary(`Kom fram til ${c.n} etter ${m.days} ${m.days>1?'dager':'dag'} med ${m.n.toLowerCase()}. ${night}`);
+  diary(`Kom fram til ${c.n} etter ${m.days} ${m.days>1?'dager':'dag'} med ${m.n.toLowerCase()}.`);
   render();
   const canDeliver=S.missions.some(x=>x.to===id&&(S.inv[x.item]||0)>0);
   let h=`<h2>${c.f} Velkommen til ${c.n}!</h2>`;
   if(stamp){sndStamp();h+=`<div style="text-align:center"><div class="stamp" style="display:inline-block;padding:10px 18px;font-size:16px"><div class="f">${c.f}</div>${c.n.toUpperCase()}<br>Dag ${S.day}</div><p><b>Nytt stempel i passet!</b></p></div>`;}
   h+=`<div class="fact">${c.fact}</div>`;
   if(ev)h+=`<p><b>📰 ${ev}</b></p>`;
-  h+=`<p class="small">${night}</p>`;
-  if(canDeliver)h+=`<button class="btn green" onclick="openBoard()">🎉 Noen venter på en leveranse her!</button>`;
-  h+=`<button class="btn blue" onclick="closeModal()">Utforsk ${c.n}</button>`;
+    if(canDeliver)h+=`<button class="btn green" onclick="openBoard()">🎉 Noen venter på en leveranse her!</button>`;
+  h+=`<button class="btn blue" onclick="openNight()">🌙 Finn overnatting i ${c.n}</button>`;
   modal(h);
 }
 
 /* --- Ryggsekk --- */
 function openBag(){
-  let h='<h2>🎒 Ryggsekken</h2>';
+  let h='<h2>🎒 Ryggsekken</h2>'+((S.debt||0)>0?`<p>📞 Du skylder hjemme: <b>${kr(S.debt)}</b></p>`:'');
   const items=Object.entries(S.inv);
   h+=`<p><b>Ting (${bagCount()}/${MAXBAG}):</b></p>`;
   if(!items.length)h+='<p class="small">Ryggsekken er tom.</p>';
@@ -676,7 +772,7 @@ function openMenu(){
 }
 
 /* --- Seier --- */
-function score(){return Math.max(0,S.done*1000+S.visited.length*150+Math.round(S.money/5)-S.day*40);}
+function score(){return Math.max(0,S.done*1000+S.visited.length*150+Math.round((S.money-(S.debt||0))/5)-S.day*40);}
 function win(){
   const sc=score();let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
   hs.push({n:S.name,s:sc,d:S.day});hs.sort((a,b)=>b.s-a.s);hs=hs.slice(0,5);
@@ -684,7 +780,7 @@ function win(){
   clearSave();
   [523,659,784,1047].forEach((f,i)=>beep(f,.25,'square',.06,i*.15));
   modal(`<h2>🏆 Gratulerer, ${S.name}!</h2><p class="big">Du har fullført alle ${GOAL} oppdragene!</p>
-  <div class="fact">📅 Dager brukt: <b>${S.day}</b><br>🛂 Byer besøkt: <b>${S.visited.length}</b><br>💰 Penger igjen: <b>${kr(S.money)}</b></div>
+  <div class="fact">📅 Dager brukt: <b>${S.day}</b><br>🛂 Byer besøkt: <b>${S.visited.length}</b><br>💰 Penger igjen: <b>${kr(S.money)}</b>${(S.debt||0)>0?'<br>📞 Gjeld hjemme: <b>'+kr(S.debt)+'</b>':''}</div>
   <p class="big">Poengsum: ${sc}</p>
   <button class="btn green" onclick="toStart()">Til startskjermen</button>`);
 }
@@ -692,18 +788,18 @@ function win(){
 /* --- Start --- */
 function showHS(){let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
   $('hsBox').innerHTML=hs.length?'<b>🏆 Beste reisende</b><ol>'+hs.map(h=>`<li>${h.n} – ${h.s} poeng (${h.d} dager)</li>`).join('')+'</ol>':'';}
-function toStart(){closeModal();$('game').classList.add('hidden');$('start').classList.remove('hidden');$('contBtn').classList.toggle('hidden',!load());showHS();}
-function startGame(st){startMusic();S=st;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();}
+function toStart(){$('modal').classList.add('hidden');$('game').classList.add('hidden');$('start').classList.remove('hidden');$('contBtn').classList.toggle('hidden',!load());showHS();}
+function startGame(st){startMusic();S=st;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();if(S.needNight)openNight();}
 function askRestart(){modal(`<h2>Start på nytt?</h2><p>Reisen du holder på med forsvinner.</p><button class="btn" onclick="clearSave();toStart();">Ja, slett reisen</button><button class="btn gray" onclick="closeModal()">Nei, avbryt</button>`);}
 $('newBtn').onclick=()=>{
   if(load()){modal(`<h2>Ny reise?</h2><p>Du har en reise som ikke er ferdig. Vil du starte en ny? Den gamle forsvinner.</p><button class="btn" onclick="clearSave();closeModal();$('newBtn').click()">Ja, start ny reise</button><button class="btn green" onclick="closeModal();$('contBtn').click()">Nei, fortsett den gamle</button>`);return;}
   S=newState($('pname').value.trim());makeOffers();startGame(S);
   modal(`<h2>🎒 God tur, ${S.name}!</h2><div class="fact">Du står på Oslo S med 2000 kr i lomma og en tom ryggsekk.<br><br>
-  1. Gå til <b>📌 Oppdrag</b> og ta et oppdrag.<br>2. Reis til byen der tingen selges og kjøp den på <b>🛒 Marked</b>.<br>3. Reis videre og lever den.<br><br>Går du tom for penger? <b>💼 Ta en jobb!</b><br>Fullfør ${GOAL} oppdrag på færrest mulig dager.</div>
+  1. Gå til <b>📌 Oppdrag</b> og ta et oppdrag.<br>2. Reis til byen der tingen selges og kjøp den på <b>🛒 Marked</b>.<br>3. Reis videre og lever den.<br><br>Går du tom for penger? <b>💼 Ta en jobb</b> eller <b>📞 ring hjem</b> og lån!<br>Fullfør ${GOAL} oppdrag på færrest mulig dager.</div>
   <button class="btn green" onclick="openBoard()">Se oppslagstavla</button>`);
 };
 $('contBtn').onclick=()=>{const s=load();if(s)startGame(s);};
-document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:openTravel,bag:openBag,pass:openPass,menu:openMenu})[b.dataset.a]();});
+document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:openTravel,bag:openBag,pass:openPass,home:openHome,menu:openMenu})[b.dataset.a]();});
 
 $('musicBtn').onclick=()=>setMusic(!MUS.on);
 $('musicBtn').textContent=MUS.on?'🎵 På':'🔇 Av';
