@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#5b3a21">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Globetrotter">
+<title>Globetrotter – Jorda rundt med ryggsekk</title>
+<style>
+:root{--sea:#1d5b86;--sea2:#14476b;--land:#dcc78f;--land2:#a98b4f;--ink:#2b2118;--paper:#f7eed6;--paper2:#eadbb4;--red:#b8322a;--green:#1e7b45;--gold:#f0b429;--leather:#5b3a21}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:"Trebuchet MS",Verdana,sans-serif;background:radial-gradient(circle at 30% 20%,#3a2414,#1c120a);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+
+/* START */
+#start{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--paper);border:4px solid var(--leather);border-radius:14px;box-shadow:0 10px 40px #000a,inset 0 0 40px #c9b07a55;padding:24px;max-width:560px;width:100%}
+.logo{font-family:Georgia,serif;font-size:42px;font-weight:bold;text-align:center;color:var(--red);letter-spacing:2px;text-shadow:2px 2px 0 #f0b42988;margin:0}
+.sub{text-align:center;font-style:italic;margin:4px 0 18px;color:#6b4c2c}
+.globe{font-size:64px;text-align:center;animation:spin 6s linear infinite;display:block}
+@keyframes spin{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
+label{font-weight:bold;display:block;margin-bottom:6px}
+input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--land2);border-radius:8px;background:#fffaf0}
+.btn{display:block;width:100%;padding:13px;margin-top:10px;border:none;border-radius:10px;font-size:18px;font-weight:bold;color:#fff;background:var(--red);box-shadow:0 4px 0 #7a1d17;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #7a1d17}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #0f4a28}
+.btn.blue{background:#2471a3;box-shadow:0 4px 0 #154a6d}
+.btn.gray{background:#8a7a62;box-shadow:0 4px 0 #574c3c}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.how{font-size:14px;line-height:1.5;background:var(--paper2);border-radius:8px;padding:10px 14px;margin-top:16px}
+.how h3{margin:0 0 4px}
+.credit{text-align:center;font-size:13px;color:#7a5a3a;margin-top:16px;font-weight:bold;letter-spacing:1px}
+.hs{font-size:14px;margin-top:12px}
+.hs ol{margin:4px 0;padding-left:22px}
+
+/* GAME */
+#game{display:flex;flex-direction:column;height:100%;max-width:1100px;margin:0 auto}
+#top{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-between;align-items:center;background:var(--leather);color:#fbe9c4;padding:8px 10px;border-bottom:3px solid #2e1d10;font-weight:bold;font-size:15px}
+#top .stat{background:#0003;border-radius:8px;padding:4px 9px;white-space:nowrap}
+#mapwrap{position:relative;overflow:auto;background:var(--sea2);border-bottom:3px solid #2e1d10;flex:0 0 auto}
+#map{display:block;width:100%;min-width:760px;height:auto}
+.land{fill:var(--land);stroke:var(--land2);stroke-width:1.2;stroke-linejoin:round}
+.grid{stroke:#ffffff22;stroke-width:1}
+.eq{stroke:#f0b42966;stroke-dasharray:6 5;stroke-width:1.2}
+.city{cursor:pointer}
+.city .dot{fill:var(--red);stroke:#fff;stroke-width:1.5}
+.city.visited .dot{fill:var(--green)}
+.city.here .dot{fill:var(--gold);stroke:#000;stroke-width:2}
+.city .hit{fill:transparent}
+.city:hover .dot{r:7}
+.lbl{font-size:12px;font-weight:bold;fill:#2b2118;paint-order:stroke;stroke:#f7eed6;stroke-width:3px;pointer-events:none}
+.ring{fill:none;stroke-width:2.5;animation:pulse 1.4s ease-in-out infinite}
+.ring.buy{stroke:#f0b429}.ring.drop{stroke:#2ecc71}
+@keyframes pulse{50%{stroke-opacity:.25}}
+.route{stroke:#fff;stroke-width:2;stroke-dasharray:5 5;fill:none}
+#plane{font-size:20px}
+
+#panel{flex:1;overflow:auto;background:var(--paper);padding:12px}
+#cityhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#cityhead .flag{font-size:38px}
+#cityhead h2{margin:0;font-family:Georgia,serif;font-size:26px}
+#cityhead small{color:#6b4c2c}
+#actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){#actions{grid-template-columns:repeat(3,1fr)}}
+.act{background:#fffaf0;border:2px solid var(--land2);border-radius:10px;padding:9px 4px;text-align:center;font-weight:bold;font-size:14px;box-shadow:0 3px 0 var(--land2)}
+.act span{display:block;font-size:26px}
+.act:active{transform:translateY(2px);box-shadow:0 1px 0 var(--land2)}
+.act.badge{position:relative}
+.act.badge::after{content:"!";position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:50%;width:20px;height:20px;line-height:20px;font-size:13px}
+#diary{margin-top:10px;background:var(--paper2);border-left:5px solid var(--land2);border-radius:6px;padding:8px 12px;font-size:14px;font-style:italic;min-height:38px}
+
+/* MODAL */
+#modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:12px;z-index:10}
+#mbox{background:var(--paper);border:4px solid var(--leather);border-radius:14px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:18px;position:relative;box-shadow:0 10px 40px #000}
+#mbox h2{margin:0 0 10px;font-family:Georgia,serif;color:var(--red)}
+#mclose{position:absolute;top:8px;right:10px;background:none;border:none;font-size:26px;color:#6b4c2c}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border-bottom:1px dashed var(--land2)}
+.row:last-child{border-bottom:none}
+.row .small{font-size:13px;color:#6b4c2c}
+.mini{padding:8px 12px;border:none;border-radius:8px;font-weight:bold;color:#fff;background:var(--green);white-space:nowrap}
+.mini.red{background:var(--red)}.mini.blue{background:#2471a3}.mini.gray{background:#8a7a62}
+.mini:disabled{opacity:.4}
+.ans{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;border:2px solid var(--land2);border-radius:10px;background:#fffaf0;font-size:16px}
+.ans.ok{background:#bfe8c9;border-color:var(--green)}
+.ans.bad{background:#f3c1bb;border-color:var(--red)}
+.q{font-size:18px;font-weight:bold;margin:8px 0}
+.fact{background:var(--paper2);padding:12px;border-radius:10px;line-height:1.5}
+.stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.stamp{border:3px dashed var(--red);border-radius:10px;padding:6px;text-align:center;font-size:12px;font-weight:bold;color:var(--red);transform:rotate(-4deg);background:#fff5}
+.stamp:nth-child(even){transform:rotate(3deg);border-color:#2471a3;color:#2471a3}
+.stamp .f{font-size:26px}
+.stamp.empty{border-color:#ccc;color:#bbb;transform:none}
+.mission{background:#fffaf0;border:2px solid var(--land2);border-radius:10px;padding:10px;margin:8px 0}
+.mission b{color:var(--red)}
+.tag{display:inline-block;font-size:12px;padding:2px 7px;border-radius:10px;background:var(--paper2);margin-right:4px}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:bold;z-index:20;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+.big{font-size:22px;text-align:center;font-weight:bold}
+</style>
+</head>
+<body>
+
+<!-- STARTSKJERM -->
+<div id="start">
+  <div class="card">
+    <span class="globe">🌍</span>
+    <h1 class="logo">GLOBETROTTER</h1>
+    <p class="sub">Jorda rundt med ryggsekk</p>
+    <label for="pname">Hva heter du, reisende?</label>
+    <input type="text" id="pname" maxlength="16" placeholder="Skriv navnet ditt">
+    <button class="btn" id="newBtn">🎒 Start ny reise</button>
+    <button class="btn green hidden" id="contBtn">▶ Fortsett reisen</button>
+    <div class="how">
+      <h3>Slik spiller du</h3>
+      Du starter i Oslo med 2000 kr i lomma. Ta på deg <b>oppdrag</b> fra oppslagstavla: kjøp en ting i én by og lever den til noen i en annen by.
+      Mangler du penger? <b>Ta en jobb</b> – svar riktig på spørsmål om stedet og tjen penger.
+      Reis med fly, tog eller båt, samle stempler i <b>passet</b> og fullfør <b>8 oppdrag</b> på færrest mulig dager!
+    </div>
+    <div class="hs" id="hsBox"></div>
+    <div class="credit">Wåle production 2026</div>
+  </div>
+</div>
+
+<!-- SPILL -->
+<div id="game" class="hidden">
+  <div id="top">
+    <span class="stat" id="sName">🎒</span>
+    <span class="stat" id="sMoney">💰</span>
+    <span class="stat" id="sDay">📅</span>
+    <span class="stat" id="sDone">📦</span>
+    <span class="stat" id="sStamps">🛂</span>
+  </div>
+  <div id="mapwrap"><svg id="map" viewBox="0 0 1000 395"></svg></div>
+  <div id="panel">
+    <div id="cityhead"><span class="flag" id="cFlag"></span><div><h2 id="cName"></h2><small id="cSub"></small></div></div>
+    <div id="actions">
+      <button class="act" data-a="about"><span>📖</span>Om byen</button>
+      <button class="act" data-a="job"><span>💼</span>Ta en jobb</button>
+      <button class="act" data-a="market"><span>🛒</span>Marked</button>
+      <button class="act" data-a="board" id="boardBtn"><span>📌</span>Oppdrag</button>
+      <button class="act" data-a="travel"><span>✈️</span>Reis</button>
+      <button class="act" data-a="bag"><span>🎒</span>Ryggsekk</button>
+      <button class="act" data-a="pass"><span>🛂</span>Passet</button>
+      <button class="act" data-a="menu"><span>⚙️</span>Meny</button>
+    </div>
+    <div id="diary"></div>
+  </div>
+</div>
+
+<div id="modal" class="hidden"><div id="mbox"><button id="mclose">✕</button><div id="mcontent"></div></div></div>
+<div id="toast"></div>
+
+<script>
+/* ================= DATA ================= */
+// q: [spørsmål, riktig svar, feil, feil]
+const CITIES=[
+{id:'oslo',n:'Oslo',c:'Norge',f:'🇳🇴',k:'EU',la:59.91,lo:10.75,lm:'EA',port:1,item:'Trollfigur',pr:150,
+ fact:'Oslo het Christiania helt fram til 1925. I Frognerparken står over 200 skulpturer laget av Gustav Vigeland, og fra Holmenkollen kan du se hele byen.',
+ q:[['Hva het Oslo før 1925?','Christiania','Nidaros','Bjørgvin'],['Hvem laget skulpturene i Frognerparken?','Gustav Vigeland','Edvard Munch','Henrik Ibsen'],['Hva heter den kjente hoppbakken i Oslo?','Holmenkollen','Granåsen','Vikersundbakken']]},
+{id:'stockholm',n:'Stockholm',c:'Sverige',f:'🇸🇪',k:'EU',la:59.33,lo:18.07,lm:'EA',port:1,item:'Dalahest',pr:200,
+ fact:'Stockholm er bygd på 14 øyer. Hvert år deles Nobelprisen ut her, og på museum kan du se krigsskipet Vasa som sank i 1628.',
+ q:[['Hvor mange øyer er Stockholm bygd på?','14','3','40'],['Hvilken pris deles ut i Stockholm hvert år?','Nobelprisen','Oscar','Ballon d\'Or'],['Hva heter det gamle krigsskipet på museum?','Vasa','Titanic','Oseberg']]},
+{id:'reykjavik',n:'Reykjavik',c:'Island',f:'🇮🇸',k:'EU',la:64.15,lo:-21.94,lm:'IS',port:1,item:'Lavastein',pr:90,
+ fact:'Reykjavik er verdens nordligste hovedstad. Mange hus varmes opp med varmt vann fra jorda, og rundt byen finnes vulkaner og sprutende geysirer.',
+ q:[['Hva varmer opp mange hus på Island?','Varmt vann fra jorda','Kull','Atomkraft'],['Hva kalles varme kilder som spruter vann?','Geysir','Fjord','Delta'],['Island er kjent for mange …','Vulkaner','Ørkener','Jungler']]},
+{id:'london',n:'London',c:'Storbritannia',f:'🇬🇧',k:'EU',la:51.51,lo:-0.13,lm:'EA',port:1,item:'Dobbeltdekker-modell',pr:250,
+ fact:'Big Ben er egentlig navnet på den store klokka inne i tårnet. De røde dobbeltdekkerbussene og Buckingham Palace er kjent over hele verden.',
+ q:[['Hva heter elva som renner gjennom London?','Themsen','Seinen','Donau'],['Hvilken farge har de klassiske bussene i London?','Rød','Blå','Gul'],['Hva heter kongeslottet i London?','Buckingham Palace','Versailles','Kreml']]},
+{id:'paris',n:'Paris',c:'Frankrike',f:'🇫🇷',k:'EU',la:48.86,lo:2.35,lm:'EA',port:0,item:'Baguette',pr:60,
+ fact:'Eiffeltårnet ble bygd til verdensutstillingen i 1889. På kunstmuseet Louvre henger Mona Lisa, verdens mest kjente maleri.',
+ q:[['Når ble Eiffeltårnet ferdig?','1889','1789','1950'],['Hvilket kjent maleri henger på Louvre?','Mona Lisa','Skrik','Solsikker'],['Hva heter elva i Paris?','Seinen','Rhinen','Themsen']]},
+{id:'berlin',n:'Berlin',c:'Tyskland',f:'🇩🇪',k:'EU',la:52.52,lo:13.4,lm:'EA',port:0,item:'Bit av Berlinmuren',pr:120,
+ fact:'Fra 1961 til 1989 delte Berlinmuren byen i to. Brandenburger Tor er byens mest kjente landemerke.',
+ q:[['Når falt Berlinmuren?','1989','1945','2001'],['Hva heter den kjente porten i Berlin?','Brandenburger Tor','Triumfbuen','Holstentor'],['Hvilken valuta bruker Tyskland?','Euro','Mark','Krone']]},
+{id:'madrid',n:'Madrid',c:'Spania',f:'🇪🇸',k:'EU',la:40.42,lo:-3.7,lm:'EA',port:0,item:'Flamencovifte',pr:140,
+ fact:'Madrid ligger nesten midt i Spania, ca. 650 meter over havet. Byen er hjem til fotballklubben Real Madrid.',
+ q:[['Hvilken fotballklubb i hvite drakter kommer fra Madrid?','Real Madrid','FC Barcelona','Sevilla'],['Hvilket språk snakkes i Spania?','Spansk','Portugisisk','Italiensk'],['Hva heter den spanske risretten med sjømat?','Paella','Lasagne','Sushi']]},
+{id:'roma',n:'Roma',c:'Italia',f:'🇮🇹',k:'EU',la:41.9,lo:12.5,lm:'EA',port:0,item:'Pizzaspade',pr:180,
+ fact:'Inne i Roma ligger verdens minste land, Vatikanstaten. I Colosseum kjempet gladiatorer for nesten 2000 år siden.',
+ q:[['Hvilket land ligger inne i Roma?','Vatikanstaten','Monaco','Liechtenstein'],['Hvor kjempet gladiatorene?','Colosseum','Akropolis','Alhambra'],['Hvem grunnla Roma ifølge sagnet?','Romulus og Remus','Zevs og Hera','Tor og Odin']]},
+{id:'istanbul',n:'Istanbul',c:'Tyrkia',f:'🇹🇷',k:'EU',la:41.01,lo:28.98,lm:'EA',port:1,item:'Tyrkisk lampe',pr:300,
+ fact:'Istanbul ligger både i Europa og Asia – sundet Bosporos renner midt gjennom byen. Før het byen Konstantinopel.',
+ q:[['Hvilke to verdensdeler ligger Istanbul i?','Europa og Asia','Asia og Afrika','Europa og Afrika'],['Hva heter sundet gjennom Istanbul?','Bosporos','Gibraltarstredet','Panamakanalen'],['Hva het Istanbul tidligere?','Konstantinopel','Babylon','Troja']]},
+{id:'moskva',n:'Moskva',c:'Russland',f:'🇷🇺',k:'EU',la:55.75,lo:37.62,lm:'EA',port:0,item:'Matrjosjka-dukke',pr:220,
+ fact:'Russland er verdens største land. Midt i Moskva ligger festningen Kreml, og herfra går Den transsibirske jernbanen helt til Stillehavet.',
+ q:[['Hva heter festningen midt i Moskva?','Kreml','Akropolis','Alhambra'],['Hvilket alfabet brukes i Russland?','Kyrillisk','Latinsk','Arabisk'],['Hvilken lang jernbane starter i Moskva?','Den transsibirske','Orientekspressen','Bergensbanen']]},
+{id:'kairo',n:'Kairo',c:'Egypt',f:'🇪🇬',k:'AF',la:30.04,lo:31.24,lm:'EA',port:0,item:'Papyrusrull',pr:160,
+ fact:'Like utenfor Kairo står pyramidene i Giza og Sfinksen. De er over 4500 år gamle! Nilen er en av verdens lengste elver.',
+ q:[['Hvilken elv renner gjennom Kairo?','Nilen','Kongo','Amazonas'],['Hva heter løvefiguren ved pyramidene?','Sfinksen','Kolossen','Kentauren'],['Hvem ble begravet i pyramidene?','Faraoer','Vikinger','Romerske keisere']]},
+{id:'marrakech',n:'Marrakech',c:'Marokko',f:'🇲🇦',k:'AF',la:31.63,lo:-8.0,lm:'EA',port:0,item:'Krydderpose',pr:80,
+ fact:'Marrakech kalles «den røde byen» på grunn av de rødlige murene. Like ved ligger Atlasfjellene, og lenger sør begynner Sahara.',
+ q:[['Hvilken ørken ligger sør for Marokko?','Sahara','Gobi','Atacama'],['Hva kalles Marrakech?','Den røde byen','Den blå byen','Den hvite byen'],['Hvilke fjell ligger ved Marrakech?','Atlasfjellene','Alpene','Andesfjellene']]},
+{id:'lagos',n:'Lagos',c:'Nigeria',f:'🇳🇬',k:'AF',la:6.52,lo:3.38,lm:'EA',port:1,item:'Afrikansk tromme',pr:170,
+ fact:'Nigeria har flest innbyggere i hele Afrika. Landets filmindustri, Nollywood, lager tusenvis av filmer hvert år.',
+ q:[['Hvilket land i Afrika har flest innbyggere?','Nigeria','Egypt','Kenya'],['Hva kalles Nigerias filmindustri?','Nollywood','Bollywood','Hollywood'],['Ved hvilket hav ligger Lagos?','Atlanterhavet','Indiahavet','Stillehavet']]},
+{id:'nairobi',n:'Nairobi',c:'Kenya',f:'🇰🇪',k:'AF',la:-1.29,lo:36.82,lm:'EA',port:0,item:'Treløve',pr:130,
+ fact:'Rett utenfor Nairobi ligger en nasjonalpark med løver, sjiraffer og neshorn – med skyskrapere i bakgrunnen! Kenya er kjent for verdens beste langdistanseløpere.',
+ q:[['Hva kalles en tur for å se ville dyr?','Safari','Fjelltur','Cruise'],['Hva heter Afrikas høyeste fjell?','Kilimanjaro','Mount Everest','Mont Blanc'],['Kenya er kjent for gode …','Langdistanseløpere','Skihoppere','Ishockeyspillere']]},
+{id:'kapp',n:'Cape Town',c:'Sør-Afrika',f:'🇿🇦',k:'AF',la:-33.92,lo:18.42,lm:'EA',port:1,item:'Diamant',pr:900,
+ fact:'Over Cape Town står Taffelberget, et fjell som er helt flatt på toppen. På Boulders Beach bor det pingviner!',
+ q:[['Hva heter det flate fjellet over Cape Town?','Taffelberget','Matterhorn','Fuji'],['Hvilke fugler bor på Boulders Beach?','Pingviner','Flamingoer','Papegøyer'],['Hvem var Sør-Afrikas første svarte president?','Nelson Mandela','Kofi Annan','Barack Obama']]},
+{id:'dubai',n:'Dubai',c:'De forente arabiske emirater',f:'🇦🇪',k:'AS',la:25.2,lo:55.27,lm:'EA',port:1,item:'Gullkamel',pr:400,h:380,p:330,
+ fact:'Her står Burj Khalifa, verdens høyeste bygning – hele 828 meter! For 60 år siden var Dubai en liten fiskerlandsby i ørkenen.',
+ q:[['Hva heter verdens høyeste bygning?','Burj Khalifa','Eiffeltårnet','Empire State Building'],['Hva har gjort landet rikt?','Olje','Kaffe','Fisk'],['Hvilket dyr forbinder man med ørkenen?','Kamel','Pingvin','Elg']]},
+{id:'delhi',n:'Delhi',c:'India',f:'🇮🇳',k:'AS',la:28.61,lo:77.21,lm:'EA',port:0,item:'Silkesjal',pr:200,
+ fact:'India har flest innbyggere i verden. Ikke langt fra Delhi ligger Taj Mahal, et hvitt marmorbygg som ble bygd av kjærlighet.',
+ q:[['Hva heter det hvite marmorbygget i Agra?','Taj Mahal','Angkor Wat','Alhambra'],['Hva kalles Indias filmindustri?','Bollywood','Nollywood','Hollywood'],['Hvilket dyr er hellig for mange hinduer?','Kua','Grisen','Hunden']]},
+{id:'kathmandu',n:'Kathmandu',c:'Nepal',f:'🇳🇵',k:'AS',la:27.7,lo:85.32,lm:'EA',port:0,item:'Bønneflagg',pr:70,
+ fact:'Nepal har åtte av verdens ti høyeste fjell, blant dem Mount Everest. Sherpaene er kjent som verdens beste fjellførere.',
+ q:[['Hva heter verdens høyeste fjell?','Mount Everest','K2','Mont Blanc'],['Hvilken fjellkjede ligger i Nepal?','Himalaya','Andesfjellene','Alpene'],['Hva er sherpaer kjent for?','Fjellføring','Fiske','Sjørøveri']]},
+{id:'beijing',n:'Beijing',c:'Kina',f:'🇨🇳',k:'AS',la:39.9,lo:116.4,lm:'EA',port:0,item:'Tekanne',pr:190,
+ fact:'Nord for Beijing går Den kinesiske mur. Midt i byen ligger Den forbudte by, der keiserne bodde i 500 år.',
+ q:[['Hva heter keiserpalasset i Beijing?','Den forbudte by','Kreml','Versailles'],['Hvilket dyr spiser bambus og er Kinas symbol?','Panda','Tiger','Koala'],['Hva spiser man ofte med i Kina?','Spisepinner','Bare kniv','Bare fingrene']]},
+{id:'tokyo',n:'Tokyo',c:'Japan',f:'🇯🇵',k:'AS',la:35.68,lo:139.69,lm:'JP',port:1,item:'Samuraisverd (tre)',pr:350,h:380,p:340,
+ fact:'Tokyo er verdens største byområde med rundt 37 millioner mennesker. Herfra kan du se det snødekte fjellet Fuji og ta lyntoget Shinkansen.',
+ q:[['Hva heter Japans høyeste fjell?','Fuji','Kilimanjaro','Everest'],['Hva kalles rå fisk på risbiter?','Sushi','Taco','Pizza'],['Hva heter Japans lyntog?','Shinkansen','TGV','Flytoget']]},
+{id:'bangkok',n:'Bangkok',c:'Thailand',f:'🇹🇭',k:'AS',la:13.76,lo:100.5,lm:'EA',port:1,item:'Tuk-tuk-modell',pr:110,
+ fact:'Bangkok har et av verdens lengste stedsnavn på thai! Gatene er fulle av trehjulte tuk-tuk-taxier og deilig gatemat.',
+ q:[['Hva er Thailands nasjonaldyr?','Elefant','Løve','Kenguru'],['Hva heter de trehjulte taxiene?','Tuk-tuk','Gondol','Sampan'],['Hva het Thailand tidligere?','Siam','Persia','Ceylon']]},
+{id:'singapore',n:'Singapore',c:'Singapore',f:'🇸🇬',k:'AS',la:1.35,lo:103.82,lm:'EA',port:1,item:'Orkidé',pr:140,h:360,p:320,
+ fact:'Singapore er både en by og et eget land. Byens symbol, Merlion, er halvt løve og halvt fisk. Landet ligger nesten rett på ekvator.',
+ q:[['Singapore er både en by og …','Et eget land','En del av Kina','En del av Japan'],['Hva heter figuren som er halvt løve, halvt fisk?','Merlion','Sfinksen','Griffen'],['Singapore ligger nær …','Ekvator','Nordpolen','Sørpolen']]},
+{id:'sydney',n:'Sydney',c:'Australia',f:'🇦🇺',k:'OC',la:-33.87,lo:151.21,lm:'AU',port:1,item:'Boomerang',pr:120,
+ fact:'Operahuset i Sydney ser ut som store seil. Australia er både et land og en verdensdel, og her bor kenguruer og koalaer.',
+ q:[['Hvilket kjent bygg i Sydney ser ut som seil?','Operahuset','Big Ben','Taj Mahal'],['Hvilket dyr hopper og bærer ungen i en pung?','Kenguru','Bever','Lama'],['Hva heter Australias hovedstad?','Canberra','Sydney','Melbourne']]},
+{id:'auckland',n:'Auckland',c:'New Zealand',f:'🇳🇿',k:'OC',la:-36.85,lo:174.76,lm:'NZ',port:1,item:'Kiwi-bamse',pr:100,
+ fact:'New Zealand ligger nesten så langt fra Norge du kan komme. Urfolket heter maori, og landets fugl, kiwien, kan ikke fly.',
+ q:[['Hva heter urfolket i New Zealand?','Maori','Samer','Inuitter'],['Hva er en kiwi (dyret)?','En fugl som ikke kan fly','En fisk','Et insekt'],['Hvilken sport spiller All Blacks?','Rugby','Baseball','Håndball']]},
+{id:'newyork',n:'New York',c:'USA',f:'🇺🇸',k:'NA',la:40.71,lo:-74.0,lm:'AM',port:1,item:'Frihetsgudinne-figur',pr:150,
+ fact:'Frihetsgudinnen var en gave fra Frankrike i 1886. New York kalles «The Big Apple», og midt på Manhattan ligger Central Park.',
+ q:[['Hvilket land ga Frihetsgudinnen til USA?','Frankrike','England','Norge'],['Hva heter den store parken på Manhattan?','Central Park','Hyde Park','Frognerparken'],['Hva er kallenavnet til New York?','Det store eplet','Vindbyen','Lysbyen']]},
+{id:'toronto',n:'Toronto',c:'Canada',f:'🇨🇦',k:'NA',la:43.65,lo:-79.38,lm:'AM',port:0,item:'Lønnesirup',pr:90,
+ fact:'Toronto er Canadas største by. Ikke langt unna ligger Niagarafallene. Canada har både engelsk og fransk som offisielle språk.',
+ q:[['Hvilket blad er på Canadas flagg?','Lønneblad','Eikeblad','Bjørkeblad'],['Hva heter de store fossene nær Toronto?','Niagarafallene','Victoriafallene','Iguazufallene'],['Hvilke språk er offisielle i Canada?','Engelsk og fransk','Spansk og engelsk','Tysk og fransk']]},
+{id:'losangeles',n:'Los Angeles',c:'USA',f:'🇺🇸',k:'NA',la:34.05,lo:-118.24,lm:'AM',port:1,item:'Surfebrett',pr:450,
+ fact:'I bydelen Hollywood lages mange av verdens mest kjente filmer. Hvert år deles Oscar-prisen ut her.',
+ q:[['Hvilken bydel i Los Angeles er kjent for film?','Hollywood','Bollywood','Nollywood'],['Ved hvilket hav ligger Los Angeles?','Stillehavet','Atlanterhavet','Indiahavet'],['Hvilken filmpris deles ut i Los Angeles?','Oscar','Nobelprisen','Spellemann']]},
+{id:'mexico',n:'Mexico by',c:'Mexico',f:'🇲🇽',k:'NA',la:19.43,lo:-99.13,lm:'AM',port:0,item:'Sombrero',pr:130,
+ fact:'Mexico by ble bygd der aztekernes hovedstad Tenochtitlan lå. Byen ligger over 2200 meter over havet.',
+ q:[['Hva heter retten med fyll i et maisbrød?','Taco','Sushi','Lasagne'],['Hvilket folk bygde pyramider i Mexico?','Aztekerne','Vikingene','Romerne'],['Hvilket språk snakkes i Mexico?','Spansk','Portugisisk','Engelsk']]},
+{id:'havana',n:'Havana',c:'Cuba',f:'🇨🇺',k:'NA',la:23.11,lo:-82.37,lm:'CU',port:1,item:'Veteranbil-modell',pr:160,
+ fact:'Cuba er den største øya i Karibia. I gatene i Havana kjører fortsatt fargerike amerikanske biler fra 1950-tallet.',
+ q:[['Hva slags land er Cuba?','En øy','En ørken','Et fjell-land'],['Havana er kjent for gamle …','Amerikanske biler','Trikker','Kameler'],['Hvilken dans kommer fra Cuba?','Salsa','Vals','Polka']]},
+{id:'lima',n:'Lima',c:'Peru',f:'🇵🇪',k:'SA',la:-12.05,lo:-77.04,lm:'AM',port:1,item:'Lamaull-lue',pr:110,
+ fact:'Fra Lima kan du reise opp i Andesfjellene til Machu Picchu, en gammel inka-by på en fjelltopp.',
+ q:[['Hva heter inka-byen i fjellene?','Machu Picchu','Petra','Pompeii'],['Hvilket ullent dyr bor i Andes?','Lama','Kenguru','Isbjørn'],['Hvilken fjellkjede går gjennom Peru?','Andesfjellene','Alpene','Himalaya']]},
+{id:'rio',n:'Rio de Janeiro',c:'Brasil',f:'🇧🇷',k:'SA',la:-22.91,lo:-43.17,lm:'AM',port:1,item:'Fotball',pr:200,
+ fact:'Over Rio står den store Kristusstatuen. Brasil har vunnet fotball-VM fem ganger – flere enn noe annet land!',
+ q:[['Hvilken statue står på fjellet over Rio?','Kristusstatuen','Frihetsgudinnen','Sfinksen'],['Hvilket språk snakkes i Brasil?','Portugisisk','Spansk','Fransk'],['Hvilket land har vunnet flest fotball-VM?','Brasil','Tyskland','Norge']]},
+{id:'buenos',n:'Buenos Aires',c:'Argentina',f:'🇦🇷',k:'SA',la:-34.6,lo:-58.38,lm:'AM',port:1,item:'Tangosko',pr:250,
+ fact:'Buenos Aires er tangoens hjemby. Argentina vant fotball-VM i 2022 med Lionel Messi som kaptein.',
+ q:[['Hvilken dans kommer fra Buenos Aires?','Tango','Samba','Halling'],['Hvem var Argentinas kaptein da de vant VM i 2022?','Lionel Messi','Cristiano Ronaldo','Erling Haaland'],['Hva er en gaucho?','En cowboy','En sjømann','En munk']]}
+];
+const GENERAL=[
+['Hva er verdens største hav?','Stillehavet','Atlanterhavet','Indiahavet'],
+['Hvilket land er verdens største?','Russland','Kina','Canada'],
+['Hva heter verdens største regnskog?','Amazonas','Sahara','Taiga'],
+['Hvilket land har form som en støvel?','Italia','Chile','Norge'],
+['Hva er hovedstaden i Danmark?','København','Aarhus','Odense'],
+['Hva er hovedstaden i Finland?','Helsinki','Turku','Tampere'],
+['Hvor mange land grenser Norge til?','3','1','5'],
+['Hva deler ekvator jorda i?','Nord og sør','Øst og vest','Hav og land'],
+['I hvilken verdensdel ligger Egypt?','Afrika','Asia','Europa'],
+['Hva er verdens største varme ørken?','Sahara','Gobi','Kalahari'],
+['Hvilken verdensdel er minst?','Oseania','Europa','Antarktis'],
+['Hvilket land har flest innbyggere?','India','USA','Brasil'],
+['Hva heter verdens lengste elv?','Nilen','Glomma','Donau'],
+['Hvor mange verdensdeler regner vi vanligvis med?','7','5','12'],
+['Hvilket hav ligger mellom Europa og Amerika?','Atlanterhavet','Stillehavet','Indiahavet'],
+['Hvilken by er hovedstaden i USA?','Washington D.C.','New York','Los Angeles']
+];
+const JOBS=['Oppvasker på restaurant','Turistguide','Servitør på kafé','Fruktplukker','Resepsjonist på hostell','Gatemusikant','Avisbud','Fotograf for turister','Kokkelærling','Hundelufter','Bagasjebærer','Kioskselger'];
+const PEOPLE=['Ahmed','Maria','Kenji','Lucia','Olav','Priya','Tom','Fatima','Pedro','Ingrid','Chen','Amara','Sofia','Jack','Nils','Aisha','Mateo','Yuki','Emma','Kwame'];
+const EVENTS=[
+['Du fant en 200-lapp på fortauet!',200],['En lommetyv stjal 300 kr fra deg!',-300],
+['Bagasjen ble forsinket – du måtte kjøpe tannbørste og klær.',-150],['En hyggelig familie spanderte middag på deg.',100],
+['Du vant quizkvelden på hostellet!',250],['Du gikk deg vill og måtte ta taxi.',-120],
+['Du fikk rabatt på rommet fordi du hjalp til på kjøkkenet.',150],['Du mistet solbrillene og kjøpte nye.',-90],
+['En turist kjøpte bildet du tegnet av byen.',180],['Du ble med på en gratis byvandring og lærte masse.',0]
+];
+const DEF={EU:[350,320],NA:[350,320],OC:[330,300],AS:[180,200],AF:[150,170],SA:[170,190]};
+CITIES.forEach(c=>{c.h=c.h||DEF[c.k][0];c.p=c.p||DEF[c.k][1];});
+const byId=Object.fromEntries(CITIES.map(c=>[c.id,c]));
+const GOAL=8, MAXBAG=6, MAXMIS=3, SAVEKEY='globetrotter_save_v1', HSKEY='globetrotter_hs_v1';
+
+/* ================= KART ================= */
+const LAND=[
+[[-168,66],[-162,70],[-140,70],[-120,72],[-95,72],[-80,70],[-65,62],[-55,52],[-66,45],[-70,42],[-76,35],[-80,32],[-81,25],[-83,29],[-90,30],[-97,27],[-97,21],[-90,21],[-87,15],[-83,9],[-78,8],[-80,7],[-85,10],[-92,14],[-105,20],[-110,24],[-117,32],[-124,40],[-124,48],[-135,58],[-150,60],[-165,60]],
+[[-45,60],[-20,70],[-20,80],[-40,83],[-65,80],[-55,70]],
+[[-78,8],[-60,10],[-50,0],[-35,-6],[-40,-22],[-48,-28],[-58,-38],[-65,-42],[-68,-55],[-75,-50],[-73,-38],[-71,-18],[-77,-12],[-81,-5],[-80,1]],
+[[-10,36],[-9,43],[-2,44],[-5,48],[2,51],[8,54],[10,58],[5,59],[5,62],[14,68],[22,71],[30,70],[40,67],[60,68],[60,45],[48,42],[40,41],[28,41],[26,38],[22,37],[20,40],[19,42],[14,45],[13,45],[16,41],[18,40],[16,38],[12,42],[9,44],[3,43],[-1,37],[-6,36]],
+[[26,38],[28,41],[40,41],[48,42],[60,45],[60,68],[80,73],[110,77],[140,72],[170,70],[180,66],[170,60],[160,60],[155,58],[140,54],[135,43],[130,42],[129,35],[126,35],[126,38],[122,40],[118,38],[122,30],[110,20],[108,12],[105,9],[103,2],[100,6],[98,16],[92,22],[88,22],[80,15],[77,8],[72,20],[67,25],[56,26],[59,22],[52,16],[44,12],[38,20],[34,28],[35,36],[30,36]],
+[[-17,21],[-17,15],[-15,10],[-8,4],[5,5],[9,4],[10,-2],[13,-12],[12,-18],[18,-35],[26,-34],[33,-26],[35,-18],[40,-11],[40,-3],[51,12],[43,12],[38,18],[33,28],[32,31],[20,32],[10,37],[-1,36],[-6,36],[-10,30]],
+[[114,-22],[114,-34],[118,-35],[130,-32],[137,-35],[141,-38],[150,-37],[153,-28],[146,-19],[142,-11],[137,-12],[131,-12],[125,-15]],
+[[-5,50],[1,51],[2,53],[-2,57],[-4,59],[-6,57],[-3,54]],
+[[-24,64],[-14,64],[-15,66],[-22,66]],
+[[130,31],[136,34],[141,36],[142,40],[141,43],[145,44],[140,41],[136,37],[131,34]],
+[[-85,22],[-80,23],[-74,20],[-78,20]],
+[[109,1],[117,7],[119,1],[116,-4],[110,-3]],
+[[95,5],[98,4],[104,-2],[106,-6],[102,-4],[96,2]],
+[[106,-6],[114,-7],[114,-8],[106,-7]],
+[[131,-1],[141,-3],[150,-10],[141,-9],[137,-5]],
+[[172,-35],[178,-38],[174,-42],[167,-46],[171,-44]],
+[[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+[[80,6],[82,7],[80,10]]
+];
+const P=(lo,la)=>[(lo+180)/360*1000,(84-la)/142*395];
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('map');
+
+function drawMap(){
+  let s='<rect width="1000" height="395" fill="url(#sea)"/><defs><radialGradient id="sea" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#2a73a6"/><stop offset="1" stop-color="#123c5c"/></radialGradient></defs>';
+  for(let lo=-150;lo<=150;lo+=30){const x=P(lo,0)[0];s+=`<line class="grid" x1="${x}" y1="0" x2="${x}" y2="395"/>`;}
+  for(let la=-30;la<=60;la+=30){const y=P(0,la)[1];s+=`<line class="${la===0?'eq':'grid'}" x1="0" y1="${y}" x2="1000" y2="${y}"/>`;}
+  s+=`<text x="6" y="${P(0,0)[1]-4}" fill="#f0b429aa" font-size="11">Ekvator</text>`;
+  LAND.forEach(p=>{s+=`<polygon class="land" points="${p.map(([lo,la])=>P(lo,la).map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`;});
+  s+='<g id="routes"></g><g id="rings"></g><g id="cities"></g><g id="labels"></g><text id="plane" class="hidden" text-anchor="middle" dominant-baseline="middle">✈️</text>';
+  svg.innerHTML=s;
+  const g=document.getElementById('cities');
+  CITIES.forEach(c=>{
+    const [x,y]=P(c.lo,c.la);
+    const el=document.createElementNS(NS,'g');el.setAttribute('class','city');el.dataset.id=c.id;
+    el.innerHTML=`<circle class="hit" cx="${x}" cy="${y}" r="13"/><circle class="dot" cx="${x}" cy="${y}" r="5"/><title>${c.n}, ${c.c}</title>`;
+    el.addEventListener('click',()=>{ if(c.id===S.at) openAbout(); else openTravelTo(c.id); });
+    g.appendChild(el);
+  });
+}
+function updateMap(){
+  document.querySelectorAll('.city').forEach(el=>{
+    const id=el.dataset.id;
+    el.classList.toggle('here',id===S.at);
+    el.classList.toggle('visited',S.visited.includes(id)&&id!==S.at);
+  });
+  const rings=document.getElementById('rings'), labels=document.getElementById('labels');
+  let r='',l='';const shown=new Set([S.at]);
+  S.missions.forEach(m=>{
+    const has=(S.inv[m.item]||0)>0;
+    const cid=has?m.to:m.from; const c=byId[cid]; const [x,y]=P(c.lo,c.la);
+    r+=`<circle class="ring ${has?'drop':'buy'}" cx="${x}" cy="${y}" r="10"/>`; shown.add(cid);
+  });
+  shown.forEach(id=>{const c=byId[id];const [x,y]=P(c.lo,c.la);l+=`<text class="lbl" x="${x+8}" y="${y-7}">${c.n}</text>`;});
+  rings.innerHTML=r;labels.innerHTML=l;
+  // sentrer kartet på mobil
+  const wrap=document.getElementById('mapwrap');
+  if(wrap.scrollWidth>wrap.clientWidth){const c=byId[S.at];const px=P(c.lo,c.la)[0]/1000*wrap.scrollWidth;wrap.scrollLeft=px-wrap.clientWidth/2;}
+}
+
+/* ================= STATE ================= */
+let S=null;
+function newState(name){
+  return {name:name||'Reisende',money:2000,day:1,at:'oslo',visited:['oslo'],stampDay:{oslo:1},inv:{},missions:[],done:0,offers:[],diary:'Du står på Oslo S med ryggsekken på ryggen. Eventyret begynner!',seq:1};
+}
+function save(){try{localStorage.setItem(SAVEKEY,JSON.stringify(S));}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(SAVEKEY));}catch(e){return null;}}
+function clearSave(){try{localStorage.removeItem(SAVEKEY);}catch(e){}}
+
+/* ================= HJELPERE ================= */
+const $=id=>document.getElementById(id);
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const kr=n=>n.toLocaleString('nb-NO')+' kr';
+const r50=n=>Math.round(n/50)*50;
+function dist(a,b){const R=6371,t=Math.PI/180;const dLa=(b.la-a.la)*t,dLo=(b.lo-a.lo)*t;const x=Math.sin(dLa/2)**2+Math.cos(a.la*t)*Math.cos(b.la*t)*Math.sin(dLo/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(x)));}
+function itemSource(item){return CITIES.find(c=>c.item===item);}
+function bagCount(){return Object.values(S.inv).reduce((a,b)=>a+b,0);}
+
+let AC=null;
+function beep(f,d=0.12,type='square',vol=0.06,delay=0){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(AC.destination);const t=AC.currentTime+delay;o.start(t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.stop(t+d+0.02);}catch(e){}}
+const sndOk=()=>{beep(660,.1);beep(880,.15,'square',.06,.1);};
+const sndBad=()=>{beep(200,.25,'sawtooth',.05);};
+const sndCoin=()=>{beep(988,.08,'square',.05);beep(1319,.2,'square',.05,.08);};
+const sndStamp=()=>{beep(120,.15,'triangle',.15);};
+
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2200);}
+function diary(t){S.diary=t;$('diary').textContent='📓 '+t;}
+
+function modal(html){$('mcontent').innerHTML=html;$('modal').classList.remove('hidden');$('mbox').scrollTop=0;}
+function closeModal(){$('modal').classList.add('hidden');}
+$('mclose').onclick=closeModal;
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+
+/* ================= UI ================= */
+function render(){
+  const c=byId[S.at];
+  $('sName').textContent='🎒 '+S.name;
+  $('sMoney').textContent='💰 '+kr(S.money);
+  $('sDay').textContent='📅 Dag '+S.day;
+  $('sDone').textContent='📦 '+S.done+'/'+GOAL+' oppdrag';
+  $('sStamps').textContent='🛂 '+S.visited.length+'/'+CITIES.length;
+  $('cFlag').textContent=c.f;$('cName').textContent=c.n;
+  $('cSub').textContent=c.c+' · Hostell: '+kr(c.h)+' per natt';
+  $('diary').textContent='📓 '+S.diary;
+  const canDeliver=S.missions.some(m=>m.to===S.at&&(S.inv[m.item]||0)>0);
+  $('boardBtn').classList.toggle('badge',canDeliver);
+  updateMap();save();
+}
+
+// Overnatting: én natt i byen
+function sleepNight(){
+  const c=byId[S.at];
+  if(S.money>=c.h){S.money-=c.h;return 'Du betalte '+kr(c.h)+' for en natt på hostellet.';}
+  return 'Du hadde ikke råd til hostell og sov på en parkbenk. Brrr!';
+}
+
+/* --- Om byen --- */
+function openAbout(){
+  const c=byId[S.at];
+  modal(`<h2>${c.f} ${c.n}</h2><div class="fact">${c.fact}</div>
+  <p><span class="tag">Land: ${c.c}</span><span class="tag">Hostell: ${kr(c.h)}</span><span class="tag">Lønn: ${kr(c.p)} per riktig svar</span><span class="tag">Suvenir: ${c.item}</span>${c.port?'<span class="tag">⚓ Havneby</span>':''}</p>
+  <button class="btn blue" onclick="closeModal()">Lukk</button>`);
+}
+
+/* --- Jobb --- */
+let JOB=null;
+function openJob(){
+  const c=byId[S.at];
+  const qs=shuffle(c.q).slice(0,2).concat([rnd(GENERAL)]);
+  JOB={title:rnd(JOBS),qs:shuffle(qs),i:0,right:0};
+  modal(`<h2>💼 Jobb i ${c.n}</h2><p>Du har fått jobb som <b>${JOB.title.toLowerCase()}</b> for en dag!</p>
+  <p>Svar på 3 spørsmål. Du får <b>${kr(c.p)}</b> for hvert riktige svar. Jobben tar én dag, og du sover på hostellet etterpå.</p>
+  <button class="btn green" onclick="jobQ()">Start arbeidsdagen</button>`);
+}
+function jobQ(){
+  const q=JOB.qs[JOB.i];const opts=shuffle(q.slice(1));
+  let h=`<h2>Spørsmål ${JOB.i+1} av 3</h2><div class="q">${q[0]}</div>`;
+  opts.forEach((o,k)=>{h+=`<button class="ans" data-o="${encodeURIComponent(o)}">${o}</button>`;});
+  h+='<div id="jobfb"></div>';
+  modal(h);
+  document.querySelectorAll('.ans').forEach(b=>b.onclick=()=>{
+    const chosen=decodeURIComponent(b.dataset.o);const ok=chosen===q[1];
+    document.querySelectorAll('.ans').forEach(x=>{x.disabled=true;if(decodeURIComponent(x.dataset.o)===q[1])x.classList.add('ok');});
+    if(ok){JOB.right++;sndOk();}else{b.classList.add('bad');sndBad();}
+    JOB.i++;
+    $('jobfb').innerHTML=`<p class="big">${ok?'✅ Riktig!':'❌ Feil – riktig svar er «'+q[1]+'»'}</p><button class="btn" onclick="${JOB.i<3?'jobQ()':'jobEnd()'}">${JOB.i<3?'Neste spørsmål':'Ferdig for i dag'}</button>`;
+  });
+}
+function jobEnd(){
+  const c=byId[S.at];const pay=JOB.right*c.p;
+  S.money+=pay;S.day++;const night=sleepNight();
+  if(pay>0)sndCoin();
+  const msg=JOB.right===3?'Sjefen var kjempefornøyd og ga deg full lønn!':JOB.right>0?'Ikke verst for en dags jobb.':'Sjefen var ikke fornøyd i dag …';
+  diary(`Jobbet som ${JOB.title.toLowerCase()} i ${c.n} og tjente ${kr(pay)}. ${night}`);
+  modal(`<h2>Arbeidsdagen er over</h2><p class="big">${JOB.right} av 3 riktige</p><p class="big" style="color:var(--green)">+ ${kr(pay)}</p><p>${msg}</p><p>${night}</p><button class="btn green" onclick="closeModal()">OK</button>`);
+  render();
+}
+
+/* --- Marked --- */
+function openMarket(){
+  const c=byId[S.at];const n=bagCount();
+  const want=S.missions.filter(m=>m.from===S.at);
+  modal(`<h2>🛒 Marked i ${c.n}</h2>
+  <div class="row"><div><b>${c.item}</b><div class="small">Lokal suvenir fra ${c.n}${want.length?' · <b style="color:var(--red)">Du trenger denne til et oppdrag!</b>':''}</div></div>
+  <button class="mini" id="buyBtn" ${S.money<c.pr||n>=MAXBAG?'disabled':''}>Kjøp ${kr(c.pr)}</button></div>
+  <p class="small">Ryggsekken: ${n}/${MAXBAG} ting. ${n>=MAXBAG?'Ryggsekken er full!':''} ${S.money<c.pr?'Du har ikke nok penger – ta en jobb!':''}</p>
+  <button class="btn gray" onclick="closeModal()">Tilbake</button>`);
+  $('buyBtn').onclick=()=>{S.money-=c.pr;S.inv[c.item]=(S.inv[c.item]||0)+1;sndCoin();diary(`Kjøpte ${c.item} i ${c.n} for ${kr(c.pr)}.`);toast('Lagt i ryggsekken: '+c.item);render();openMarket();};
+}
+
+/* --- Oppdrag --- */
+function makeOffers(){
+  const offers=[];let tries=0;
+  while(offers.length<3&&tries<100){tries++;
+    const from=rnd(CITIES),to=rnd(CITIES);
+    if(from.id===to.id||to.id===S.at)continue;
+    if(offers.some(o=>o.from===from.id||o.to===to.id))continue;
+    if(S.missions.some(m=>m.from===from.id&&m.to===to.id))continue;
+    const d=dist(from,to)+dist(byId[S.at],from);
+    offers.push({id:S.seq++,from:from.id,to:to.id,item:from.item,who:rnd(PEOPLE),reward:r50(350+from.pr*1.3+d*0.09)});
+  }
+  S.offers=offers;
+}
+function missionText(m){const f=byId[m.from],t=byId[m.to];return `Kjøp <b>${m.item}</b> i ${f.f} ${f.n} og lever den til <b>${m.who}</b> i ${t.f} ${t.n}.`;}
+function openBoard(){
+  const c=byId[S.at];let h=`<h2>📌 Oppslagstavla i ${c.n}</h2>`;
+  const deliver=S.missions.filter(m=>m.to===S.at&&(S.inv[m.item]||0)>0);
+  deliver.forEach(m=>{h+=`<div class="mission" style="border-color:var(--green)">🎉 ${m.who} venter på deg her! ${missionText(m)}<br><button class="btn green" onclick="deliver(${m.id})">Lever ${m.item} og få ${kr(m.reward)}</button></div>`;});
+  h+=`<p><b>Nye oppdrag</b> (du kan ha ${MAXMIS} om gangen – du har ${S.missions.length}):</p>`;
+  if(!S.offers.length)h+='<p class="small">Ingen nye oppdrag her akkurat nå. Kom tilbake senere!</p>';
+  S.offers.forEach(o=>{h+=`<div class="mission">✉️ ${missionText(o)}<br><span class="tag">Belønning: ${kr(o.reward)}</span><br><button class="mini blue" style="margin-top:6px" onclick="accept(${o.id})" ${S.missions.length>=MAXMIS?'disabled':''}>Ta oppdraget</button></div>`;});
+  h+='<button class="btn gray" onclick="closeModal()">Tilbake</button>';
+  modal(h);
+}
+function accept(id){const o=S.offers.find(x=>x.id===id);if(!o||S.missions.length>=MAXMIS)return;S.missions.push(o);S.offers=S.offers.filter(x=>x.id!==id);sndOk();diary(`Nytt oppdrag: hente ${o.item} i ${byId[o.from].n} til ${o.who} i ${byId[o.to].n}.`);render();openBoard();}
+function deliver(id){
+  const m=S.missions.find(x=>x.id===id);if(!m)return;
+  S.inv[m.item]--;if(!S.inv[m.item])delete S.inv[m.item];
+  S.missions=S.missions.filter(x=>x.id!==id);S.money+=m.reward;S.done++;sndCoin();setTimeout(sndOk,250);
+  diary(`${m.who} ble kjempeglad for ${m.item}! Du fikk ${kr(m.reward)}.`);
+  render();
+  if(S.done>=GOAL){win();return;}
+  modal(`<h2>🎉 Oppdrag fullført!</h2><p class="big">${m.who} takker så mye!</p><p class="big" style="color:var(--green)">+ ${kr(m.reward)}</p><p class="big">${S.done} av ${GOAL} oppdrag ferdig</p><button class="btn green" onclick="openBoard()">Tilbake til tavla</button>`);
+}
+
+/* --- Reise --- */
+function modes(a,b){
+  const d=dist(a,b),list=[];
+  list.push({k:'fly',ic:'✈️',n:'Fly',price:r50(300+d*0.12),days:d>7000?2:1});
+  if(a.lm===b.lm&&d<9000)list.push({k:'tog',ic:'🚆',n:'Tog / buss',price:r50(100+d*0.06),days:Math.max(1,Math.ceil(d/900))});
+  if(a.port&&b.port)list.push({k:'baat',ic:'🚢',n:'Båt',price:r50(100+d*0.035),days:Math.max(1,Math.ceil(d/650))});
+  return list;
+}
+function openTravel(){
+  const a=byId[S.at];
+  const list=CITIES.filter(c=>c.id!==S.at).map(c=>({c,d:dist(a,c)})).sort((x,y)=>x.d-y.d);
+  let h=`<h2>✈️ Hvor vil du reise?</h2><p class="small">Du kan også trykke på en by på kartet. 🟡 = kjøp ting der · 🟢 = lever ting der</p>`;
+  list.forEach(({c,d})=>{
+    const buy=S.missions.some(m=>m.from===c.id&&!(S.inv[m.item]>0)),drop=S.missions.some(m=>m.to===c.id&&S.inv[m.item]>0);
+    const cheapest=Math.min(...modes(a,c).map(m=>m.price));
+    h+=`<div class="row"><div>${c.f} <b>${c.n}</b> ${buy?'🟡':''}${drop?'🟢':''}${S.visited.includes(c.id)?' <span class="small">✔</span>':''}<div class="small">${c.c} · ${d.toLocaleString('nb-NO')} km · fra ${kr(cheapest)}</div></div><button class="mini blue" onclick="openTravelTo('${c.id}')">Velg</button></div>`;
+  });
+  modal(h);
+}
+function openTravelTo(id){
+  const a=byId[S.at],b=byId[id],d=dist(a,b);
+  let h=`<h2>${b.f} Reise til ${b.n}</h2><p>${a.n} → ${b.n}: <b>${d.toLocaleString('nb-NO')} km</b></p>`;
+  modes(a,b).forEach(m=>{
+    h+=`<div class="row"><div><span style="font-size:24px">${m.ic}</span> <b>${m.n}</b><div class="small">${m.days} ${m.days>1?'dager':'dag'} · ${kr(m.price)}</div></div><button class="mini" ${S.money<m.price?'disabled':''} onclick="travel('${id}','${m.k}')">Kjøp billett</button></div>`;
+  });
+  if(!modes(a,b).some(m=>S.money>=m.price))h+='<p class="small" style="color:var(--red)"><b>Du har ikke råd til billett. Ta en jobb først!</b></p>';
+  if(a.lm!==b.lm)h+='<p class="small">Tog går ikke over havet. Båt går bare mellom havnebyer ⚓.</p>';
+  h+=`<button class="btn gray" onclick="openTravel()">Velg en annen by</button>`;
+  modal(h);
+}
+let busy=false;
+function travel(id,k){
+  if(busy)return;const a=byId[S.at],b=byId[id];const m=modes(a,b).find(x=>x.k===k);
+  if(!m||S.money<m.price)return;
+  busy=true;closeModal();S.money-=m.price;render();
+  // animasjon
+  const [x1,y1]=P(a.lo,a.la),[x2,y2]=P(b.lo,b.la);
+  $('routes').innerHTML=`<line class="route" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  const pl=$('plane');pl.textContent=m.ic;pl.classList.remove('hidden');
+  const t0=performance.now(),dur=1400+Math.min(1600,dist(a,b)/8);
+  beep(300,.4,'triangle',.05);
+  function step(t){const p=Math.min(1,(t-t0)/dur),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    pl.setAttribute('x',x1+(x2-x1)*e);pl.setAttribute('y',y1+(y2-y1)*e-Math.sin(p*Math.PI)*25);
+    if(p<1)requestAnimationFrame(step);else{pl.classList.add('hidden');$('routes').innerHTML='';arrive(id,m);}}
+  requestAnimationFrame(step);
+}
+function arrive(id,m){
+  busy=false;S.at=id;S.day+=m.days;const c=byId[id];
+  let news=[];let stamp=false;
+  if(!S.visited.includes(id)){S.visited.push(id);S.stampDay[id]=S.day;stamp=true;}
+  let ev='';
+  if(Math.random()<0.3){const e=rnd(EVENTS);S.money=Math.max(0,S.money+e[1]);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
+  const night=sleepNight();
+  makeOffers();
+  diary(`Kom fram til ${c.n} etter ${m.days} ${m.days>1?'dager':'dag'} med ${m.n.toLowerCase()}. ${night}`);
+  render();
+  const canDeliver=S.missions.some(x=>x.to===id&&(S.inv[x.item]||0)>0);
+  let h=`<h2>${c.f} Velkommen til ${c.n}!</h2>`;
+  if(stamp){sndStamp();h+=`<div style="text-align:center"><div class="stamp" style="display:inline-block;padding:10px 18px;font-size:16px"><div class="f">${c.f}</div>${c.n.toUpperCase()}<br>Dag ${S.day}</div><p><b>Nytt stempel i passet!</b></p></div>`;}
+  h+=`<div class="fact">${c.fact}</div>`;
+  if(ev)h+=`<p><b>📰 ${ev}</b></p>`;
+  h+=`<p class="small">${night}</p>`;
+  if(canDeliver)h+=`<button class="btn green" onclick="openBoard()">🎉 Noen venter på en leveranse her!</button>`;
+  h+=`<button class="btn blue" onclick="closeModal()">Utforsk ${c.n}</button>`;
+  modal(h);
+}
+
+/* --- Ryggsekk --- */
+function openBag(){
+  let h='<h2>🎒 Ryggsekken</h2>';
+  const items=Object.entries(S.inv);
+  h+=`<p><b>Ting (${bagCount()}/${MAXBAG}):</b></p>`;
+  if(!items.length)h+='<p class="small">Ryggsekken er tom.</p>';
+  items.forEach(([it,n])=>{const src=itemSource(it);h+=`<div class="row"><div>${src?src.f:''} ${it} ${n>1?'× '+n:''}</div><button class="mini gray" onclick="sellItem('${it.replace(/'/g,"\\'")}')">Selg ${kr(Math.round((src?src.pr:100)/2))}</button></div>`;});
+  h+=`<p><b>Mine oppdrag (${S.missions.length}/${MAXMIS}):</b></p>`;
+  if(!S.missions.length)h+='<p class="small">Ingen oppdrag. Se på oppslagstavla!</p>';
+  S.missions.forEach(m=>{const has=(S.inv[m.item]||0)>0;h+=`<div class="mission">${has?'🟢 Har tingen – lever i '+byId[m.to].n:'🟡 Må kjøpes i '+byId[m.from].n}<br>${missionText(m)}<br><span class="tag">Belønning: ${kr(m.reward)}</span> <button class="mini red" style="margin-top:6px" onclick="dropMission(${m.id})">Avbryt</button></div>`;});
+  h+='<button class="btn gray" onclick="closeModal()">Lukk</button>';
+  modal(h);
+}
+function sellItem(it){const src=itemSource(it);const v=Math.round((src?src.pr:100)/2);S.inv[it]--;if(!S.inv[it])delete S.inv[it];S.money+=v;sndCoin();diary(`Solgte ${it} for ${kr(v)}.`);render();openBag();}
+function dropMission(id){S.missions=S.missions.filter(m=>m.id!==id);diary('Du ga opp et oppdrag.');render();openBag();}
+
+/* --- Pass --- */
+function openPass(){
+  let h=`<h2>🛂 Passet til ${S.name}</h2><p>${S.visited.length} av ${CITIES.length} byer besøkt</p><div class="stamps">`;
+  CITIES.forEach(c=>{h+=S.visited.includes(c.id)?`<div class="stamp"><div class="f">${c.f}</div>${c.n}<br>Dag ${S.stampDay[c.id]||1}</div>`:`<div class="stamp empty"><div class="f">❔</div>${c.n}</div>`;});
+  h+='</div><button class="btn gray" onclick="closeModal()">Lukk</button>';
+  modal(h);
+}
+
+/* --- Meny --- */
+function openMenu(){
+  modal(`<h2>⚙️ Meny</h2><p>Spillet lagres automatisk.</p>
+  <button class="btn blue" onclick="toStart()">Til startskjermen</button>
+  <button class="btn" onclick="askRestart()">Start helt på nytt</button>
+  <button class="btn gray" onclick="closeModal()">Tilbake</button>`);
+}
+
+/* --- Seier --- */
+function score(){return Math.max(0,S.done*1000+S.visited.length*150+Math.round(S.money/5)-S.day*40);}
+function win(){
+  const sc=score();let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
+  hs.push({n:S.name,s:sc,d:S.day});hs.sort((a,b)=>b.s-a.s);hs=hs.slice(0,5);
+  try{localStorage.setItem(HSKEY,JSON.stringify(hs));}catch(e){}
+  clearSave();
+  [523,659,784,1047].forEach((f,i)=>beep(f,.25,'square',.06,i*.15));
+  modal(`<h2>🏆 Gratulerer, ${S.name}!</h2><p class="big">Du har fullført alle ${GOAL} oppdragene!</p>
+  <div class="fact">📅 Dager brukt: <b>${S.day}</b><br>🛂 Byer besøkt: <b>${S.visited.length}</b><br>💰 Penger igjen: <b>${kr(S.money)}</b></div>
+  <p class="big">Poengsum: ${sc}</p>
+  <button class="btn green" onclick="toStart()">Til startskjermen</button>`);
+}
+
+/* --- Start --- */
+function showHS(){let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
+  $('hsBox').innerHTML=hs.length?'<b>🏆 Beste reisende</b><ol>'+hs.map(h=>`<li>${h.n} – ${h.s} poeng (${h.d} dager)</li>`).join('')+'</ol>':'';}
+function toStart(){closeModal();$('game').classList.add('hidden');$('start').classList.remove('hidden');$('contBtn').classList.toggle('hidden',!load());showHS();}
+function startGame(st){S=st;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();}
+function askRestart(){modal(`<h2>Start på nytt?</h2><p>Reisen du holder på med forsvinner.</p><button class="btn" onclick="clearSave();toStart();">Ja, slett reisen</button><button class="btn gray" onclick="closeModal()">Nei, avbryt</button>`);}
+$('newBtn').onclick=()=>{
+  if(load()){modal(`<h2>Ny reise?</h2><p>Du har en reise som ikke er ferdig. Vil du starte en ny? Den gamle forsvinner.</p><button class="btn" onclick="clearSave();closeModal();$('newBtn').click()">Ja, start ny reise</button><button class="btn green" onclick="closeModal();$('contBtn').click()">Nei, fortsett den gamle</button>`);return;}
+  S=newState($('pname').value.trim());makeOffers();startGame(S);
+  modal(`<h2>🎒 God tur, ${S.name}!</h2><div class="fact">Du står på Oslo S med 2000 kr i lomma og en tom ryggsekk.<br><br>
+  1. Gå til <b>📌 Oppdrag</b> og ta et oppdrag.<br>2. Reis til byen der tingen selges og kjøp den på <b>🛒 Marked</b>.<br>3. Reis videre og lever den.<br><br>Går du tom for penger? <b>💼 Ta en jobb!</b><br>Fullfør ${GOAL} oppdrag på færrest mulig dager.</div>
+  <button class="btn green" onclick="openBoard()">Se oppslagstavla</button>`);
+};
+$('contBtn').onclick=()=>{const s=load();if(s)startGame(s);};
+document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:openTravel,bag:openBag,pass:openPass,menu:openMenu})[b.dataset.a]();});
+
+drawMap();toStart();
+try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
+</script>
+</body>
+</html>
