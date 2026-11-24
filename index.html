@@ -49,18 +49,26 @@ input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--l
 #game{display:flex;flex-direction:column;height:100%;max-width:1100px;margin:0 auto}
 #top{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-between;align-items:center;background:var(--leather);color:#fbe9c4;padding:8px 10px;border-bottom:3px solid #2e1d10;font-weight:bold;font-size:15px}
 #top .stat{background:#0003;border-radius:8px;padding:4px 9px;white-space:nowrap}
-#mapwrap{position:relative;overflow:auto;background:var(--sea2);border-bottom:3px solid #2e1d10;flex:0 0 auto}
-#map{display:block;width:100%;min-width:760px;height:auto}
-.land{fill:var(--land);stroke:var(--land2);stroke-width:1.2;stroke-linejoin:round}
-.grid{stroke:#ffffff22;stroke-width:1}
-.eq{stroke:#f0b42966;stroke-dasharray:6 5;stroke-width:1.2}
+#mapbox{position:relative;flex:0 0 auto;border-bottom:3px solid #2e1d10}
+#mapwrap{overflow:auto;background:#a9d6ef;max-height:48vh;-webkit-overflow-scrolling:touch}
+.zoom{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:40px;height:40px;border-radius:10px;border:2px solid var(--leather);background:#fffaf0;font-size:22px;font-weight:bold;box-shadow:0 2px 6px #0004}
+.zoom button:disabled{opacity:.4}
+#map{display:block;width:760px;height:auto}
+.land{stroke:#7d8f9c;stroke-width:.7;stroke-linejoin:round}
+.land.real{stroke:#fff;stroke-width:.35}
+.ocean{fill:#5f93b3;font-size:9px;font-style:italic;letter-spacing:3px;font-family:Georgia,serif;pointer-events:none}
+.ocean.small{font-size:7px;letter-spacing:1px}
+.grid{stroke:#ffffff99;stroke-width:.5}
+.eq{stroke:#d9534f99;stroke-dasharray:5 4;stroke-width:.8}
 .city{cursor:pointer}
-.city .dot{fill:var(--red);stroke:#fff;stroke-width:1.5}
+.city .dot{fill:var(--red);stroke:#fff;stroke-width:1.3}
+.city.small .dot{fill:#e67e22;stroke-width:1}
 .city.visited .dot{fill:var(--green)}
 .city.here .dot{fill:var(--gold);stroke:#000;stroke-width:2}
 .city .hit{fill:transparent}
 .city:hover .dot{r:7}
-.lbl{font-size:12px;font-weight:bold;fill:#2b2118;paint-order:stroke;stroke:#f7eed6;stroke-width:3px;pointer-events:none}
+.lbl{font-size:10px;font-weight:bold;fill:#2b2118;paint-order:stroke;stroke:#f7eed6;stroke-width:3px;pointer-events:none}
 .ring{fill:none;stroke-width:2.5;animation:pulse 1.4s ease-in-out infinite}
 .ring.buy{stroke:#f0b429}.ring.drop{stroke:#2ecc71}
 @keyframes pulse{50%{stroke-opacity:.25}}
@@ -108,6 +116,19 @@ input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--l
 #toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:bold;z-index:20;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
 #toast.show{opacity:1}
 .big{font-size:22px;text-align:center;font-weight:bold}
+.sec{margin:16px 0 8px;font-family:Georgia,serif;color:var(--leather)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.facts div{background:#fffaf0;border:1px solid var(--land2);border-radius:8px;padding:8px}
+.facts span{display:block;font-size:12px;color:#6b4c2c}
+.jobs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.jobcard{background:#fffaf0;border:2px solid var(--land2);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:0 3px 0 var(--land2);min-height:44px}
+.jobcard span{display:block;font-size:32px}
+.jobcard b{display:block;margin:4px 0}
+.jobcard small{color:#6b4c2c;font-size:12px}
+.jobcard:active{transform:translateY(2px);box-shadow:0 1px 0 var(--land2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chip{border:2px solid var(--land2);background:#fffaf0;border-radius:16px;padding:6px 12px;font-size:14px;font-weight:bold;min-height:36px}
+.chip.on{background:var(--leather);color:#fbe9c4;border-color:var(--leather)}
 </style>
 </head>
 <body>
@@ -139,7 +160,7 @@ input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--l
     <span class="stat" id="sStamps">🛂</span>
     <button class="stat" id="musicBtn" style="border:none;color:#fbe9c4;cursor:pointer">🎵 På</button>
   </div>
-  <div id="mapwrap"><svg id="map" viewBox="0 0 1000 395"></svg></div>
+  <div id="mapbox"><div id="mapwrap"><svg id="map" viewBox="0 0 1000 395"></svg></div><div class="zoom"><button id="zIn" aria-label="Zoom inn">+</button><button id="zOut" aria-label="Zoom ut">−</button></div></div>
   <div id="panel">
     <div id="cityhead"><span class="flag" id="cFlag"></span><div><h2 id="cName"></h2><small id="cSub"></small></div></div>
     <div id="actions">
@@ -256,7 +277,754 @@ events:[
 ['A tourist bought the drawing you made of the city.',180],['You joined a free walking tour and learned loads.',0]
 ]};
 
+// Land: info, historie, varer og temajobber. q-rad: [nor spm, riktig, feil, feil, eng spm, riktig, feil, feil]
+const COUNTRIES={
+NO:{f:"🇳🇴",
+ no:{n:"Norge",cap:"Oslo",lang:"Norsk og samisk",cur:"Norske kroner",pop:"ca. 5,6 millioner",hist:"For over 1000 år siden seilte vikingene fra Norge helt til Amerika, Russland og Middelhavet. Fra 1380 var Norge i union med Danmark i over 400 år, og så med Sverige fra 1814. Grunnloven ble skrevet på Eidsvoll 17. mai 1814, og i 1905 ble Norge et helt selvstendig land. Under andre verdenskrig var landet okkupert av Tyskland. Etter at det ble funnet olje i Nordsjøen i 1969, ble Norge et av verdens rikeste land."},
+ en:{n:"Norway",cap:"Oslo",lang:"Norwegian and Sami",cur:"Norwegian krone",pop:"about 5.6 million",hist:"Over 1000 years ago the Vikings sailed from Norway all the way to America, Russia and the Mediterranean. From 1380 Norway was in a union with Denmark for over 400 years, and then with Sweden from 1814. The constitution was written at Eidsvoll on 17 May 1814, and in 1905 Norway became fully independent. During World War II the country was occupied by Germany. After oil was found in the North Sea in 1969, Norway became one of the richest countries in the world."},
+ items:[["Strikkegenser","Knitted sweater",600],["Brunost","Brown cheese",90],["Vikinghjelm (kopi)","Viking helmet (replica)",350],["Elgpølse","Moose sausage",120]],
+ jobs:[
+ {ic:"🐟",no:"Fiskerenser",en:"Fish cleaner",tn:"dyr og natur i Norge",te:"animals and nature in Norway",q:[
+  ["Hvilken fisk henges til tørk og blir til tørrfisk?","Torsk","Laks","Makrell","Which fish is hung to dry and becomes stockfish?","Cod","Salmon","Mackerel"],
+  ["Hvilket dyr kalles «skogens konge» i Norge?","Elg","Rev","Grevling","Which animal is called «the king of the forest» in Norway?","Moose","Fox","Badger"],
+  ["Hva heter Norges nasjonalfugl?","Fossekall","Måke","Ørn","What is Norway's national bird?","White-throated dipper","Seagull","Eagle"],
+  ["Hvilken fugl med fargerikt nebb hekker på Runde og i Lofoten?","Lunde","Pingvin","Struts","Which bird with a colourful beak nests on Runde and in Lofoten?","Puffin","Penguin","Ostrich"]]},
+ {ic:"⛷️",no:"Skilærer",en:"Ski instructor",tn:"vintersport i Norge",te:"winter sports in Norway",q:[
+  ["Hvilken norsk skiløper har vunnet flest OL-gull i langrenn blant menn?","Johannes Høsflot Klæbo","Petter Northug","Vegard Ulvang","Which Norwegian skier has won the most Olympic cross-country golds among men?","Johannes Høsflot Klæbo","Petter Northug","Vegard Ulvang"],
+  ["Hvilken by arrangerte vinter-OL i 1994?","Lillehammer","Oslo","Trondheim","Which town hosted the 1994 Winter Olympics?","Lillehammer","Oslo","Trondheim"],
+  ["Hva heter den kjente skiformen fra Telemark?","Telemark","Slalåm","Snowboard","What is the famous skiing style from Telemark called?","Telemark","Slalom","Snowboard"],
+  ["Hvor ligger Vikersundbakken, en av verdens største skiflygingsbakker?","Buskerud","Finnmark","Rogaland","Where is Vikersund, one of the world's biggest ski flying hills?","Buskerud","Finnmark","Rogaland"]]},
+ {ic:"🛢️",no:"Oljearbeider",en:"Oil worker",tn:"norsk næringsliv",te:"Norwegian industry",q:[
+  ["Hvilket år ble det funnet olje i Nordsjøen (Ekofisk)?","1969","1905","2001","Which year was oil found in the North Sea (Ekofisk)?","1969","1905","2001"],
+  ["Hva heter Norges store statlige sparefond?","Oljefondet","Lottofondet","Vikingkassa","What is Norway's big state savings fund called?","The Oil Fund","The Lottery Fund","The Viking Fund"],
+  ["Hvilken fisk eksporterer Norge mest av?","Laks","Haifisk","Gullfisk","Which fish does Norway export the most of?","Salmon","Shark","Goldfish"],
+  ["Hva produserer de fleste norske kraftverk strøm fra?","Vann","Kull","Atomkraft","What do most Norwegian power stations make electricity from?","Water","Coal","Nuclear power"]]}]},
+SE:{f:"🇸🇪",
+ no:{n:"Sverige",cap:"Stockholm",lang:"Svensk",cur:"Svenske kroner",pop:"ca. 10,5 millioner",hist:"Svenske vikinger reiste østover langs elvene i Russland. På 1600-tallet var Sverige en stormakt som eide Finland og deler av Tyskland og Baltikum. Norge var i union med Sverige fra 1814 til 1905. Sverige holdt seg utenfor begge verdenskrigene. I dag er landet kjent for store bedrifter som IKEA, Volvo og Spotify, og ble medlem av NATO i 2024."},
+ en:{n:"Sweden",cap:"Stockholm",lang:"Swedish",cur:"Swedish krona",pop:"about 10.5 million",hist:"Swedish Vikings travelled east along the rivers of Russia. In the 1600s Sweden was a great power that owned Finland and parts of Germany and the Baltics. Norway was in a union with Sweden from 1814 to 1905. Sweden stayed out of both world wars. Today the country is famous for big companies like IKEA, Volvo and Spotify, and it joined NATO in 2024."},
+ items:[["Kanelbolle","Cinnamon bun",40],["Moose-skilt","Moose road sign",150],["Svensk godteripose","Swedish candy bag",70],["Treklogger","Wooden clogs",300]],
+ jobs:[
+ {ic:"🪚",no:"Møbelsnekker",en:"Furniture maker",tn:"svenske verdenskjente bedrifter",te:"world-famous Swedish companies",q:[
+  ["Hvilket svensk firma selger flatpakkede møbler over hele verden?","IKEA","Jysk","Bohus","Which Swedish company sells flat-pack furniture all over the world?","IKEA","Jysk","Bohus"],
+  ["Hvilken musikktjeneste ble startet i Sverige?","Spotify","YouTube","iTunes","Which music service was started in Sweden?","Spotify","YouTube","iTunes"],
+  ["Hvilket bilmerke kommer fra Göteborg?","Volvo","Audi","Toyota","Which car brand comes from Gothenburg?","Volvo","Audi","Toyota"],
+  ["Hvilket svensk klesfirma har butikker i nesten hele verden?","H&M","Zara","Gap","Which Swedish clothing company has shops almost all over the world?","H&M","Zara","Gap"]]},
+ {ic:"🍬",no:"Godteriselger",en:"Candy seller",tn:"svensk mat og kultur",te:"Swedish food and culture",q:[
+  ["Hva kalles den svenske kaffepausen?","Fika","Hygge","Kos","What is the Swedish coffee break called?","Fika","Hygge","Siesta"],
+  ["Hvilken svensk forfatter skrev om Pippi Langstrømpe?","Astrid Lindgren","Selma Lagerlöf","Henrik Ibsen","Which Swedish author wrote about Pippi Longstocking?","Astrid Lindgren","Selma Lagerlöf","Henrik Ibsen"],
+  ["Hva spiser svenskene mye av på midtsommer?","Sild","Taco","Pizza","What do Swedes eat a lot of at midsummer?","Herring","Tacos","Pizza"],
+  ["Hvilken by holder Nobelprisutdelingen (unntatt fredsprisen)?","Stockholm","Oslo","Göteborg","Which city hosts the Nobel ceremony (except the Peace Prize)?","Stockholm","Oslo","Gothenburg"]]},
+ {ic:"⛏️",no:"Gruvearbeider",en:"Miner",tn:"svensk natur",te:"Swedish nature",q:[
+  ["Hva graves det ut i gruva i Kiruna?","Jernmalm","Gull","Diamanter","What is mined in the Kiruna mine?","Iron ore","Gold","Diamonds"],
+  ["Hva heter Sveriges største innsjø?","Vänern","Mjøsa","Siljan","What is Sweden's largest lake?","Vänern","Mjøsa","Siljan"],
+  ["Hvilket hav ligger øst for Sverige?","Østersjøen","Nordsjøen","Barentshavet","Which sea lies east of Sweden?","The Baltic Sea","The North Sea","The Barents Sea"],
+  ["Hva heter hotellet i Jukkasjärvi som er bygd av is?","Ishotellet","Snøslottet","Frostpalasset","What is the hotel in Jukkasjärvi built of ice called?","Icehotel","Snow Castle","Frost Palace"]]}]},
+IS:{f:"🇮🇸",
+ no:{n:"Island",cap:"Reykjavik",lang:"Islandsk",cur:"Islandske kroner",pop:"ca. 390 000",hist:"Island ble bosatt rundt år 874, mest av nordmenn som flyktet fra kong Harald Hårfagre. I år 930 startet Alltinget, en av verdens eldste folkeforsamlinger. Islendingene skrev ned de berømte sagaene på 1200-tallet. Landet var under Norge og senere Danmark, og ble en egen republikk i 1944."},
+ en:{n:"Iceland",cap:"Reykjavik",lang:"Icelandic",cur:"Icelandic króna",pop:"about 390,000",hist:"Iceland was settled around the year 874, mostly by Norwegians fleeing King Harald Fairhair. In 930 the Althing was founded, one of the world's oldest parliaments. Icelanders wrote down the famous sagas in the 1200s. The country was ruled by Norway and later Denmark, and became its own republic in 1944."},
+ items:[["Lopapeysa (ullgenser)","Lopapeysa (wool sweater)",700],["Lakrissjokolade","Liquorice chocolate",60],["Vulkanaske i glass","Volcanic ash in a jar",80],["Lundefigur","Puffin figure",110]],
+ jobs:[
+ {ic:"🐋",no:"Hvalsafari-guide",en:"Whale watching guide",tn:"hav og dyr ved Island",te:"sea and animals around Iceland",q:[
+  ["Hvilket stort sjøpattedyr ser turister ofte fra båt ved Island?","Hval","Isbjørn","Walross","Which big sea mammal do tourists often see from boats near Iceland?","Whale","Polar bear","Walrus"],
+  ["Hvilken fugl er det millioner av på Island om sommeren?","Lunde","Papegøye","Flamingo","Which bird is there millions of in Iceland in summer?","Puffin","Parrot","Flamingo"],
+  ["Hvilket dyr har aldri levd vilt på Island fra før mennesker kom, bortsett fra fjellreven?","Ingen andre landpattedyr","Bjørn","Ulv","Apart from the arctic fox, which land mammals lived in Iceland before humans?","None","Bears","Wolves"],
+  ["Hvorfor er det nesten ingen skog på Island?","Den ble hogd ned av de første bosetterne","Det er for varmt","Det regner aldri","Why is there almost no forest in Iceland?","The first settlers cut it down","It is too hot","It never rains"]]},
+ {ic:"🌋",no:"Vulkanforsker",en:"Volcano scientist",tn:"vulkaner og natur",te:"volcanoes and nature",q:[
+  ["Hva heter det flytende steinet som kommer ut av en vulkan?","Lava","Leire","Sand","What is the liquid rock that comes out of a volcano called?","Lava","Clay","Sand"],
+  ["Island ligger på grensen mellom to …","Kontinentalplater","Hav","Ørkener","Iceland lies on the border between two …","Tectonic plates","Oceans","Deserts"],
+  ["Hva heter det kjente badet med blått varmt vann ved Reykjavik?","Den blå lagune","Det røde badet","Isbadet","What is the famous bath with blue hot water near Reykjavik?","The Blue Lagoon","The Red Bath","The Ice Bath"],
+  ["Hva heter den store geysiren som har gitt navn til alle geysirer?","Geysir","Strokkur","Hekla","What is the big geyser that gave its name to all geysers?","Geysir","Strokkur","Hekla"]]},
+ {ic:"📜",no:"Sagaforteller",en:"Saga storyteller",tn:"islandsk historie",te:"Icelandic history",q:[
+  ["Hva heter de gamle islandske fortellingene fra 1200-tallet?","Sagaer","Eventyr","Myter","What are the old Icelandic stories from the 1200s called?","Sagas","Fairy tales","Myths"],
+  ["Hvilken islandsk viking oppdaget Amerika rundt år 1000?","Leiv Eiriksson","Ragnar Lodbrok","Harald Hårfagre","Which Icelandic Viking discovered America around the year 1000?","Leif Erikson","Ragnar Lothbrok","Harald Fairhair"],
+  ["Hva heter Islands gamle folkeforsamling fra 930?","Alltinget","Stortinget","Riksdagen","What is Iceland's old parliament from 930 called?","The Althing","The Storting","The Riksdag"],
+  ["Hvilket år ble Island en selvstendig republikk?","1944","1814","1990","Which year did Iceland become an independent republic?","1944","1814","1990"]]}]},
+GB:{f:"🇬🇧",
+ no:{n:"Storbritannia",cap:"London",lang:"Engelsk",cur:"Britiske pund",pop:"ca. 68 millioner",hist:"Romerne bygde London for nesten 2000 år siden, og vikingene herjet i landet på 800-tallet. I 1066 erobret normannerne England. På 1800-tallet var det britiske imperiet verdens største, og den industrielle revolusjonen startet her med dampmaskiner og fabrikker. Under andre verdenskrig ledet Winston Churchill landet. Dronning Elizabeth II satt på tronen i 70 år, fram til 2022."},
+ en:{n:"United Kingdom",cap:"London",lang:"English",cur:"British pound",pop:"about 68 million",hist:"The Romans built London almost 2000 years ago, and the Vikings raided the country in the 800s. In 1066 the Normans conquered England. In the 1800s the British Empire was the largest in the world, and the industrial revolution started here with steam engines and factories. During World War II Winston Churchill led the country. Queen Elizabeth II was on the throne for 70 years, until 2022."},
+ items:[["Paraply","Umbrella",200],["Fine te-esker","Fancy tea tins",120],["Fotballskjerf","Football scarf",180],["Rød telefonkiosk-modell","Red phone box model",160]],
+ jobs:[
+ {ic:"⚽",no:"Fotballvert",en:"Football steward",tn:"britisk fotball",te:"British football",q:[
+  ["Hvilket land vant fotball-VM i 1966 på hjemmebane?","England","Skottland","Wales","Which country won the 1966 World Cup at home?","England","Scotland","Wales"],
+  ["Hva heter Englands øverste fotballiga?","Premier League","La Liga","Serie A","What is England's top football league called?","Premier League","La Liga","Serie A"],
+  ["Hvilken klubb spiller på Anfield?","Liverpool","Arsenal","Chelsea","Which club plays at Anfield?","Liverpool","Arsenal","Chelsea"],
+  ["Hva heter Englands nasjonalstadion i London?","Wembley","Old Trafford","Ullevaal","What is England's national stadium in London called?","Wembley","Old Trafford","Ullevaal"]]},
+ {ic:"☕",no:"Teservitør",en:"Tea room waiter",tn:"britisk mat og tradisjon",te:"British food and tradition",q:[
+  ["Hva serveres ofte med «fish»?","Chips","Ris","Nudler","What is often served with fish?","Chips","Rice","Noodles"],
+  ["Når drikker britene tradisjonelt ettermiddagste?","Rundt klokka 16","Klokka 6 om morgenen","Midnatt","When do the British traditionally have afternoon tea?","Around 4 pm","At 6 am","At midnight"],
+  ["Hva kalles de svarte drosjene i London?","Black cabs","Tuk-tuk","Gondoler","What are London's black taxis called?","Black cabs","Tuk-tuks","Gondolas"],
+  ["Hva heter vaktene med høye pelslue ved slottet?","Livgarden (Queen's/King's Guard)","Ninjaer","Musketerer","What are the guards with tall fur hats at the palace called?","The King's Guard","Ninjas","Musketeers"]]},
+ {ic:"🏰",no:"Slottsguide",en:"Castle guide",tn:"britisk historie",te:"British history",q:[
+  ["Hvilket år erobret normannerne England?","1066","1814","1492","Which year did the Normans conquer England?","1066","1814","1492"],
+  ["Hvem var Storbritannias statsminister under andre verdenskrig?","Winston Churchill","Tony Blair","Boris Johnson","Who was Britain's prime minister during World War II?","Winston Churchill","Tony Blair","Boris Johnson"],
+  ["Hvilken gammel steinring står i Sør-England?","Stonehenge","Akropolis","Colosseum","Which ancient stone circle stands in southern England?","Stonehenge","The Acropolis","The Colosseum"],
+  ["Hvor oppbevares kronjuvelene i London?","Tower of London","Big Ben","British Museum","Where are the Crown Jewels kept in London?","Tower of London","Big Ben","British Museum"]]}]},
+FR:{f:"🇫🇷",
+ no:{n:"Frankrike",cap:"Paris",lang:"Fransk",cur:"Euro",pop:"ca. 68 millioner",hist:"I oldtiden het området Gallia og ble erobret av romerne. Kongene bygde det enorme slottet i Versailles. I 1789 startet den franske revolusjonen, og kongen ble avsatt med slagordet «frihet, likhet, brorskap». Napoleon gjorde seg til keiser og erobret store deler av Europa. I dag er Frankrike verdens mest besøkte turistland."},
+ en:{n:"France",cap:"Paris",lang:"French",cur:"Euro",pop:"about 68 million",hist:"In ancient times the area was called Gaul and was conquered by the Romans. The kings built the enormous palace of Versailles. In 1789 the French Revolution began, and the king was removed under the slogan «liberty, equality, fraternity». Napoleon made himself emperor and conquered large parts of Europe. Today France is the most visited tourist country in the world."},
+ items:[["Parfyme","Perfume",500],["Alpelue (béret)","Beret",150],["Makroner","Macarons",90],["Eiffeltårn-figur","Eiffel Tower figure",100]],
+ jobs:[
+ {ic:"🥐",no:"Bakerlærling",en:"Baker's apprentice",tn:"fransk mat",te:"French food",q:[
+  ["Hva heter de fargerike franske småkakene med fyll?","Makroner","Muffins","Donuts","What are the colourful French filled cookies called?","Macarons","Muffins","Donuts"],
+  ["Hvilket land er kjent for over 1000 sorter ost?","Frankrike","Finland","Egypt","Which country is famous for over 1000 kinds of cheese?","France","Finland","Egypt"],
+  ["Hva er en crêpe?","En tynn pannekake","En suppe","En pølse","What is a crêpe?","A thin pancake","A soup","A sausage"],
+  ["Hvilke dyr spiser franskmenn noen ganger som delikatesse?","Snegler","Pingviner","Hvaler","Which animals do the French sometimes eat as a delicacy?","Snails","Penguins","Whales"]]},
+ {ic:"🎨",no:"Museumsvakt",en:"Museum guard",tn:"fransk kunst og kultur",te:"French art and culture",q:[
+  ["Hvilken fransk maler er kjent for vannliljer?","Claude Monet","Picasso","Munch","Which French painter is famous for water lilies?","Claude Monet","Picasso","Munch"],
+  ["Hva heter den store katedralen i Paris som brant i 2019?","Notre-Dame","Sagrada Família","Peterskirken","What is the big cathedral in Paris that burned in 2019?","Notre-Dame","Sagrada Família","St Peter's"],
+  ["Hvilken filmfestival holdes på Rivieraen hvert år?","Cannes","Oscar","Sundance","Which film festival is held on the Riviera every year?","Cannes","The Oscars","Sundance"],
+  ["Hva heter den kjente buen på Champs-Élysées?","Triumfbuen","Brandenburger Tor","Marble Arch","What is the famous arch on the Champs-Élysées?","The Arc de Triomphe","The Brandenburg Gate","Marble Arch"]]},
+ {ic:"👑",no:"Slottsguide i Versailles",en:"Versailles palace guide",tn:"fransk historie",te:"French history",q:[
+  ["Hvilket år startet den franske revolusjonen?","1789","1905","1066","Which year did the French Revolution start?","1789","1905","1066"],
+  ["Hva var slagordet til revolusjonen?","Frihet, likhet, brorskap","Gud, konge, fedreland","Alt for Norge","What was the slogan of the revolution?","Liberty, equality, fraternity","God, king, country","All for one"],
+  ["Hvilken jente ledet franske soldater på 1400-tallet?","Jeanne d'Arc","Marie Antoinette","Kleopatra","Which girl led French soldiers in the 1400s?","Joan of Arc","Marie Antoinette","Cleopatra"],
+  ["Hvilken konge kalles «Solkongen»?","Ludvig XIV","Napoleon","Karl den store","Which king is called «the Sun King»?","Louis XIV","Napoleon","Charlemagne"]]}]},
+DE:{f:"🇩🇪",
+ no:{n:"Tyskland",cap:"Berlin",lang:"Tysk",cur:"Euro",pop:"ca. 84 millioner",hist:"Tyskland besto lenge av mange små kongedømmer, og ble samlet til ett land først i 1871. Johannes Gutenberg fant opp boktrykkerkunsten i Mainz rundt 1450. Etter andre verdenskrig ble landet delt i Øst- og Vest-Tyskland. Berlinmuren falt i 1989, og landet ble samlet igjen i 1990. I dag er Tyskland Europas største økonomi."},
+ en:{n:"Germany",cap:"Berlin",lang:"German",cur:"Euro",pop:"about 84 million",hist:"Germany was for a long time made up of many small kingdoms, and was only united as one country in 1871. Johannes Gutenberg invented the printing press in Mainz around 1450. After World War II the country was split into East and West Germany. The Berlin Wall fell in 1989 and the country was reunited in 1990. Today Germany is Europe's largest economy."},
+ items:[["Gjøkur","Cuckoo clock",650],["Ølkrus","Beer stein",200],["Kringle (pretzel)","Pretzel",30],["Nøtteknekker","Nutcracker",250]],
+ jobs:[
+ {ic:"🔧",no:"Bilmekaniker",en:"Car mechanic",tn:"tyske bilmerker og bedrifter",te:"German car brands and companies",q:[
+  ["Hvilket bilmerke har en stjerne som logo?","Mercedes-Benz","Volvo","Ford","Which car brand has a star as its logo?","Mercedes-Benz","Volvo","Ford"],
+  ["Hva betyr Volkswagen?","Folkets bil","Rask bil","Liten bil","What does Volkswagen mean?","The people's car","Fast car","Small car"],
+  ["Hvilket tysk sportsklesmerke har tre striper?","Adidas","Nike","Puma","Which German sportswear brand has three stripes?","Adidas","Nike","Puma"],
+  ["Hva heter de tyske motorveiene, kjent for steder uten fartsgrense?","Autobahn","Highway","Motorway","What are the German motorways, famous for stretches without a speed limit?","Autobahn","Highway","Turnpike"]]},
+ {ic:"🌭",no:"Pølseselger",en:"Sausage seller",tn:"tysk mat og tradisjon",te:"German food and tradition",q:[
+  ["Hva heter den tyske retten med pølse og karrisaus?","Currywurst","Paella","Gulasj","What is the German dish of sausage with curry sauce?","Currywurst","Paella","Goulash"],
+  ["Hvilken juletradisjon kommer fra Tyskland?","Julemarked og juletre","Halloween","17. mai-tog","Which Christmas tradition comes from Germany?","Christmas markets and Christmas trees","Halloween","Easter egg hunts"],
+  ["Hva er surkål?","Syrnet kål","En kake","En fisk","What is sauerkraut?","Fermented cabbage","A cake","A fish"],
+  ["Hvilken tysk by er kjent for en stor ølfest i september?","München","Hamburg","Köln","Which German city is famous for a big beer festival in September?","Munich","Hamburg","Cologne"]]},
+ {ic:"📚",no:"Boktrykker",en:"Printer",tn:"tysk historie og kultur",te:"German history and culture",q:[
+  ["Hvem fant opp boktrykkerkunsten rundt 1450?","Gutenberg","Edison","Newton","Who invented the printing press around 1450?","Gutenberg","Edison","Newton"],
+  ["Hvilke brødre samlet eventyr som Hans og Grete og Snøhvit?","Brødrene Grimm","Brødrene Dal","Brødrene Wright","Which brothers collected fairy tales like Hansel and Gretel and Snow White?","The Brothers Grimm","The Dal Brothers","The Wright Brothers"],
+  ["Hvilket år ble Tyskland samlet igjen etter delingen?","1990","1945","1871","Which year was Germany reunited after being split?","1990","1945","1871"],
+  ["Hvilket eventyrslott i Bayern inspirerte Disney?","Neuschwanstein","Versailles","Windsor","Which fairy-tale castle in Bavaria inspired Disney?","Neuschwanstein","Versailles","Windsor"]]}]},
+ES:{f:"🇪🇸",
+ no:{n:"Spania",cap:"Madrid",lang:"Spansk",cur:"Euro",pop:"ca. 48 millioner",hist:"Spania ble styrt av romerne og senere av maurerne fra Nord-Afrika i nesten 800 år – de bygde det vakre slottet Alhambra. I 1492 seilte Columbus til Amerika med spanske skip, og Spania fikk et stort imperium. På 1900-tallet hadde landet en blodig borgerkrig og deretter diktatoren Franco fram til 1975. I dag er Spania et av nordmenns favorittferieland."},
+ en:{n:"Spain",cap:"Madrid",lang:"Spanish",cur:"Euro",pop:"about 48 million",hist:"Spain was ruled by the Romans and later by the Moors from North Africa for almost 800 years – they built the beautiful Alhambra palace. In 1492 Columbus sailed to America with Spanish ships, and Spain gained a huge empire. In the 1900s the country had a bloody civil war and then the dictator Franco until 1975. Today Spain is one of the most popular holiday countries in Europe."},
+ items:[["Kastanjetter","Castanets",90],["Spekeskinke","Cured ham",400],["Olivenolje","Olive oil",150],["Gitar","Spanish guitar",900]],
+ jobs:[
+ {ic:"🍤",no:"Tapas-kokk",en:"Tapas chef",tn:"spansk mat",te:"Spanish food",q:[
+  ["Hva heter den kalde spanske tomatsuppen?","Gazpacho","Borsjtsj","Minestrone","What is the cold Spanish tomato soup called?","Gazpacho","Borscht","Minestrone"],
+  ["Hva er churros?","Frityrstekte deigstenger","Kjøttboller","Oliven","What are churros?","Deep-fried dough sticks","Meatballs","Olives"],
+  ["Hvilket krydder gir paella gul farge?","Safran","Pepper","Kanel","Which spice gives paella its yellow colour?","Saffron","Pepper","Cinnamon"],
+  ["Hva dyrker Spania mer av enn noe annet land?","Oliven","Ris","Bananer","What does Spain grow more of than any other country?","Olives","Rice","Bananas"]]},
+ {ic:"💃",no:"Flamencodanser",en:"Flamenco dancer",tn:"spansk kultur",te:"Spanish culture",q:[
+  ["Hvilken del av Spania kommer flamencoen fra?","Andalucía","Galicia","Catalonia","Which part of Spain does flamenco come from?","Andalusia","Galicia","Catalonia"],
+  ["Hva kalles den spanske hvilestunden midt på dagen?","Siesta","Fika","Hygge","What is the Spanish midday rest called?","Siesta","Fika","Hygge"],
+  ["Hvilken arkitekt tegnet Sagrada Família?","Antoni Gaudí","Picasso","Dalí","Which architect designed the Sagrada Família?","Antoni Gaudí","Picasso","Dalí"],
+  ["Hvilken festival kaster folk tomater på hverandre?","La Tomatina","Karneval","Oktoberfest","At which festival do people throw tomatoes at each other?","La Tomatina","Carnival","Oktoberfest"]]},
+ {ic:"⛵",no:"Havnearbeider",en:"Harbour worker",tn:"spansk historie",te:"Spanish history",q:[
+  ["Hvilket år kom Columbus til Amerika?","1492","1066","1789","Which year did Columbus reach America?","1492","1066","1789"],
+  ["Hvem styrte Sør-Spania i nesten 800 år?","Maurerne","Vikingene","Romerne","Who ruled southern Spain for almost 800 years?","The Moors","The Vikings","The Romans"],
+  ["Hva heter det maurisk slottet i Granada?","Alhambra","Kreml","Versailles","What is the Moorish palace in Granada called?","Alhambra","The Kremlin","Versailles"],
+  ["Hvilken diktator styrte Spania til 1975?","Franco","Napoleon","Mussolini","Which dictator ruled Spain until 1975?","Franco","Napoleon","Mussolini"]]}]},
+IT:{f:"🇮🇹",
+ no:{n:"Italia",cap:"Roma",lang:"Italiensk",cur:"Euro",pop:"ca. 59 millioner",hist:"Fra Roma vokste Romerriket fram, som for 2000 år siden styrte hele Middelhavet. Senere ble Italia vuggen for renessansen, med kunstnere som Leonardo da Vinci og Michelangelo. Landet var delt i mange småstater og ble samlet først i 1861. I dag er Italia verdenskjent for mat, mote, biler og kunst."},
+ en:{n:"Italy",cap:"Rome",lang:"Italian",cur:"Euro",pop:"about 59 million",hist:"From Rome grew the Roman Empire, which 2000 years ago ruled the whole Mediterranean. Later Italy became the cradle of the Renaissance, with artists like Leonardo da Vinci and Michelangelo. The country was split into many small states and was only united in 1861. Today Italy is world famous for food, fashion, cars and art."},
+ items:[["Pasta i fine former","Fancy pasta",70],["Venetiansk maske","Venetian mask",250],["Espressokanne","Espresso pot",220],["Murano-glass","Murano glass",500]],
+ jobs:[
+ {ic:"🍕",no:"Pizzabaker",en:"Pizza maker",tn:"italiensk mat",te:"Italian food",q:[
+  ["Hvilken by regnes som pizzaens hjemby?","Napoli","Milano","Torino","Which city is seen as the home of pizza?","Naples","Milan","Turin"],
+  ["Hva heter iskremen fra Italia?","Gelato","Sorbet","Softis","What is Italian ice cream called?","Gelato","Sherbet","Soft serve"],
+  ["Hvilken ost er vanlig på pizza margherita?","Mozzarella","Brunost","Cheddar","Which cheese is common on a pizza margherita?","Mozzarella","Brown cheese","Cheddar"],
+  ["Hva betyr «spaghetti» omtrent?","Små snorer","Store rør","Bølger","What does «spaghetti» roughly mean?","Little strings","Big tubes","Waves"]]},
+ {ic:"👗",no:"Motemodell",en:"Fashion model",tn:"italiensk mote og design",te:"Italian fashion and design",q:[
+  ["Hvilken italiensk by er kjent som motehovedstad?","Milano","Bari","Palermo","Which Italian city is known as a fashion capital?","Milan","Bari","Palermo"],
+  ["Hvilket motehus er italiensk?","Gucci","H&M","Zara","Which fashion house is Italian?","Gucci","H&M","Zara"],
+  ["Hvilken liten italiensk scooter er verdenskjent?","Vespa","Harley","Moped-X","Which small Italian scooter is world famous?","Vespa","Harley","Moped-X"],
+  ["Hvilket sportsbilmerke har en okse som logo?","Lamborghini","Ferrari","Fiat","Which sports car brand has a bull as its logo?","Lamborghini","Ferrari","Fiat"]]},
+ {ic:"🏛️",no:"Arkeolog",en:"Archaeologist",tn:"Romerriket og italiensk historie",te:"the Roman Empire and Italian history",q:[
+  ["Hvem var den kjente romerske lederen som ble drept i år 44 f.Kr.?","Julius Cæsar","Nero","Napoleon","Who was the famous Roman leader killed in 44 BC?","Julius Caesar","Nero","Napoleon"],
+  ["Hvem malte taket i Det sixtinske kapell?","Michelangelo","Monet","Van Gogh","Who painted the ceiling of the Sistine Chapel?","Michelangelo","Monet","Van Gogh"],
+  ["Hvilket språk snakket romerne?","Latin","Gresk","Engelsk","Which language did the Romans speak?","Latin","Greek","English"],
+  ["Hvilken by ble begravd av vulkanen Vesuv i år 79?","Pompeii","Roma","Venezia","Which city was buried by Vesuvius in the year 79?","Pompeii","Rome","Venice"]]}]},
+TR:{f:"🇹🇷",
+ no:{n:"Tyrkia",cap:"Ankara",lang:"Tyrkisk",cur:"Tyrkisk lira",pop:"ca. 85 millioner",hist:"I det som i dag er Tyrkia lå den gamle byen Troja. Byen Konstantinopel var hovedstad i Østromerriket i over 1000 år, til osmanerne erobret den i 1453. Det osmanske riket styrte store deler av Midtøsten, Nord-Afrika og Balkan i 600 år. I 1923 grunnla Mustafa Kemal Atatürk den moderne republikken Tyrkia."},
+ en:{n:"Turkey",cap:"Ankara",lang:"Turkish",cur:"Turkish lira",pop:"about 85 million",hist:"The ancient city of Troy lay in what is today Turkey. The city of Constantinople was the capital of the Eastern Roman Empire for over 1000 years, until the Ottomans conquered it in 1453. The Ottoman Empire ruled large parts of the Middle East, North Africa and the Balkans for 600 years. In 1923 Mustafa Kemal Atatürk founded the modern Republic of Turkey."},
+ items:[["Lokum","Turkish delight",80],["Nazar (blått øye)","Nazar (evil eye charm)",50],["Tyrkisk teglass","Turkish tea glasses",150],["Lite teppe","Small rug",800]],
+ jobs:[
+ {ic:"🍢",no:"Kebabkokk",en:"Kebab cook",tn:"tyrkisk mat",te:"Turkish food",q:[
+  ["Hva heter det søte bakverket med nøtter og honning?","Baklava","Croissant","Vaffel","What is the sweet pastry with nuts and honey called?","Baklava","Croissant","Waffle"],
+  ["Hva drikker tyrkere ofte av små tulipanformede glass?","Te","Melk","Brus","What do Turks often drink from small tulip-shaped glasses?","Tea","Milk","Soda"],
+  ["Hva er tyrkisk kaffe kjent for?","Den er sterk og tykk","Den er iskald","Den er rosa","What is Turkish coffee known for?","It is strong and thick","It is ice cold","It is pink"],
+  ["Hva heter kjøttet som grilles på et stort roterende spyd?","Döner kebab","Biff","Kjøttkaker","What is the meat grilled on a big rotating spit called?","Döner kebab","Steak","Meatballs"]]},
+ {ic:"🎈",no:"Ballongpilot",en:"Balloon pilot",tn:"tyrkisk natur og severdigheter",te:"Turkish nature and sights",q:[
+  ["Hvilket område i Tyrkia er kjent for ballongturer over steinsøyler?","Kappadokia","Ankara","Antalya","Which area of Turkey is famous for balloon rides over rock pillars?","Cappadocia","Ankara","Antalya"],
+  ["Hva heter de hvite kalkterrassene med varmt vann?","Pamukkale","Petra","Uluru","What are the white limestone terraces with warm water called?","Pamukkale","Petra","Uluru"],
+  ["Hvilken populær ferieby ved Middelhavet ligger i Tyrkia?","Antalya","Nice","Malaga","Which popular Mediterranean holiday town is in Turkey?","Antalya","Nice","Malaga"],
+  ["Hva heter den gamle byen fra sagnet om trehesten?","Troja","Roma","Athen","What is the ancient city from the legend of the wooden horse?","Troy","Rome","Athens"]]},
+ {ic:"🕌",no:"Basarselger",en:"Bazaar trader",tn:"tyrkisk historie",te:"Turkish history",q:[
+  ["Hvilket år erobret osmanerne Konstantinopel?","1453","1066","1923","Which year did the Ottomans conquer Constantinople?","1453","1066","1923"],
+  ["Hvem grunnla den moderne republikken Tyrkia?","Atatürk","Süleyman","Erdoğan","Who founded the modern Republic of Turkey?","Atatürk","Suleiman","Erdoğan"],
+  ["Hva heter den gamle kirken og moskeen i Istanbul med stor kuppel?","Hagia Sophia","Notre-Dame","Taj Mahal","What is the old church and mosque in Istanbul with a huge dome?","Hagia Sophia","Notre-Dame","Taj Mahal"],
+  ["Hva het riket som styrte fra Istanbul i 600 år?","Det osmanske riket","Romerriket","Mongolriket","What was the empire that ruled from Istanbul for 600 years?","The Ottoman Empire","The Roman Empire","The Mongol Empire"]]}]},
+RU:{f:"🇷🇺",
+ no:{n:"Russland",cap:"Moskva",lang:"Russisk",cur:"Rubel",pop:"ca. 145 millioner",hist:"Russland vokste fram fra Kievriket, grunnlagt av blant annet svenske vikinger. Tsarene styrte landet i flere hundre år, og Peter den store bygde St. Petersburg. I 1917 tok kommunistene makten, og Sovjetunionen ble dannet. Sovjetunionen sendte det første mennesket ut i verdensrommet i 1961, og gikk i oppløsning i 1991."},
+ en:{n:"Russia",cap:"Moscow",lang:"Russian",cur:"Rouble",pop:"about 145 million",hist:"Russia grew out of Kievan Rus, founded partly by Swedish Vikings. The tsars ruled the country for hundreds of years, and Peter the Great built St Petersburg. In 1917 the communists took power and the Soviet Union was formed. The Soviet Union sent the first person into space in 1961, and broke up in 1991."},
+ items:[["Pelslue (ushanka)","Fur hat (ushanka)",350],["Samovar","Samovar",900],["Kaviar","Caviar",700],["Balalaika","Balalaika",450]],
+ jobs:[
+ {ic:"🚂",no:"Togvert",en:"Train attendant",tn:"Russlands natur og størrelse",te:"Russia's nature and size",q:[
+  ["Hvor lang er Den transsibirske jernbanen omtrent?","9300 km","930 km","93 km","About how long is the Trans-Siberian Railway?","9,300 km","930 km","93 km"],
+  ["Hva heter den kalde, store delen av Russland i øst?","Sibir","Sahara","Patagonia","What is the cold, huge eastern part of Russia called?","Siberia","Sahara","Patagonia"],
+  ["Hvilket stort kattedyr lever i Russlands fjerne øst?","Sibirsk tiger","Løve","Gepard","Which big cat lives in Russia's Far East?","Siberian tiger","Lion","Cheetah"],
+  ["Hva heter Europas lengste elv, som renner i Russland?","Volga","Donau","Rhinen","What is Europe's longest river, which flows in Russia?","The Volga","The Danube","The Rhine"]]},
+ {ic:"🩰",no:"Ballettdanser",en:"Ballet dancer",tn:"russisk kultur",te:"Russian culture",q:[
+  ["Hva heter Moskvas berømte ballett- og operateater?","Bolsjoj","Scala","Covent Garden","What is Moscow's famous ballet and opera theatre?","Bolshoi","La Scala","Covent Garden"],
+  ["Hvilken russisk forfatter skrev «Krig og fred»?","Lev Tolstoj","Ibsen","Shakespeare","Which Russian author wrote «War and Peace»?","Leo Tolstoy","Ibsen","Shakespeare"],
+  ["Hva heter den røde suppen med rødbeter?","Borsjtsj","Gazpacho","Ramen","What is the red beetroot soup called?","Borscht","Gazpacho","Ramen"],
+  ["Hvilket spill er russerne kjent for å være gode i?","Sjakk","Cricket","Baseball","Which game are Russians famous for being good at?","Chess","Cricket","Baseball"]]},
+ {ic:"🚀",no:"Romfartstekniker",en:"Space technician",tn:"russisk historie",te:"Russian history",q:[
+  ["Hva het hundene og satellitten som var først i bane rundt jorda?","Sputnik (satellitt) og Laika (hund)","Apollo og Snoopy","Mir og Lassie","What were the first satellite and dog in orbit called?","Sputnik (satellite) and Laika (dog)","Apollo and Snoopy","Mir and Lassie"],
+  ["Hva het de russiske keiserne?","Tsarer","Faraoer","Shoguner","What were the Russian emperors called?","Tsars","Pharaohs","Shoguns"],
+  ["Hvilket år gikk Sovjetunionen i oppløsning?","1991","1917","1945","Which year did the Soviet Union break up?","1991","1917","1945"],
+  ["Hvem bygde byen St. Petersburg?","Peter den store","Ivan den grusomme","Lenin","Who built the city of St Petersburg?","Peter the Great","Ivan the Terrible","Lenin"]]}]}
+};
+Object.assign(COUNTRIES,{
+EG:{f:"🇪🇬",
+ no:{n:"Egypt",cap:"Kairo",lang:"Arabisk",cur:"Egyptiske pund",pop:"ca. 110 millioner",hist:"For over 5000 år siden vokste en av verdens første sivilisasjoner fram langs Nilen. Faraoene bygde pyramidene og templene i Luxor, og egypterne skrev med hieroglyfer. Senere ble landet styrt av grekere, romere, arabere, osmanere og britene. Egypt ble selvstendig i 1922, og Suezkanalen er i dag en av verdens viktigste skipsruter."},
+ en:{n:"Egypt",cap:"Cairo",lang:"Arabic",cur:"Egyptian pound",pop:"about 110 million",hist:"More than 5000 years ago one of the world's first civilisations grew up along the Nile. The pharaohs built the pyramids and the temples of Luxor, and the Egyptians wrote in hieroglyphs. Later the country was ruled by Greeks, Romans, Arabs, Ottomans and the British. Egypt became independent in 1922, and the Suez Canal is today one of the world's most important shipping routes."},
+ items:[["Mini-pyramide","Mini pyramid",90],["Skarabé-amulett","Scarab amulet",120],["Bomullshåndkle","Cotton towel",160],["Vannpipe-modell","Water pipe model",300]],
+ jobs:[
+ {ic:"🐪",no:"Kameltreker",en:"Camel driver",tn:"ørken og natur i Egypt",te:"desert and nature in Egypt",q:[
+  ["Hvor mange pukler har en vanlig kamel i Egypt (dromedar)?","1","2","3","How many humps does a common camel in Egypt (dromedary) have?","1","2","3"],
+  ["Hvor stor del av Egypt er ørken?","Over 90 %","Omtrent halvparten","10 %","How much of Egypt is desert?","Over 90%","About half","10%"],
+  ["Hvilket farlig krypdyr levde i Nilen?","Krokodille","Isbjørn","Pingvin","Which dangerous reptile lived in the Nile?","Crocodile","Polar bear","Penguin"],
+  ["Hvorfor bor nesten alle egyptere ved Nilen?","Der er det vann og fruktbar jord","Der er det snø","Der er det fjell","Why do almost all Egyptians live by the Nile?","There is water and fertile soil","There is snow","There are mountains"]]},
+ {ic:"🤿",no:"Dykkerinstruktør",en:"Diving instructor",tn:"Rødehavet og ferie-Egypt",te:"the Red Sea and holiday Egypt",q:[
+  ["Hvilket hav er kjent for fargerike korallrev ved Hurghada?","Rødehavet","Nordsjøen","Kaspiske hav","Which sea is famous for colourful coral reefs near Hurghada?","The Red Sea","The North Sea","The Caspian Sea"],
+  ["Hva heter halvøya mellom Afrika og Asia?","Sinai","Krim","Jylland","What is the peninsula between Africa and Asia called?","Sinai","Crimea","Jutland"],
+  ["Hvilket fargerikt dyr lever på korallrevene?","Klovnefisk","Isbjørn","Elg","Which colourful animal lives on the coral reefs?","Clownfish","Polar bear","Moose"],
+  ["Hva heter den kjente feriebyen på Sinai?","Sharm el-Sheikh","Kairo","Luxor","What is the famous holiday town on Sinai?","Sharm el-Sheikh","Cairo","Luxor"]]},
+ {ic:"🏺",no:"Arkeolog",en:"Archaeologist",tn:"det gamle Egypt",te:"ancient Egypt",q:[
+  ["Hvilken stein hjalp forskerne å forstå hieroglyfer?","Rosettasteinen","Runesteinen","Kongesteinen","Which stone helped scientists understand hieroglyphs?","The Rosetta Stone","The Rune Stone","The King's Stone"],
+  ["Hvorfor ble faraoene mumifisert?","For å leve videre etter døden","For å bli lettere","For å skremme tyver","Why were the pharaohs mummified?","To live on after death","To become lighter","To scare thieves"],
+  ["Hva heter dalen der mange faraoer ble gravlagt?","Kongenes dal","Dødens dal","Ørnedalen","What is the valley where many pharaohs were buried?","Valley of the Kings","Death Valley","Eagle Valley"],
+  ["Hvilken gud hadde hode som en falk?","Horus","Tor","Zevs","Which god had the head of a falcon?","Horus","Thor","Zeus"]]}]},
+MA:{f:"🇲🇦",
+ no:{n:"Marokko",cap:"Rabat",lang:"Arabisk og berbisk (tamazight)",cur:"Marokkanske dirham",pop:"ca. 37 millioner",hist:"Berberne har bodd i Marokko i tusenvis av år. Fra 700-tallet kom arabere og islam, og marokkanske riker styrte også store deler av Spania. Byer som Fès og Marrakech ble viktige handelssentre for karavaner over Sahara. Frankrike og Spania styrte landet fra 1912, og Marokko ble et selvstendig kongedømme i 1956."},
+ en:{n:"Morocco",cap:"Rabat",lang:"Arabic and Berber (Tamazight)",cur:"Moroccan dirham",pop:"about 37 million",hist:"The Berbers have lived in Morocco for thousands of years. From the 700s Arabs and Islam arrived, and Moroccan kingdoms also ruled large parts of Spain. Cities like Fez and Marrakech became important trading centres for caravans across the Sahara. France and Spain ruled the country from 1912, and Morocco became an independent kingdom in 1956."},
+ items:[["Lærtøfler (babouche)","Leather slippers",180],["Arganolje","Argan oil",200],["Tagine-gryte","Tagine pot",250],["Lykt i metall","Metal lantern",300]],
+ jobs:[
+ {ic:"🫖",no:"Teselger",en:"Tea seller",tn:"marokkansk mat",te:"Moroccan food",q:[
+  ["Hva heter den lille kornretten som er vanlig i Marokko?","Couscous","Popcorn","Grøt","What is the small grain dish common in Morocco?","Couscous","Popcorn","Porridge"],
+  ["Hvilken urt er det i marokkansk te?","Mynte","Dill","Persille","Which herb is in Moroccan tea?","Mint","Dill","Parsley"],
+  ["Hvilken frukt vokser på palmer i oasene?","Dadler","Epler","Pærer","Which fruit grows on palm trees in the oases?","Dates","Apples","Pears"],
+  ["Hvilken olje lages av nøtter fra et tre der geiter klatrer?","Arganolje","Tran","Rapsolje","Which oil is made from the nuts of a tree goats climb?","Argan oil","Cod liver oil","Rapeseed oil"]]},
+ {ic:"🏜️",no:"Ørkenguide",en:"Desert guide",tn:"Sahara og naturen",te:"the Sahara and nature",q:[
+  ["Hva kalles en grønn flekk med vann i ørkenen?","Oase","Fjord","Atoll","What is a green spot with water in the desert called?","Oasis","Fjord","Atoll"],
+  ["Hva kalles en gruppe kameler som reiser sammen med varer?","Karavane","Konvoi","Flokk","What is a group of camels travelling with goods called?","Caravan","Convoy","Pack"],
+  ["Hva heter de store sandhaugene i ørkenen?","Sanddyner","Isbreer","Vulkaner","What are the big piles of sand in the desert called?","Sand dunes","Glaciers","Volcanoes"],
+  ["Hvordan er temperaturen i Sahara om natta?","Den kan bli veldig kald","Alltid 40 grader","Det snør hver natt","What is the temperature like in the Sahara at night?","It can get very cold","Always 40 degrees","It snows every night"]]},
+ {ic:"🧵",no:"Teppevever",en:"Carpet weaver",tn:"marokkansk kultur og historie",te:"Moroccan culture and history",q:[
+  ["Hva heter den store plassen i Marrakech med slangetemmere?","Jemaa el-Fna","Times Square","Den røde plass","What is the big square in Marrakech with snake charmers?","Jemaa el-Fnaa","Times Square","Red Square"],
+  ["Hvilket år ble Marokko selvstendig?","1956","1814","2001","Which year did Morocco become independent?","1956","1814","2001"],
+  ["Hva styres Marokko av?","En konge","En president","En keiser","Who heads Morocco?","A king","A president","An emperor"],
+  ["Hvilken blå by i fjellene er populær på Instagram?","Chefchaouen","Casablanca","Agadir","Which blue town in the mountains is popular on Instagram?","Chefchaouen","Casablanca","Agadir"]]}]},
+NG:{f:"🇳🇬",
+ no:{n:"Nigeria",cap:"Abuja",lang:"Engelsk, hausa, joruba og igbo m.fl.",cur:"Naira",pop:"ca. 225 millioner",hist:"I området som i dag er Nigeria lå mektige riker som Benin, kjent for sine bronsefigurer, og Oyo. Fra 1500-tallet ble millioner av mennesker tatt som slaver og sendt over Atlanterhavet. Britene gjorde Nigeria til en koloni, og landet ble selvstendig i 1960. I dag har Nigeria flest innbyggere i Afrika og over 500 språk."},
+ en:{n:"Nigeria",cap:"Abuja",lang:"English, Hausa, Yoruba, Igbo and more",cur:"Naira",pop:"about 225 million",hist:"Powerful kingdoms such as Benin, famous for its bronze figures, and Oyo lay in what is today Nigeria. From the 1500s millions of people were taken as slaves and sent across the Atlantic. The British made Nigeria a colony, and the country became independent in 1960. Today Nigeria has the most people in Africa and over 500 languages."},
+ items:[["Fargerikt stoff","Colourful fabric",180],["Bronsefigur","Bronze figure",600],["Sheasmør","Shea butter",90],["Nollywood-DVD","Nollywood DVD",40]],
+ jobs:[
+ {ic:"🎬",no:"Filmstatist",en:"Film extra",tn:"Nollywood og nigeriansk kultur",te:"Nollywood and Nigerian culture",q:[
+  ["Hvilken stor by er sentrum for Nollywood?","Lagos","Abuja","Kano","Which big city is the centre of Nollywood?","Lagos","Abuja","Kano"],
+  ["Hvilken musikkstil fra Nigeria er populær over hele verden i dag?","Afrobeats","Polka","Joik","Which music style from Nigeria is popular worldwide today?","Afrobeats","Polka","Yoik"],
+  ["Omtrent hvor mange språk snakkes i Nigeria?","Over 500","3","20","About how many languages are spoken in Nigeria?","Over 500","3","20"],
+  ["Hvilket språk snakkes av mange i nord?","Hausa","Swahili","Zulu","Which language is spoken by many in the north?","Hausa","Swahili","Zulu"]]},
+ {ic:"🛒",no:"Markedsselger",en:"Market trader",tn:"nigeriansk mat og handel",te:"Nigerian food and trade",q:[
+  ["Hva er fufu?","En deigaktig rett av kassava eller yams","En dans","En fugl","What is fufu?","A dough-like dish of cassava or yam","A dance","A bird"],
+  ["Hvilken rotgrønnsak dyrker Nigeria mest av i verden?","Kassava","Potet","Gulrot","Which root vegetable does Nigeria grow the most of in the world?","Cassava","Potato","Carrot"],
+  ["Hva er pepper soup?","En sterk krydret suppe","En is","En brus","What is pepper soup?","A spicy hot soup","An ice cream","A soft drink"],
+  ["Hva heter Nigerias valuta?","Naira","Rand","Shilling","What is Nigeria's currency?","Naira","Rand","Shilling"]]},
+ {ic:"👑",no:"Museumsguide",en:"Museum guide",tn:"nigeriansk historie",te:"Nigerian history",q:[
+  ["Hvilket gammelt kongerike er kjent for bronsefigurer?","Benin","Ghana","Egypt","Which old kingdom is famous for bronze figures?","Benin","Ghana","Egypt"],
+  ["Hvilket år ble Nigeria selvstendig?","1960","1905","1990","Which year did Nigeria become independent?","1960","1905","1990"],
+  ["Hvilket land var kolonimakt i Nigeria?","Storbritannia","Frankrike","Portugal","Which country colonised Nigeria?","Britain","France","Portugal"],
+  ["Hvorfor ble hovedstaden flyttet fra Lagos til Abuja?","Abuja ligger midt i landet","Lagos sank i havet","Abuja er eldre","Why was the capital moved from Lagos to Abuja?","Abuja is in the middle of the country","Lagos sank into the sea","Abuja is older"]]}]},
+KE:{f:"🇰🇪",
+ no:{n:"Kenya",cap:"Nairobi",lang:"Swahili og engelsk",cur:"Kenyanske shilling",pop:"ca. 55 millioner",hist:"Noen av de eldste sporene etter mennesker er funnet i Øst-Afrika, blant annet i Kenya. Langs kysten bygde swahili-folket handelsbyer som Mombasa, med handel til Arabia og India. Britene gjorde Kenya til koloni, og etter Mau Mau-opprøret ble landet selvstendig i 1963. I dag er Kenya kjent for safari, te og løpere."},
+ en:{n:"Kenya",cap:"Nairobi",lang:"Swahili and English",cur:"Kenyan shilling",pop:"about 55 million",hist:"Some of the oldest traces of humans have been found in East Africa, including Kenya. Along the coast the Swahili people built trading towns like Mombasa, trading with Arabia and India. The British made Kenya a colony, and after the Mau Mau uprising the country became independent in 1963. Today Kenya is famous for safaris, tea and runners."},
+ items:[["Massai-perlekjede","Maasai bead necklace",150],["Kenyansk te","Kenyan tea",80],["Safarihatt","Safari hat",200],["Kanga-stoff","Kanga cloth",120]],
+ jobs:[
+ {ic:"🦁",no:"Safariguide",en:"Safari guide",tn:"dyrelivet i Kenya",te:"Kenya's wildlife",q:[
+  ["Hva heter den store dyrevandringen i Masai Mara?","Den store migrasjonen","Laksetrappen","Elgjakta","What is the great animal migration in the Maasai Mara called?","The Great Migration","The Salmon Run","The Moose Hunt"],
+  ["Hvilket dyr vandrer i millioner sammen med sebraene?","Gnu","Elg","Kenguru","Which animal migrates by the millions with the zebras?","Wildebeest","Moose","Kangaroo"],
+  ["Hvilket dyr er det raskeste på land?","Gepard","Løve","Elefant","Which is the fastest land animal?","Cheetah","Lion","Elephant"],
+  ["Hvilket dyr har lengst hals?","Sjiraff","Flodhest","Neshorn","Which animal has the longest neck?","Giraffe","Hippo","Rhino"]]},
+ {ic:"🏃",no:"Løpetrener",en:"Running coach",tn:"kenyansk idrett",te:"Kenyan sport",q:[
+  ["Hvilken kenyaner var den første som løp maraton under 2 timer?","Eliud Kipchoge","Usain Bolt","Mo Farah","Which Kenyan was the first to run a marathon in under 2 hours?","Eliud Kipchoge","Usain Bolt","Mo Farah"],
+  ["Hvorfor trener mange løpere i høyden i Kenya?","Tynn luft gir bedre kondisjon","Det er kaldere","Det er nedoverbakke","Why do many runners train at high altitude in Kenya?","Thin air builds fitness","It is colder","It is downhill"],
+  ["Hvor lang er en maraton?","42,2 km","10 km","100 km","How long is a marathon?","42.2 km","10 km","100 km"],
+  ["Hvilket folk er kjent for høye hopp i dansen sin?","Massaiene","Vikingene","Inkaene","Which people are famous for high jumps in their dance?","The Maasai","The Vikings","The Inca"]]},
+ {ic:"🍃",no:"Teplukker",en:"Tea picker",tn:"Kenyas natur og historie",te:"Kenya's nature and history",q:[
+  ["Hvilket år ble Kenya selvstendig?","1963","1905","1999","Which year did Kenya become independent?","1963","1905","1999"],
+  ["Hvilken dal i Kenya er en del av en stor sprekk i jordskorpa?","Riftdalen","Gudbrandsdalen","Dødsdalen","Which valley in Kenya is part of a huge crack in the earth's crust?","The Rift Valley","Gudbrandsdalen","Death Valley"],
+  ["Hvilket hav ligger ved Mombasa?","Indiahavet","Atlanterhavet","Middelhavet","Which ocean is by Mombasa?","The Indian Ocean","The Atlantic","The Mediterranean"],
+  ["Hvilken kenyansk kvinne fikk Nobels fredspris for å plante trær?","Wangari Maathai","Malala","Greta Thunberg","Which Kenyan woman won the Nobel Peace Prize for planting trees?","Wangari Maathai","Malala","Greta Thunberg"]]}]},
+ZA:{f:"🇿🇦",
+ no:{n:"Sør-Afrika",cap:"Pretoria, Cape Town og Bloemfontein",lang:"12 offisielle språk, bl.a. zulu, xhosa, afrikaans og engelsk",cur:"Rand",pop:"ca. 62 millioner",hist:"Nederlandske nybyggere kom til Kapp det gode håp i 1652, og senere kom britene. Det ble funnet gull og diamanter på 1800-tallet. Fra 1948 hadde landet apartheid, et system som skilte folk etter hudfarge. Nelson Mandela satt 27 år i fengsel, men ble landets første svarte president i 1994. Sør-Afrika kalles «regnbuenasjonen»."},
+ en:{n:"South Africa",cap:"Pretoria, Cape Town and Bloemfontein",lang:"12 official languages, incl. Zulu, Xhosa, Afrikaans and English",cur:"Rand",pop:"about 62 million",hist:"Dutch settlers arrived at the Cape of Good Hope in 1652, and later the British came. Gold and diamonds were found in the 1800s. From 1948 the country had apartheid, a system that separated people by skin colour. Nelson Mandela spent 27 years in prison, but became the country's first black president in 1994. South Africa is called «the rainbow nation»."},
+ items:[["Rooibos-te","Rooibos tea",70],["Biltong (tørket kjøtt)","Biltong (dried meat)",120],["Zulu-skjold (mini)","Mini Zulu shield",250],["Strutseegg","Ostrich egg",400]],
+ jobs:[
+ {ic:"🐘",no:"Viltvokter",en:"Game ranger",tn:"dyr og natur i Sør-Afrika",te:"animals and nature in South Africa",q:[
+  ["Hva heter Sør-Afrikas mest kjente nasjonalpark?","Kruger","Yellowstone","Serengeti","What is South Africa's most famous national park?","Kruger","Yellowstone","Serengeti"],
+  ["Hvilket hoppende dyr er Sør-Afrikas nasjonaldyr?","Springbukk","Kenguru","Frosk","Which leaping animal is South Africa's national animal?","Springbok","Kangaroo","Frog"],
+  ["Hvorfor beskyttes neshorn ekstra mye?","Krypskyttere vil ha hornene","De er farlige","De er giftige","Why are rhinos given extra protection?","Poachers want their horns","They are dangerous","They are poisonous"],
+  ["Hvilken stor fugl kan ikke fly, men løper fort?","Struts","Ørn","Pelikan","Which big bird cannot fly but runs fast?","Ostrich","Eagle","Pelican"]]},
+ {ic:"🍇",no:"Vingårdsarbeider",en:"Vineyard worker",tn:"Sør-Afrikas landskap og byer",te:"South Africa's landscapes and cities",q:[
+  ["Hva heter Sør-Afrikas største by?","Johannesburg","Durban","Cape Town","What is South Africa's largest city?","Johannesburg","Durban","Cape Town"],
+  ["Hva kalles sørafrikansk grill?","Braai","Barbecue-bålet","Grillfest","What is a South African barbecue called?","Braai","Fire feast","Grillfest"],
+  ["Hvilken stor rute langs kysten er kjent for vakker natur?","Garden Route","Route 66","Atlanterhavsveien","Which coastal route is famous for beautiful scenery?","The Garden Route","Route 66","The Atlantic Road"],
+  ["Hva heter Sør-Afrikas rugbylandslag?","Springboks","All Blacks","Wallabies","What is South Africa's rugby team called?","Springboks","All Blacks","Wallabies"]]},
+ {ic:"💎",no:"Gullgraver",en:"Gold miner",tn:"sørafrikansk historie",te:"South African history",q:[
+  ["Hva het systemet som skilte folk etter hudfarge?","Apartheid","Demokrati","Monarki","What was the system that separated people by skin colour called?","Apartheid","Democracy","Monarchy"],
+  ["Hvilket år ble Nelson Mandela president?","1994","1964","2010","Which year did Nelson Mandela become president?","1994","1964","2010"],
+  ["Hvem kom til Kapp det gode håp i 1652?","Nederlendere","Vikinger","Kinesere","Who arrived at the Cape of Good Hope in 1652?","The Dutch","The Vikings","The Chinese"],
+  ["Hva kalles Sør-Afrika på grunn av alle de ulike folkegruppene?","Regnbuenasjonen","Gullandet","Solriket","What is South Africa called because of all its different peoples?","The rainbow nation","Gold land","Sun kingdom"]]}]},
+AE:{f:"🇦🇪",
+ no:{n:"De forente arabiske emirater",cap:"Abu Dhabi",lang:"Arabisk",cur:"Dirham",pop:"ca. 10 millioner",hist:"I hundrevis av år levde folk her av perledykking, fiske og handel med dadler. Området var under britisk beskyttelse fra 1800-tallet. Etter at det ble funnet olje på 1950-tallet, gikk sju små emirater sammen og dannet ett land i 1971. På få tiår ble ørkenlandsbyer til skinnende storbyer som Dubai."},
+ en:{n:"United Arab Emirates",cap:"Abu Dhabi",lang:"Arabic",cur:"Dirham",pop:"about 10 million",hist:"For hundreds of years people here lived from pearl diving, fishing and trading dates. The area was under British protection from the 1800s. After oil was found in the 1950s, seven small emirates joined together to form one country in 1971. In just a few decades desert villages became gleaming cities like Dubai."},
+ items:[["Dadler i eske","Box of dates",90],["Parfymeolje (oud)","Perfume oil (oud)",450],["Sand-flaske med mønster","Patterned sand bottle",70],["Falk-figur i gull","Golden falcon figure",350]],
+ jobs:[
+ {ic:"🦪",no:"Perledykker",en:"Pearl diver",tn:"emiratenes historie",te:"the history of the Emirates",q:[
+  ["Hva levde mange av før oljen ble funnet?","Perledykking","Skogsarbeid","Gruvedrift","What did many live from before oil was found?","Pearl diving","Forestry","Mining"],
+  ["Hvilket år ble De forente arabiske emirater dannet?","1971","1905","2001","Which year were the United Arab Emirates formed?","1971","1905","2001"],
+  ["Hvilket land beskyttet området fra 1800-tallet?","Storbritannia","Frankrike","Kina","Which country protected the area from the 1800s?","Britain","France","China"],
+  ["Hva heter den tradisjonelle trebåten i Dubai?","Dhow","Gondol","Kajakk","What is the traditional wooden boat in Dubai called?","Dhow","Gondola","Kayak"]]},
+ {ic:"🏙️",no:"Hotellpiccolo",en:"Hotel bellboy",tn:"det moderne Dubai",te:"modern Dubai",q:[
+  ["Hvilket hotell ser ut som et seil?","Burj Al Arab","Hilton","Plaza","Which hotel looks like a sail?","Burj Al Arab","Hilton","Plaza"],
+  ["Hva heter Dubais enorme kjøpesenter med akvarium?","Dubai Mall","Mall of America","Storo","What is Dubai's huge shopping centre with an aquarium called?","Dubai Mall","Mall of America","Westfield"],
+  ["Hvilket flyselskap har base i Dubai?","Emirates","Norwegian","SAS","Which airline is based in Dubai?","Emirates","Norwegian","SAS"],
+  ["Hvor mange etasjer har Burj Khalifa omtrent?","Over 160","20","1000","About how many floors does the Burj Khalifa have?","Over 160","20","1000"]]},
+ {ic:"🐫",no:"Kameljockey-trener",en:"Camel race trainer",tn:"ørken og tradisjoner",te:"desert and traditions",q:[
+  ["Hvilken populær sport bruker kameler i emiratene?","Kamelløp","Kamelfotball","Kamelsvømming","Which popular sport uses camels in the Emirates?","Camel racing","Camel football","Camel swimming"],
+  ["Hvilken fugl er nasjonalsymbol i emiratene?","Falk","Due","Papegøye","Which bird is a national symbol of the Emirates?","Falcon","Dove","Parrot"],
+  ["Hva er den hvite kjortelen mange menn bruker?","Kandura","Kimono","Kilt","What is the white robe many men wear?","Kandura","Kimono","Kilt"],
+  ["Hva heter den hellige måneden med faste?","Ramadan","Advent","Påske","What is the holy month of fasting called?","Ramadan","Advent","Easter"]]}]},
+IN:{f:"🇮🇳",
+ no:{n:"India",cap:"New Delhi",lang:"Hindi, engelsk og 20 andre offisielle språk",cur:"Indiske rupi",pop:"ca. 1,4 milliarder",hist:"En av verdens eldste sivilisasjoner lå i Indusdalen for 4500 år siden. Hinduismen og buddhismen oppsto i India. Stormogulene bygde praktfulle byggverk som Taj Mahal på 1600-tallet. Britene styrte India i nesten 200 år, men etter en fredelig kamp ledet av Mahatma Gandhi ble landet selvstendig i 1947. I dag har India flest innbyggere i verden."},
+ en:{n:"India",cap:"New Delhi",lang:"Hindi, English and 20 other official languages",cur:"Indian rupee",pop:"about 1.4 billion",hist:"One of the world's oldest civilisations lay in the Indus Valley 4500 years ago. Hinduism and Buddhism began in India. The Mughal emperors built magnificent buildings like the Taj Mahal in the 1600s. The British ruled India for almost 200 years, but after a peaceful struggle led by Mahatma Gandhi the country became independent in 1947. Today India has the most people in the world."},
+ items:[["Krydderboks","Spice box",150],["Elefantfigur i tre","Wooden elephant",130],["Sari-stoff","Sari fabric",350],["Chai-te","Chai tea",60]],
+ jobs:[
+ {ic:"🍛",no:"Karrikokk",en:"Curry cook",tn:"indisk mat og krydder",te:"Indian food and spices",q:[
+  ["Hva heter det flate indiske brødet som stekes i leirovn?","Naan","Baguette","Lefse","What is the flat Indian bread baked in a clay oven called?","Naan","Baguette","Tortilla"],
+  ["Hva heter den indiske leirovnen?","Tandoor","Pizzaovn","Mikro","What is the Indian clay oven called?","Tandoor","Pizza oven","Microwave"],
+  ["Hvilket gult krydder er mye brukt i indisk mat?","Gurkemeie","Kanel","Vanilje","Which yellow spice is widely used in Indian food?","Turmeric","Cinnamon","Vanilla"],
+  ["Hva er lassi?","En yoghurtdrikk","En suppe","En dans","What is lassi?","A yoghurt drink","A soup","A dance"]]},
+ {ic:"🎥",no:"Bollywood-danser",en:"Bollywood dancer",tn:"indisk kultur og religion",te:"Indian culture and religion",q:[
+  ["Hvilken by er sentrum for Bollywood?","Mumbai","Delhi","Kolkata","Which city is the centre of Bollywood?","Mumbai","Delhi","Kolkata"],
+  ["Hva heter lysfesten i India?","Diwali","Holi","Jul","What is India's festival of lights called?","Diwali","Holi","Christmas"],
+  ["Hvilken religion har flest tilhengere i India?","Hinduisme","Kristendom","Buddhisme","Which religion has the most followers in India?","Hinduism","Christianity","Buddhism"],
+  ["Hvilken religion startet Buddha i Nord-India?","Buddhisme","Islam","Sikhisme","Which religion did Buddha start in northern India?","Buddhism","Islam","Sikhism"]]},
+ {ic:"🏏",no:"Cricketdommer",en:"Cricket umpire",tn:"indisk historie og idrett",te:"Indian history and sport",q:[
+  ["Hvilket år ble India selvstendig?","1947","1905","1989","Which year did India become independent?","1947","1905","1989"],
+  ["Hvem bygde Taj Mahal?","Stormogulen Shah Jahan","Dronning Victoria","Gandhi","Who built the Taj Mahal?","The Mughal emperor Shah Jahan","Queen Victoria","Gandhi"],
+  ["Hvilket land styrte India før 1947?","Storbritannia","Frankrike","Portugal","Which country ruled India before 1947?","Britain","France","Portugal"],
+  ["Hvor mange spillere er det på et cricketlag?","11","5","15","How many players are in a cricket team?","11","5","15"]]}]},
+NP:{f:"🇳🇵",
+ no:{n:"Nepal",cap:"Kathmandu",lang:"Nepali",cur:"Nepalske rupi",pop:"ca. 30 millioner",hist:"Buddha ble født i Lumbini i Nepal for rundt 2500 år siden. Kathmandudalen var i lang tid styrt av newar-konger som bygde vakre templer og palasser. Landet ble samlet av kong Prithvi Narayan Shah på 1700-tallet og ble aldri en koloni. Nepal var et kongedømme til 2008, da det ble republikk."},
+ en:{n:"Nepal",cap:"Kathmandu",lang:"Nepali",cur:"Nepalese rupee",pop:"about 30 million",hist:"Buddha was born in Lumbini in Nepal around 2500 years ago. The Kathmandu Valley was ruled for a long time by Newar kings who built beautiful temples and palaces. The country was united by King Prithvi Narayan Shah in the 1700s and never became a colony. Nepal was a kingdom until 2008, when it became a republic."},
+ items:[["Syngeskål","Singing bowl",250],["Yakullsjal","Yak wool shawl",300],["Gurkha-kniv (mini)","Mini Gurkha knife",200],["Himalaya-te","Himalayan tea",70]],
+ jobs:[
+ {ic:"🏔️",no:"Sherpa-assistent",en:"Sherpa assistant",tn:"fjellene i Nepal",te:"the mountains of Nepal",q:[
+  ["Hva heter Everest på nepali?","Sagarmatha","Annapurna","Kanchenjunga","What is Everest called in Nepali?","Sagarmatha","Annapurna","Kanchenjunga"],
+  ["Hva skjer med lufta høyt oppe i fjellet?","Den blir tynnere","Den blir varmere","Den blir søtere","What happens to the air high up a mountain?","It gets thinner","It gets warmer","It gets sweeter"],
+  ["Hva heter den populære fjellruten rundt et kjent fjellmassiv?","Annapurna-runden","Trolltunga","Kungsleden","What is the popular trekking route around a famous massif?","The Annapurna Circuit","Trolltunga","Kungsleden"],
+  ["Hvilken sagnskapning skal visstnok leve i Himalaya?","Yeti","Troll","Varulv","Which legendary creature is said to live in the Himalayas?","Yeti","Troll","Werewolf"]]},
+ {ic:"🛕",no:"Tempelvakt",en:"Temple keeper",tn:"religion og kultur i Nepal",te:"religion and culture in Nepal",q:[
+  ["Hvor ble Buddha født?","Lumbini","Kathmandu","Delhi","Where was Buddha born?","Lumbini","Kathmandu","Delhi"],
+  ["Hva heter de store hvite tempelkuplene med øyne malt på?","Stupaer","Pyramider","Minareter","What are the big white temple domes with painted eyes called?","Stupas","Pyramids","Minarets"],
+  ["Hva skrives på bønneflagg?","Bønner og mantraer","Handlelister","Fotballresultater","What is written on prayer flags?","Prayers and mantras","Shopping lists","Football scores"],
+  ["Hvilken levende jente dyrkes som gudinne i Kathmandu?","Kumari","Kleopatra","Sita","Which living girl is worshipped as a goddess in Kathmandu?","Kumari","Cleopatra","Sita"]]},
+ {ic:"🐅",no:"Jungelguide",en:"Jungle guide",tn:"Nepals natur og historie",te:"Nepal's nature and history",q:[
+  ["Hvilken nasjonalpark i lavlandet har tigre og neshorn?","Chitwan","Kruger","Yellowstone","Which lowland national park has tigers and rhinos?","Chitwan","Kruger","Yellowstone"],
+  ["Hvilket år ble Nepal republikk?","2008","1947","1814","Which year did Nepal become a republic?","2008","1947","1814"],
+  ["Hvilke soldater fra Nepal er kjent i den britiske hæren?","Gurkhaer","Vikinger","Samuraier","Which soldiers from Nepal are famous in the British army?","Gurkhas","Vikings","Samurai"],
+  ["Var Nepal noen gang en koloni?","Nei, aldri","Ja, under Frankrike","Ja, under Spania","Was Nepal ever a colony?","No, never","Yes, under France","Yes, under Spain"]]}]},
+CN:{f:"🇨🇳",
+ no:{n:"Kina",cap:"Beijing",lang:"Mandarin (kinesisk)",cur:"Yuan (renminbi)",pop:"ca. 1,4 milliarder",hist:"Kina har en av verdens eldste sivilisasjoner, med keiserdynastier i over 2000 år. Den første keiseren, Qin Shi Huang, begynte på muren og ble gravlagt med terrakottahæren. Kineserne fant opp papir, kompass, krutt og boktrykk. Silkeveien knyttet Kina til Europa. I 1949 tok kommunistpartiet makten, og i dag er Kina en av verdens største økonomier."},
+ en:{n:"China",cap:"Beijing",lang:"Mandarin (Chinese)",cur:"Yuan (renminbi)",pop:"about 1.4 billion",hist:"China has one of the world's oldest civilisations, with imperial dynasties for over 2000 years. The first emperor, Qin Shi Huang, began the wall and was buried with the Terracotta Army. The Chinese invented paper, the compass, gunpowder and printing. The Silk Road linked China with Europe. In 1949 the Communist Party took power, and today China is one of the world's largest economies."},
+ items:[["Silkeskjerf","Silk scarf",250],["Kinesisk drage-lykt","Chinese dragon lantern",120],["Grønn te","Green tea",80],["Pandabamse","Panda teddy",150]],
+ jobs:[
+ {ic:"🥟",no:"Dumplingkokk",en:"Dumpling chef",tn:"kinesisk mat og høytider",te:"Chinese food and festivals",q:[
+  ["Hvilken stekeretning er populær i Beijing?","Pekingand","Pinnekjøtt","Fish and chips","Which roast dish is popular in Beijing?","Peking duck","Lamb ribs","Fish and chips"],
+  ["Hvilket dyr har hvert kinesisk år?","Et dyr fra stjernetegnene, f.eks. drage","En farge","En blomst","What does every Chinese year have?","An animal from the zodiac, e.g. dragon","A colour","A flower"],
+  ["Hvilken farge betyr lykke i Kina?","Rød","Svart","Hvit","Which colour means good luck in China?","Red","Black","White"],
+  ["Hva gis i røde konvolutter til nyttår?","Penger","Brev","Godteri","What is given in red envelopes at New Year?","Money","Letters","Sweets"]]},
+ {ic:"🏭",no:"Fabrikkarbeider",en:"Factory worker",tn:"det moderne Kina",te:"modern China",q:[
+  ["Hva er Kinas største by?","Shanghai","Beijing","Hongkong","What is China's largest city?","Shanghai","Beijing","Hong Kong"],
+  ["Hvilket elektronikkfirma er kinesisk?","Huawei","Samsung","Sony","Which electronics company is Chinese?","Huawei","Samsung","Sony"],
+  ["Hva heter verdens største vannkraftverk, i Kina?","De tre kløfters demning","Hoover-demningen","Alta-demningen","What is the world's largest hydropower plant, in China, called?","The Three Gorges Dam","The Hoover Dam","The Aswan Dam"],
+  ["Hvilken populær video-app er laget av et kinesisk selskap?","TikTok","Snapchat","Instagram","Which popular video app was made by a Chinese company?","TikTok","Snapchat","Instagram"]]},
+ {ic:"🐉",no:"Kungfu-lærer",en:"Kung fu teacher",tn:"kinesisk historie",te:"Chinese history",q:[
+  ["Hva het handelsruten mellom Kina og Europa?","Silkeveien","Krydderveien","Gullveien","What was the trade route between China and Europe called?","The Silk Road","The Spice Road","The Gold Road"],
+  ["Hvilken kinesisk oppfinnelse brukes i fyrverkeri?","Krutt","Plast","Dynamitt","Which Chinese invention is used in fireworks?","Gunpowder","Plastic","Dynamite"],
+  ["Hvilket tempel er kjent for kungfu-munker?","Shaolin","Angkor Wat","Taj Mahal","Which temple is famous for kung fu monks?","Shaolin","Angkor Wat","Taj Mahal"],
+  ["Hvilket år ble Folkerepublikken Kina grunnlagt?","1949","1911","1989","Which year was the People's Republic of China founded?","1949","1911","1989"]]}]},
+JP:{f:"🇯🇵",
+ no:{n:"Japan",cap:"Tokyo",lang:"Japansk",cur:"Yen",pop:"ca. 124 millioner",hist:"Japan har hatt keiser i over 1500 år – verdens eldste keiserslekt. I mange hundre år styrte samuraier og shoguner landet, og Japan holdt seg nesten helt stengt for utlendinger fram til 1853. Etter andre verdenskrig, der atombomber ble sluppet over Hiroshima og Nagasaki, bygde Japan seg opp til å bli en teknologisk supermakt."},
+ en:{n:"Japan",cap:"Tokyo",lang:"Japanese",cur:"Yen",pop:"about 124 million",hist:"Japan has had an emperor for over 1500 years – the world's oldest imperial family. For hundreds of years samurai and shoguns ruled the country, and Japan stayed almost completely closed to foreigners until 1853. After World War II, when atomic bombs were dropped on Hiroshima and Nagasaki, Japan rebuilt itself into a technological superpower."},
+ items:[["Kimono","Kimono",900],["Vinkekatt (maneki-neko)","Lucky cat (maneki-neko)",120],["Matcha-te","Matcha tea",150],["Spisepinner i lakk","Lacquered chopsticks",100]],
+ jobs:[
+ {ic:"🍣",no:"Sushikokk",en:"Sushi chef",tn:"japansk mat",te:"Japanese food",q:[
+  ["Hva heter den grønne, sterke sausen til sushi?","Wasabi","Ketchup","Pesto","What is the green, hot sauce served with sushi?","Wasabi","Ketchup","Pesto"],
+  ["Hva heter nudelsuppen som er populær i Japan?","Ramen","Gazpacho","Borsjtsj","What is the popular Japanese noodle soup called?","Ramen","Gazpacho","Borscht"],
+  ["Hva er sake?","Risvin","Fiskesuppe","Te","What is sake?","Rice wine","Fish soup","Tea"],
+  ["Hvilken giftig fisk må kokker ha egen lisens for å lage?","Kulefisk (fugu)","Laks","Torsk","Which poisonous fish do chefs need a special licence to prepare?","Pufferfish (fugu)","Salmon","Cod"]]},
+ {ic:"🎮",no:"Spilltester",en:"Game tester",tn:"japansk teknologi og popkultur",te:"Japanese technology and pop culture",q:[
+  ["Hvilken gul figur er kjent fra Pokémon?","Pikachu","Snoopy","Pingu","Which yellow character is famous from Pokémon?","Pikachu","Snoopy","Pingu"],
+  ["Hvilket japansk bilmerke er verdens største bilprodusent?","Toyota","Volvo","Tesla","Which Japanese car brand is the world's biggest car maker?","Toyota","Volvo","Tesla"],
+  ["Hva heter japanske tegnefilmer?","Anime","Cartoon","Manga-TV","What are Japanese animated films called?","Anime","Cartoons","Manga TV"],
+  ["Hva heter det å synge til musikk på en skjerm (en japansk oppfinnelse)?","Karaoke","Sumo","Origami","What is singing along to music on a stage called (a Japanese invention)?","Karaoke","Sumo","Origami"]]},
+ {ic:"⛩️",no:"Tempelvert",en:"Shrine attendant",tn:"japansk historie og tradisjon",te:"Japanese history and tradition",q:[
+  ["Hva het Japans krigere med sverd?","Samuraier","Vikinger","Riddere","What were Japan's sword warriors called?","Samurai","Vikings","Knights"],
+  ["Hva heter Japans gamle religion med porter kalt torii?","Shinto","Hinduisme","Islam","What is Japan's old religion with gates called torii?","Shinto","Hinduism","Islam"],
+  ["Hvilken by var Japans hovedstad i over 1000 år?","Kyoto","Osaka","Sapporo","Which city was Japan's capital for over 1000 years?","Kyoto","Osaka","Sapporo"],
+  ["Hva gjør man før man går inn i et japansk hjem?","Tar av seg skoene","Tar på seg hatt","Synger en sang","What do you do before entering a Japanese home?","Take off your shoes","Put on a hat","Sing a song"]]}]},
+TH:{f:"🇹🇭",
+ no:{n:"Thailand",cap:"Bangkok",lang:"Thai",cur:"Baht",pop:"ca. 70 millioner",hist:"Thailand het Siam fram til 1939. Kongedømmet Sukhothai ble grunnlagt på 1200-tallet, og senere var Ayutthaya en av verdens største byer. Thailand er det eneste landet i Sørøst-Asia som aldri ble kolonisert av europeerne. Landet har fortsatt konge, og buddhismen preger hverdagen med tusenvis av templer."},
+ en:{n:"Thailand",cap:"Bangkok",lang:"Thai",cur:"Baht",pop:"about 70 million",hist:"Thailand was called Siam until 1939. The Kingdom of Sukhothai was founded in the 1200s, and later Ayutthaya was one of the world's largest cities. Thailand is the only country in Southeast Asia that was never colonised by Europeans. The country still has a king, and Buddhism shapes daily life with thousands of temples."},
+ items:[["Elefantbukse","Elephant pants",100],["Thaiboksehansker","Thai boxing gloves",350],["Kokosskål","Coconut bowl",60],["Silkepute","Silk cushion",200]],
+ jobs:[
+ {ic:"💆",no:"Massør",en:"Massage therapist",tn:"thailandsk kultur",te:"Thai culture",q:[
+  ["Hvordan hilser man i Thailand?","Med håndflatene sammen (wai)","Med klem","Med håndhilsen","How do you greet people in Thailand?","Palms together (wai)","With a hug","With a handshake"],
+  ["Hva heter den thailandske nyttårsfesten med vannkrig?","Songkran","Diwali","Karneval","What is the Thai New Year festival with water fights?","Songkran","Diwali","Carnival"],
+  ["Hvilken religion har de fleste i Thailand?","Buddhisme","Kristendom","Hinduisme","Which religion do most people in Thailand follow?","Buddhism","Christianity","Hinduism"],
+  ["Hva heter det store marmortempelet med smaragdbuddha i Bangkok?","Wat Phra Kaew","Taj Mahal","Angkor Wat","What is the temple of the Emerald Buddha in Bangkok called?","Wat Phra Kaew","Taj Mahal","Angkor Wat"]]},
+ {ic:"🥥",no:"Gatekjøkkenkokk",en:"Street food cook",tn:"thailandsk mat",te:"Thai food",q:[
+  ["Hva heter den sterke, sure thailandske suppen med reker?","Tom yum","Minestrone","Gulasj","What is the hot and sour Thai prawn soup called?","Tom yum","Minestrone","Goulash"],
+  ["Hvilken frukt er beryktet for sterk lukt?","Durian","Banan","Eple","Which fruit is notorious for its strong smell?","Durian","Banana","Apple"],
+  ["Hva lager man grønn karri med?","Kokosmelk","Kumelk","Appelsinjuice","What is green curry made with?","Coconut milk","Cow's milk","Orange juice"],
+  ["Hva serveres med nesten alle måltider i Thailand?","Ris","Poteter","Brød","What is served with almost every meal in Thailand?","Rice","Potatoes","Bread"]]},
+ {ic:"🐘",no:"Elefantrøkter",en:"Elephant carer",tn:"natur og historie i Thailand",te:"nature and history in Thailand",q:[
+  ["Hvilket dyr er Thailands nasjonaldyr?","Elefant","Tiger","Panda","What is Thailand's national animal?","Elephant","Tiger","Panda"],
+  ["Hva het Thailands gamle hovedstad som ble ødelagt i 1767?","Ayutthaya","Phuket","Pattaya","What was Thailand's old capital destroyed in 1767?","Ayutthaya","Phuket","Pattaya"],
+  ["Ble Thailand noen gang kolonisert av europeere?","Nei","Ja, av Frankrike","Ja, av Portugal","Was Thailand ever colonised by Europeans?","No","Yes, by France","Yes, by Portugal"],
+  ["Hvilken naturkatastrofe rammet Thailands kyst i 2004?","Tsunami","Snøstorm","Vulkanutbrudd","Which natural disaster hit Thailand's coast in 2004?","A tsunami","A snowstorm","A volcanic eruption"]]}]},
+SG:{f:"🇸🇬",
+ no:{n:"Singapore",cap:"Singapore",lang:"Engelsk, malayisk, mandarin og tamil",cur:"Singapore-dollar",pop:"ca. 6 millioner",hist:"Briten Stamford Raffles grunnla en handelspost her i 1819, og Singapore ble en viktig havn. Under andre verdenskrig var øya okkupert av Japan. Singapore ble en del av Malaysia i 1963, men ble kastet ut og ble et selvstendig land i 1965. Fra en fattig havneby ble Singapore et av verdens rikeste og reneste land."},
+ en:{n:"Singapore",cap:"Singapore",lang:"English, Malay, Mandarin and Tamil",cur:"Singapore dollar",pop:"about 6 million",hist:"The Briton Stamford Raffles founded a trading post here in 1819, and Singapore became an important port. During World War II the island was occupied by Japan. Singapore joined Malaysia in 1963, but was expelled and became an independent country in 1965. From a poor port town Singapore became one of the richest and cleanest countries in the world."},
+ items:[["Merlion-figur","Merlion figure",90],["Kaya-syltetøy","Kaya jam",60],["Orkidé i gull","Golden orchid",450],["Tigerbalsam","Tiger balm",50]],
+ jobs:[
+ {ic:"🚢",no:"Havnearbeider",en:"Port worker",tn:"handel og havn",te:"trade and the port",q:[
+  ["Hvorfor ble Singapore en viktig havn?","Den ligger ved en travel skipsrute","Den har mye is","Den ligger midt i ørkenen","Why did Singapore become an important port?","It lies on a busy shipping route","It has lots of ice","It lies in a desert"],
+  ["Hvem grunnla det moderne Singapore i 1819?","Stamford Raffles","Kaptein Cook","Columbus","Who founded modern Singapore in 1819?","Stamford Raffles","Captain Cook","Columbus"],
+  ["Hvilket år ble Singapore selvstendig?","1965","1819","1999","Which year did Singapore become independent?","1965","1819","1999"],
+  ["Hvilket sund ligger ved Singapore?","Malakkastredet","Bosporos","Øresund","Which strait lies by Singapore?","The Strait of Malacca","The Bosphorus","The Øresund"]]},
+ {ic:"🍜",no:"Matbodselger",en:"Hawker stall cook",tn:"mat og kultur i Singapore",te:"food and culture in Singapore",q:[
+  ["Hva kalles de populære matmarkedene i Singapore?","Hawker centres","Food trucks","Kiosker","What are Singapore's popular food markets called?","Hawker centres","Food trucks","Kiosks"],
+  ["Hvilken rett med kylling og ris er Singapores nasjonalrett?","Hainanese chicken rice","Taco","Lapskaus","Which chicken and rice dish is Singapore's national dish?","Hainanese chicken rice","Taco","Stew"],
+  ["Hvilken stor hagehage med kuppler ligger ved Marina Bay?","Gardens by the Bay","Kew Gardens","Botanisk hage Oslo","Which big garden with domes lies at Marina Bay?","Gardens by the Bay","Kew Gardens","Central Park"],
+  ["Hva heter Singapores kjente flyplass med innendørs foss?","Changi","Heathrow","Gardermoen","What is Singapore's famous airport with an indoor waterfall?","Changi","Heathrow","Gardermoen"]]},
+ {ic:"🧹",no:"Gaterengjører",en:"Street cleaner",tn:"regler og hverdag i Singapore",te:"rules and daily life in Singapore",q:[
+  ["Hva skjer om man kaster søppel på gata i Singapore?","Man får høy bot","Man får premie","Ingenting","What happens if you litter in Singapore?","You get a big fine","You get a prize","Nothing"],
+  ["Hvor mange offisielle språk har Singapore?","4","1","10","How many official languages does Singapore have?","4","1","10"],
+  ["Hvilket land okkuperte Singapore under andre verdenskrig?","Japan","Tyskland","Russland","Which country occupied Singapore in World War II?","Japan","Germany","Russia"],
+  ["Hvilket land var Singapore en del av i to år?","Malaysia","Kina","India","Which country was Singapore part of for two years?","Malaysia","China","India"]]}]}
+});
+Object.assign(COUNTRIES,{
+AU:{f:"🇦🇺",
+ no:{n:"Australia",cap:"Canberra",lang:"Engelsk",cur:"Australske dollar",pop:"ca. 27 millioner",hist:"Aboriginene har bodd i Australia i minst 50 000 år – en av verdens eldste levende kulturer. Kaptein James Cook kom i 1770, og fra 1788 sendte Storbritannia fanger hit. Gullfeber på 1850-tallet fikk mange til å flytte til Australia. Landet ble en egen nasjon i 1901, men har fortsatt den britiske kongen som statsoverhode."},
+ en:{n:"Australia",cap:"Canberra",lang:"English",cur:"Australian dollar",pop:"about 27 million",hist:"Aboriginal people have lived in Australia for at least 50,000 years – one of the world's oldest living cultures. Captain James Cook arrived in 1770, and from 1788 Britain sent convicts here. A gold rush in the 1850s made many people move to Australia. The country became its own nation in 1901, but still has the British king as head of state."},
+ items:[["Didgeridoo","Didgeridoo",500],["Koalabamse","Koala teddy",120],["Opal-anheng","Opal pendant",700],["Surfevoks","Surf wax",40]],
+ jobs:[
+ {ic:"🏄",no:"Livredder",en:"Lifeguard",tn:"strender og havet",te:"beaches and the sea",q:[
+  ["Hva heter Sydneys mest kjente surfestrand?","Bondi Beach","Copacabana","Waikiki","What is Sydney's most famous surf beach?","Bondi Beach","Copacabana","Waikiki"],
+  ["Hvilket farlig dyr kan finnes i havet ved Australia?","Hai","Isbjørn","Elg","Which dangerous animal can be found in the sea around Australia?","Shark","Polar bear","Moose"],
+  ["Hvorfor må man bruke mye solkrem i Australia?","Sola er veldig sterk","Det er alltid mørkt","Det snør","Why do you need lots of sunscreen in Australia?","The sun is very strong","It is always dark","It snows"],
+  ["Hva kalles den farlige, nesten usynlige maneten i nord?","Kassemanet","Glassmanet","Brennmanet","What is the dangerous, almost invisible jellyfish in the north?","Box jellyfish","Glass jellyfish","Lion's mane"]]},
+ {ic:"🦘",no:"Dyrepasser",en:"Zookeeper",tn:"Australias dyr",te:"Australia's animals",q:[
+  ["Hva kalles dyr som bærer ungene i en pung?","Pungdyr","Krypdyr","Insekter","What are animals that carry their young in a pouch called?","Marsupials","Reptiles","Insects"],
+  ["Hvilket rart dyr legger egg men gir melk?","Nebbdyr","Koala","Wombat","Which strange animal lays eggs but makes milk?","Platypus","Koala","Wombat"],
+  ["Hva heter den ville hunden i Australia?","Dingo","Ulv","Hyene","What is Australia's wild dog called?","Dingo","Wolf","Hyena"],
+  ["Hvilken stor fugl kan ikke fly og står på våpenskjoldet?","Emu","Ørn","Pelikan","Which big flightless bird is on the coat of arms?","Emu","Eagle","Pelican"]]},
+ {ic:"🐑",no:"Sauegårdsarbeider",en:"Sheep station hand",tn:"Australias historie og land",te:"Australia's history and land",q:[
+  ["Hva kalles det tørre innlandet i Australia?","Outback","Taiga","Tundra","What is Australia's dry interior called?","The Outback","The Taiga","The Tundra"],
+  ["Hvem kom til Australias østkyst i 1770?","James Cook","Columbus","Magellan","Who reached Australia's east coast in 1770?","James Cook","Columbus","Magellan"],
+  ["Hvem ble sendt til Australia fra Storbritannia fra 1788?","Fanger","Konger","Prinsesser","Who were sent to Australia from Britain from 1788?","Convicts","Kings","Princesses"],
+  ["Hvor lenge har aboriginene bodd i Australia?","Minst 50 000 år","500 år","5000 år","How long have Aboriginal people lived in Australia?","At least 50,000 years","500 years","5,000 years"]]}]},
+NZ:{f:"🇳🇿",
+ no:{n:"New Zealand",cap:"Wellington",lang:"Engelsk, maori og tegnspråk",cur:"New Zealand-dollar",pop:"ca. 5,2 millioner",hist:"Maoriene kom fra Polynesia i kanoer rundt år 1300, og var de første menneskene i New Zealand. Nederlenderen Abel Tasman kom i 1642, og senere James Cook. I 1840 ble Waitangi-avtalen skrevet mellom britene og maorihøvdinger. I 1893 ble New Zealand det første landet i verden der kvinner fikk stemmerett."},
+ en:{n:"New Zealand",cap:"Wellington",lang:"English, Māori and sign language",cur:"New Zealand dollar",pop:"about 5.2 million",hist:"The Māori came from Polynesia in canoes around the year 1300, and were the first people in New Zealand. The Dutchman Abel Tasman arrived in 1642, and later James Cook. In 1840 the Treaty of Waitangi was signed between the British and Māori chiefs. In 1893 New Zealand became the first country in the world where women got the vote."},
+ items:[["Pounamu (grønnstein)","Pounamu (greenstone)",400],["Merinoull-lue","Merino wool hat",250],["Manukahonning","Manuka honey",300],["Hobbit-figur","Hobbit figure",150]],
+ jobs:[
+ {ic:"🪂",no:"Strikkhopp-instruktør",en:"Bungee instructor",tn:"eventyr og natur i New Zealand",te:"adventure and nature in New Zealand",q:[
+  ["Hvilken ekstremsport ble gjort kjent i Queenstown?","Strikkhopp","Curling","Sjakk","Which extreme sport was made famous in Queenstown?","Bungee jumping","Curling","Chess"],
+  ["Hva heter de lange, smale fjordene på Sørøya?","Fjorder (som Milford Sound)","Wadier","Kanaler","What are the long narrow inlets on the South Island?","Fjords (like Milford Sound)","Wadis","Canals"],
+  ["Hvilke små lysende dyr lyser opp grottene i Waitomo?","Glødeormer","Ildfluer i sjøen","Lysfisk","Which small glowing creatures light up the Waitomo caves?","Glowworms","Sea fireflies","Lanternfish"],
+  ["Hva heter New Zealands høyeste fjell?","Aoraki / Mount Cook","Everest","Kilimanjaro","What is New Zealand's highest mountain?","Aoraki / Mount Cook","Everest","Kilimanjaro"]]},
+ {ic:"🎞️",no:"Filmstatist",en:"Film extra",tn:"film og kultur",te:"film and culture",q:[
+  ["Hvilken regissør laget Ringenes herre i New Zealand?","Peter Jackson","Steven Spielberg","James Cameron","Which director made The Lord of the Rings in New Zealand?","Peter Jackson","Steven Spielberg","James Cameron"],
+  ["Hva heter hobbitlandsbyen man kan besøke?","Hobbiton","Narnia","Hogwarts","What is the hobbit village you can visit called?","Hobbiton","Narnia","Hogwarts"],
+  ["Hva kaller newzealendere seg selv på folkemunne?","Kiwier","Aussies","Yankees","What do New Zealanders call themselves informally?","Kiwis","Aussies","Yankees"],
+  ["Hva heter maorienes hilsen der man trykker nese mot nese?","Hongi","Wai","Haka","What is the Māori greeting where you press noses together?","Hongi","Wai","Haka"]]},
+ {ic:"🐑",no:"Saueklipper",en:"Sheep shearer",tn:"New Zealands historie",te:"New Zealand's history",q:[
+  ["Hvordan kom maoriene til New Zealand?","I kanoer fra Polynesia","Med fly","Gående over isen","How did the Māori reach New Zealand?","In canoes from Polynesia","By plane","Walking across the ice"],
+  ["Hvilket land var først med stemmerett for kvinner (1893)?","New Zealand","Norge","USA","Which country was first to give women the vote (1893)?","New Zealand","Norway","USA"],
+  ["Hva heter avtalen fra 1840 mellom britene og maoriene?","Waitangi-avtalen","Versailles-traktaten","Kalmarunionen","What is the 1840 treaty between the British and the Māori called?","The Treaty of Waitangi","The Treaty of Versailles","The Kalmar Union"],
+  ["Hvilken nederlender oppdaget New Zealand for europeerne i 1642?","Abel Tasman","Vasco da Gama","Leiv Eiriksson","Which Dutchman found New Zealand for Europeans in 1642?","Abel Tasman","Vasco da Gama","Leif Erikson"]]}]},
+US:{f:"🇺🇸",
+ no:{n:"USA",cap:"Washington D.C.",lang:"Engelsk (og mye spansk)",cur:"Amerikanske dollar",pop:"ca. 335 millioner",hist:"Urfolk har levd i Nord-Amerika i over 15 000 år. Europeiske kolonister kom fra 1600-tallet, og 4. juli 1776 erklærte 13 kolonier seg uavhengige av Storbritannia. Borgerkrigen 1861–1865 endte slaveriet. Millioner av innvandrere – også rundt 800 000 nordmenn – kom til USA. I 1969 var amerikanerne de første på månen."},
+ en:{n:"USA",cap:"Washington D.C.",lang:"English (and a lot of Spanish)",cur:"US dollar",pop:"about 335 million",hist:"Native peoples have lived in North America for over 15,000 years. European colonists arrived from the 1600s, and on 4 July 1776 thirteen colonies declared independence from Britain. The Civil War of 1861–1865 ended slavery. Millions of immigrants – including around 800,000 Norwegians – came to the USA. In 1969 Americans were the first on the Moon."},
+ items:[["Baseballcaps","Baseball cap",200],["Cowboyhatt","Cowboy hat",450],["Ekte amerikansk dongeri","Real American jeans",600],["Snøkule med skyskrapere","Skyscraper snow globe",80]],
+ jobs:[
+ {ic:"🍔",no:"Hamburgerkokk",en:"Burger cook",tn:"amerikansk mat og bedrifter",te:"American food and companies",q:[
+  ["Hvilken hamburgerkjede har gule buer som logo?","McDonald's","Burger King","Max","Which burger chain has golden arches as its logo?","McDonald's","Burger King","Max"],
+  ["Hvilket teknologiselskap laget iPhone?","Apple","Samsung","Nokia","Which tech company made the iPhone?","Apple","Samsung","Nokia"],
+  ["Hvilken brus ble oppfunnet i Atlanta i 1886?","Coca-Cola","Solo","Fanta","Which soft drink was invented in Atlanta in 1886?","Coca-Cola","Solo","Fanta"],
+  ["Hva spiser amerikanere tradisjonelt på Thanksgiving?","Kalkun","Pinnekjøtt","Sushi","What do Americans traditionally eat at Thanksgiving?","Turkey","Lamb ribs","Sushi"]]},
+ {ic:"🏈",no:"Stadionselger",en:"Stadium vendor",tn:"amerikansk idrett",te:"American sport",q:[
+  ["Hva heter finalen i amerikansk fotball?","Super Bowl","World Series","Stanley Cup","What is the final of American football called?","Super Bowl","World Series","Stanley Cup"],
+  ["Hvilken sport spilles i World Series?","Baseball","Basketball","Golf","Which sport is played in the World Series?","Baseball","Basketball","Golf"],
+  ["Hvilken basketballstjerne var kjent som «Air Jordan»?","Michael Jordan","LeBron James","Kobe Bryant","Which basketball star was known as «Air Jordan»?","Michael Jordan","LeBron James","Kobe Bryant"],
+  ["Hva heter ishockeyligaen i USA og Canada?","NHL","NBA","NFL","What is the ice hockey league in the USA and Canada?","NHL","NBA","NFL"]]},
+ {ic:"🗽",no:"Museumsguide",en:"Museum guide",tn:"amerikansk historie",te:"American history",q:[
+  ["Hvilket år erklærte USA seg uavhengig?","1776","1492","1905","Which year did the USA declare independence?","1776","1492","1905"],
+  ["Hvem var den første på månen i 1969?","Neil Armstrong","Jurij Gagarin","Buzz Lightyear","Who was the first person on the Moon in 1969?","Neil Armstrong","Yuri Gagarin","Buzz Lightyear"],
+  ["Hvilken president avskaffet slaveriet?","Abraham Lincoln","George Washington","Barack Obama","Which president abolished slavery?","Abraham Lincoln","George Washington","Barack Obama"],
+  ["Hvilken øy i New York tok imot millioner av innvandrere?","Ellis Island","Manhattan","Staten Island","Which island in New York received millions of immigrants?","Ellis Island","Manhattan","Staten Island"]]}]},
+CA:{f:"🇨🇦",
+ no:{n:"Canada",cap:"Ottawa",lang:"Engelsk og fransk",cur:"Kanadiske dollar",pop:"ca. 40 millioner",hist:"Inuitter og andre urfolk har bodd i Canada i tusenvis av år. Vikingene slo seg ned på Newfoundland rundt år 1000. Frankrike og Storbritannia kjempet om landet, og britene vant i 1763. Canada ble en egen stat i 1867. I dag er Canada verdens nest største land i areal."},
+ en:{n:"Canada",cap:"Ottawa",lang:"English and French",cur:"Canadian dollar",pop:"about 40 million",hist:"Inuit and other Indigenous peoples have lived in Canada for thousands of years. The Vikings settled on Newfoundland around the year 1000. France and Britain fought over the land, and the British won in 1763. Canada became its own country in 1867. Today Canada is the second largest country in the world by area."},
+ items:[["Ishockeykølle","Hockey stick",400],["Rutete skogsskjorte","Plaid lumberjack shirt",300],["Inuksuk-figur","Inukshuk figure",120],["Lønnesirup-godteri","Maple candy",60]],
+ jobs:[
+ {ic:"🏒",no:"Ishockeytrener",en:"Hockey coach",tn:"kanadisk idrett",te:"Canadian sport",q:[
+  ["Hvilken kanadier kalles «The Great One» i ishockey?","Wayne Gretzky","Sidney Crosby","Connor McDavid","Which Canadian is called «The Great One» in hockey?","Wayne Gretzky","Sidney Crosby","Connor McDavid"],
+  ["Hva heter trofeet i NHL?","Stanley Cup","World Cup","Davis Cup","What is the NHL trophy called?","The Stanley Cup","The World Cup","The Davis Cup"],
+  ["Hvilken sport ble oppfunnet av kanadieren James Naismith?","Basketball","Golf","Tennis","Which sport was invented by Canadian James Naismith?","Basketball","Golf","Tennis"],
+  ["Hvilken by i Canada hadde vinter-OL i 2010?","Vancouver","Toronto","Montréal","Which Canadian city hosted the 2010 Winter Olympics?","Vancouver","Toronto","Montréal"]]},
+ {ic:"🌲",no:"Tømmerhogger",en:"Lumberjack",tn:"natur og dyr i Canada",te:"nature and animals in Canada",q:[
+  ["Hvilket dyr er Canadas nasjonaldyr og bygger demninger?","Bever","Elg","Grizzlybjørn","Which animal is Canada's national animal and builds dams?","Beaver","Moose","Grizzly bear"],
+  ["Hvilke fjell ligger i vest-Canada?","Rocky Mountains","Alpene","Andesfjellene","Which mountains are in western Canada?","The Rocky Mountains","The Alps","The Andes"],
+  ["Hvilken stor hvit bjørn lever ved Hudson Bay?","Isbjørn","Panda","Brunbjørn","Which big white bear lives by Hudson Bay?","Polar bear","Panda","Brown bear"],
+  ["Omtrent hvor mange innsjøer har Canada?","Over 2 millioner","10","500","About how many lakes does Canada have?","Over 2 million","10","500"]]},
+ {ic:"🛶",no:"Kanoguide",en:"Canoe guide",tn:"kanadisk historie og kultur",te:"Canadian history and culture",q:[
+  ["Hvor slo vikingene seg ned i Canada rundt år 1000?","Newfoundland","Toronto","Yukon","Where did the Vikings settle in Canada around the year 1000?","Newfoundland","Toronto","Yukon"],
+  ["Hvilket år ble Canada en egen stat?","1867","1776","1945","Which year did Canada become its own country?","1867","1776","1945"],
+  ["Hva heter Canadas urfolk i Arktis?","Inuitter","Maorier","Samer","What are Canada's Indigenous people in the Arctic called?","Inuit","Māori","Sami"],
+  ["Hva heter retten med pommes frites, ost og saus fra Québec?","Poutine","Nachos","Lasagne","What is the dish of fries, cheese curds and gravy from Québec?","Poutine","Nachos","Lasagne"]]}]},
+MX:{f:"🇲🇽",
+ no:{n:"Mexico",cap:"Mexico by",lang:"Spansk og mange urfolksspråk",cur:"Meksikanske peso",pop:"ca. 130 millioner",hist:"Mayaene bygde store byer og pyramider for over 1000 år siden, og senere styrte aztekerne fra hovedstaden Tenochtitlan. I 1521 erobret spanjolene under Hernán Cortés aztekerriket. Mexico ble selvstendig fra Spania i 1821. Mexico gav verden sjokolade, mais, chili og tomater."},
+ en:{n:"Mexico",cap:"Mexico City",lang:"Spanish and many Indigenous languages",cur:"Mexican peso",pop:"about 130 million",hist:"The Maya built great cities and pyramids over 1000 years ago, and later the Aztecs ruled from their capital Tenochtitlan. In 1521 the Spanish under Hernán Cortés conquered the Aztec Empire. Mexico became independent from Spain in 1821. Mexico gave the world chocolate, corn, chilli and tomatoes."},
+ items:[["Maraca-par","Pair of maracas",80],["Hodeskalle-figur (Día de Muertos)","Sugar skull figure",120],["Poncho","Poncho",300],["Chilisaus","Hot sauce",50]],
+ jobs:[
+ {ic:"🌮",no:"Tacokokk",en:"Taco cook",tn:"meksikansk mat",te:"Mexican food",q:[
+  ["Hvilken matvare dyrket folk i Mexico først av alle?","Mais","Ris","Hvete","Which food plant was first grown by people in Mexico?","Corn (maize)","Rice","Wheat"],
+  ["Hvilken søt godbit kommer opprinnelig fra kakao i Mexico?","Sjokolade","Lakris","Marsipan","Which sweet treat originally comes from cocoa in Mexico?","Chocolate","Liquorice","Marzipan"],
+  ["Hva er en tortilla i Mexico?","En tynn lefse av mais eller hvete","En omelett","En kake","What is a tortilla in Mexico?","A thin flatbread of corn or wheat","An omelette","A cake"],
+  ["Hvilken sterk liten chili kommer fra Mexico?","Jalapeño","Paprika","Agurk","Which hot little chilli comes from Mexico?","Jalapeño","Bell pepper","Cucumber"]]},
+ {ic:"🎺",no:"Mariachimusiker",en:"Mariachi musician",tn:"meksikansk kultur",te:"Mexican culture",q:[
+  ["Hva heter de meksikanske musikerne med store hatter?","Mariachi","Samba","Polka","What are the Mexican musicians with big hats called?","Mariachi","Samba","Polka"],
+  ["Hvilken meksikansk kunstner malte selvportretter med blomster i håret?","Frida Kahlo","Picasso","Monet","Which Mexican artist painted self-portraits with flowers in her hair?","Frida Kahlo","Picasso","Monet"],
+  ["Hva heter fribrytingen med masker i Mexico?","Lucha libre","Sumo","Judo","What is Mexico's masked wrestling called?","Lucha libre","Sumo","Judo"],
+  ["Hva pynter man med på Día de Muertos?","Ringblomster og hodeskaller","Juletrær","Påskeegg","What do people decorate with on Día de Muertos?","Marigolds and skulls","Christmas trees","Easter eggs"]]},
+ {ic:"🗿",no:"Pyramideguide",en:"Pyramid guide",tn:"meksikansk historie",te:"Mexican history",q:[
+  ["Hva het aztekernes hovedstad?","Tenochtitlan","Cusco","Machu Picchu","What was the Aztec capital called?","Tenochtitlan","Cusco","Machu Picchu"],
+  ["Hvilken spanjol erobret aztekerriket?","Hernán Cortés","Columbus","Magellan","Which Spaniard conquered the Aztec Empire?","Hernán Cortés","Columbus","Magellan"],
+  ["Hvilket år ble Mexico selvstendig?","1821","1492","1945","Which year did Mexico become independent?","1821","1492","1945"],
+  ["Hvilken stor pyramide ligger i Teotihuacán?","Solpyramiden","Kheopspyramiden","Månetårnet","Which great pyramid stands at Teotihuacán?","The Pyramid of the Sun","The Great Pyramid of Giza","The Moon Tower"]]}]},
+CU:{f:"🇨🇺",
+ no:{n:"Cuba",cap:"Havana",lang:"Spansk",cur:"Kubanske peso",pop:"ca. 11 millioner",hist:"Columbus kom til Cuba i 1492, og Spania styrte øya i 400 år med store sukkerplantasjer. Cuba ble selvstendig i 1902 etter en krig der USA også deltok. I 1959 tok Fidel Castro og Che Guevara makten i en revolusjon. Under den kalde krigen var Cuba alliert med Sovjetunionen, og i 1962 var verden nær atomkrig under Cubakrisen."},
+ en:{n:"Cuba",cap:"Havana",lang:"Spanish",cur:"Cuban peso",pop:"about 11 million",hist:"Columbus reached Cuba in 1492, and Spain ruled the island for 400 years with big sugar plantations. Cuba became independent in 1902 after a war in which the USA also took part. In 1959 Fidel Castro and Che Guevara took power in a revolution. During the Cold War Cuba was allied with the Soviet Union, and in 1962 the world came close to nuclear war in the Cuban Missile Crisis."},
+ items:[["Bongotrommer","Bongo drums",350],["Kubansk kaffe","Cuban coffee",90],["Panamahatt","Panama hat",250],["Veteranbil-magnet","Vintage car magnet",40]],
+ jobs:[
+ {ic:"🚖",no:"Veteranbilsjåfør",en:"Vintage car driver",tn:"Havana og hverdagen på Cuba",te:"Havana and daily life in Cuba",q:[
+  ["Hvorfor kjører det så mange gamle biler på Cuba?","Det var vanskelig å få kjøpt nye biler i mange år","Folk liker ikke nye biler","Nye biler er forbudt ved lov","Why are there so many old cars in Cuba?","It was hard to buy new cars for many years","People dislike new cars","New cars are banned by law"],
+  ["Hva heter den lange strandpromenaden i Havana?","Malecón","Karl Johan","Copacabana","What is Havana's long seaside promenade called?","Malecón","Broadway","Copacabana"],
+  ["Hvilken farge er mange av husene i gamle Havana?","Mange sterke farger","Bare grå","Bare svart","What colour are many houses in Old Havana?","Lots of bright colours","Only grey","Only black"],
+  ["Hvilket land har hatt handelsboikott mot Cuba i mange år?","USA","Norge","Spania","Which country has had a trade embargo against Cuba for many years?","USA","Norway","Spain"]]},
+ {ic:"🎷",no:"Salsamusiker",en:"Salsa musician",tn:"kubansk musikk og kultur",te:"Cuban music and culture",q:[
+  ["Hvilket kjent kubansk band ble verdensberømt med en film i 1999?","Buena Vista Social Club","ABBA","Queen","Which famous Cuban band became world famous through a 1999 film?","Buena Vista Social Club","ABBA","Queen"],
+  ["Hvilken rytmeinstrument-dans kommer fra Cuba sammen med salsa?","Rumba","Vals","Halling","Which dance comes from Cuba along with salsa?","Rumba","Waltz","Polka"],
+  ["Hva dyrkes på Cuba for å lage sigarer?","Tobakk","Kaffe","Te","What is grown in Cuba to make cigars?","Tobacco","Coffee","Tea"],
+  ["Hvilken idrett har Cuba vunnet mange OL-gull i?","Boksing","Skiskyting","Curling","Which sport has Cuba won many Olympic golds in?","Boxing","Biathlon","Curling"]]},
+ {ic:"🌴",no:"Sukkerrørhogger",en:"Sugar cane cutter",tn:"kubansk historie",te:"Cuban history",q:[
+  ["Hvem ledet revolusjonen sammen med Fidel Castro?","Che Guevara","Simón Bolívar","Napoleon","Who led the revolution together with Fidel Castro?","Che Guevara","Simón Bolívar","Napoleon"],
+  ["Hva het den farlige krisen i 1962?","Cubakrisen","Oljekrisen","Finanskrisen","What was the dangerous crisis in 1962 called?","The Cuban Missile Crisis","The Oil Crisis","The Financial Crisis"],
+  ["Hvilket land styrte Cuba i 400 år?","Spania","Frankrike","Storbritannia","Which country ruled Cuba for 400 years?","Spain","France","Britain"],
+  ["Hva var Cubas viktigste eksportvare i lang tid?","Sukker","Olje","Biler","What was Cuba's most important export for a long time?","Sugar","Oil","Cars"]]}]},
+PE:{f:"🇵🇪",
+ no:{n:"Peru",cap:"Lima",lang:"Spansk, quechua og aymara",cur:"Sol",pop:"ca. 34 millioner",hist:"Peru var sentrum for Inkariket, det største riket i Amerika, med hovedstad i Cusco. Inkaene bygde veier, terrasser og Machu Picchu – uten hjul og uten jern. I 1532 erobret spanjolen Francisco Pizarro riket. Peru ble selvstendig i 1821. Machu Picchu ble «gjenoppdaget» for omverdenen i 1911."},
+ en:{n:"Peru",cap:"Lima",lang:"Spanish, Quechua and Aymara",cur:"Sol",pop:"about 34 million",hist:"Peru was the centre of the Inca Empire, the largest empire in the Americas, with its capital in Cusco. The Incas built roads, terraces and Machu Picchu – without wheels and without iron. In 1532 the Spaniard Francisco Pizarro conquered the empire. Peru became independent in 1821. Machu Picchu was «rediscovered» by the outside world in 1911."},
+ items:[["Alpakkagenser","Alpaca sweater",450],["Panfløyte","Pan flute",150],["Inka-maske","Inca mask",250],["Lilla maischips","Purple corn chips",50]],
+ jobs:[
+ {ic:"🦙",no:"Lamagjeter",en:"Llama herder",tn:"Andesfjellene og dyrene der",te:"the Andes and its animals",q:[
+  ["Hvilket dyr er i slekt med lamaen og gir myk ull?","Alpakka","Sau","Geit","Which animal is related to the llama and gives soft wool?","Alpaca","Sheep","Goat"],
+  ["Hvilken enorm fugl svever over Andesfjellene?","Kondor","Kolibri","Spurv","Which huge bird soars over the Andes?","Condor","Hummingbird","Sparrow"],
+  ["Hvilket lite dyr spises som festmat i Peru?","Marsvin","Hamster","Kanin","Which small animal is eaten as festive food in Peru?","Guinea pig","Hamster","Rabbit"],
+  ["Hvor mange sorter poteter finnes det omtrent i Peru?","Over 3000","3","30","About how many kinds of potato are there in Peru?","Over 3,000","3","30"]]},
+ {ic:"🥾",no:"Inkastien-bærer",en:"Inca Trail porter",tn:"inkaene",te:"the Incas",q:[
+  ["Hva het inkaenes hovedstad?","Cusco","Lima","Quito","What was the Inca capital called?","Cusco","Lima","Quito"],
+  ["Hva brukte inkaene i stedet for skrift?","Knutesnorer (quipu)","Runer","Hieroglyfer","What did the Incas use instead of writing?","Knotted strings (quipu)","Runes","Hieroglyphs"],
+  ["Hvem erobret Inkariket i 1532?","Francisco Pizarro","Hernán Cortés","Columbus","Who conquered the Inca Empire in 1532?","Francisco Pizarro","Hernán Cortés","Columbus"],
+  ["Hvilket år ble Machu Picchu kjent for omverdenen?","1911","1492","1999","Which year did Machu Picchu become known to the outside world?","1911","1492","1999"]]},
+ {ic:"🌊",no:"Surfelærer",en:"Surf teacher",tn:"Perus kyst og mysterier",te:"Peru's coast and mysteries",q:[
+  ["Hva heter de enorme figurene tegnet i ørkenen i Peru?","Nazca-linjene","Steinsirklene","Kornsirklene","What are the huge figures drawn in Peru's desert called?","The Nazca Lines","The Stone Circles","The Crop Circles"],
+  ["Hvilket hav ligger ved Lima?","Stillehavet","Atlanterhavet","Det karibiske hav","Which ocean lies by Lima?","The Pacific","The Atlantic","The Caribbean"],
+  ["Hvilket år ble Peru selvstendig?","1821","1776","1960","Which year did Peru become independent?","1821","1776","1960"],
+  ["Hvilken fisk fanger Peru mest av i verden (brukes til fiskemel)?","Ansjos","Laks","Tunfisk","Which fish does Peru catch the most of in the world (used for fishmeal)?","Anchovy","Salmon","Tuna"]]}]},
+BR:{f:"🇧🇷",
+ no:{n:"Brasil",cap:"Brasília",lang:"Portugisisk",cur:"Real",pop:"ca. 216 millioner",hist:"Portugiseren Pedro Álvares Cabral kom til Brasil i 1500, og landet ble en portugisisk koloni. Millioner av slaver ble ført fra Afrika for å jobbe på sukker- og kaffeplantasjer. Brasil ble selvstendig i 1822 og var et keiserdømme fram til 1889. Den nye hovedstaden Brasília ble bygd fra bunnen av og stod ferdig i 1960."},
+ en:{n:"Brazil",cap:"Brasília",lang:"Portuguese",cur:"Real",pop:"about 216 million",hist:"The Portuguese Pedro Álvares Cabral arrived in Brazil in 1500, and the country became a Portuguese colony. Millions of slaves were brought from Africa to work on sugar and coffee plantations. Brazil became independent in 1822 and was an empire until 1889. The new capital Brasília was built from scratch and was finished in 1960."},
+ items:[["Brasil-drakt","Brazil football shirt",500],["Havaianas-sandaler","Havaianas flip-flops",150],["Brasiliansk kaffe","Brazilian coffee",100],["Karnevalsmaske med fjær","Feathered carnival mask",250]],
+ jobs:[
+ {ic:"⚽",no:"Fotballtrener for barn",en:"Kids' football coach",tn:"brasiliansk fotball",te:"Brazilian football",q:[
+  ["Hvor mange ganger har Brasil vunnet fotball-VM?","5","2","8","How many times has Brazil won the World Cup?","5","2","8"],
+  ["Hva heter Rios kjente fotballstadion?","Maracanã","Camp Nou","Anfield","What is Rio's famous football stadium?","Maracanã","Camp Nou","Anfield"],
+  ["Hvilken brasiliansk kvinne har scoret flest VM-mål?","Marta","Ada Hegerberg","Alex Morgan","Which Brazilian woman has scored the most World Cup goals?","Marta","Ada Hegerberg","Alex Morgan"],
+  ["Hvilken fargekombinasjon har Brasils drakt?","Gul og grønn","Rød og hvit","Svart og hvit","What colours is Brazil's football shirt?","Yellow and green","Red and white","Black and white"]]},
+ {ic:"🌳",no:"Regnskogsguide",en:"Rainforest guide",tn:"Amazonas og naturen",te:"the Amazon and nature",q:[
+  ["Hvilken stor slange lever i Amazonas?","Anakonda","Hoggorm","Kobra","Which huge snake lives in the Amazon?","Anaconda","Adder","Cobra"],
+  ["Hvilke fisker med skarpe tenner lever i Amazonas?","Piraja","Laks","Torsk","Which fish with sharp teeth live in the Amazon?","Piranhas","Salmon","Cod"],
+  ["Hvorfor kalles Amazonas «jordas lunger»?","Trærne lager mye oksygen","Den er formet som lunger","Det er mye vind der","Why is the Amazon called «the lungs of the earth»?","The trees make lots of oxygen","It is shaped like lungs","It is very windy"],
+  ["Hvilke enorme fossefall ligger ved grensen til Argentina?","Iguaçu","Niagara","Vøringsfossen","Which huge waterfalls lie on the border with Argentina?","Iguaçu","Niagara","Vøringsfossen"]]},
+ {ic:"🎭",no:"Karnevalsdanser",en:"Carnival dancer",tn:"brasiliansk kultur og historie",te:"Brazilian culture and history",q:[
+  ["Hvilket land koloniserte Brasil?","Portugal","Spania","Nederland","Which country colonised Brazil?","Portugal","Spain","Netherlands"],
+  ["Hvilket år ble Brasil selvstendig?","1822","1500","1960","Which year did Brazil become independent?","1822","1500","1960"],
+  ["Hvilken kampsport-dans kommer fra Brasil?","Capoeira","Karate","Flamenco","Which martial-arts dance comes from Brazil?","Capoeira","Karate","Flamenco"],
+  ["Hvilken by er Brasils største?","São Paulo","Rio de Janeiro","Brasília","Which city is Brazil's largest?","São Paulo","Rio de Janeiro","Brasília"]]}]},
+AR:{f:"🇦🇷",
+ no:{n:"Argentina",cap:"Buenos Aires",lang:"Spansk",cur:"Argentinske peso",pop:"ca. 46 millioner",hist:"Spanske kolonister kom på 1500-tallet, og Argentina ble selvstendig i 1816 under ledelse av José de San Martín. Rundt 1900 kom millioner av innvandrere fra Italia og Spania, og landet ble et av verdens rikeste. På 1900-tallet hadde Argentina flere militærdiktaturer, og i 1982 kriget landet mot Storbritannia om Falklandsøyene."},
+ en:{n:"Argentina",cap:"Buenos Aires",lang:"Spanish",cur:"Argentine peso",pop:"about 46 million",hist:"Spanish colonists arrived in the 1500s, and Argentina became independent in 1816 under José de San Martín. Around 1900 millions of immigrants came from Italy and Spain, and the country became one of the richest in the world. In the 1900s Argentina had several military dictatorships, and in 1982 it fought Britain over the Falkland Islands."},
+ items:[["Mate-beger med sugerør","Mate gourd with straw",150],["Dulce de leche","Dulce de leche",70],["Skinnvest","Leather vest",500],["Argentina-drakt","Argentina football shirt",500]],
+ jobs:[
+ {ic:"🥩",no:"Grillmester (asador)",en:"Grill master (asador)",tn:"argentinsk mat og gauchoer",te:"Argentine food and gauchos",q:[
+  ["Hva kalles argentinsk grillfest?","Asado","Braai","Barbecue-fika","What is an Argentine barbecue called?","Asado","Braai","Cookout fika"],
+  ["Hva er dulce de leche?","Søt karamellkrem av melk","En suppe","En dans","What is dulce de leche?","A sweet milk caramel","A soup","A dance"],
+  ["Hva heter de store gresslettene der gauchoene rir?","Pampas","Savanne","Tundra","What are the big grasslands where gauchos ride called?","The Pampas","The Savannah","The Tundra"],
+  ["Hva er empanadas?","Fylte deigpaier","Pannekaker","Pølser","What are empanadas?","Filled pastries","Pancakes","Sausages"]]},
+ {ic:"🐧",no:"Pingvinforsker",en:"Penguin researcher",tn:"Patagonia og naturen",te:"Patagonia and nature",q:[
+  ["Hvilken by regnes som verdens sørligste by?","Ushuaia","Oslo","Cape Town","Which city is said to be the southernmost in the world?","Ushuaia","Oslo","Cape Town"],
+  ["Hvilken enorm isbre i Patagonia kalver ned i en innsjø?","Perito Moreno","Jostedalsbreen","Vatnajökull","Which huge glacier in Patagonia calves into a lake?","Perito Moreno","Jostedalsbreen","Vatnajökull"],
+  ["Hvilket kontinent ligger sør for Argentina?","Antarktis","Afrika","Australia","Which continent lies south of Argentina?","Antarctica","Africa","Australia"],
+  ["Hva heter Amerikas høyeste fjell?","Aconcagua","Denali","Chimborazo","What is the highest mountain in the Americas?","Aconcagua","Denali","Chimborazo"]]},
+ {ic:"🎻",no:"Tangomusiker",en:"Tango musician",tn:"argentinsk kultur og historie",te:"Argentine culture and history",q:[
+  ["Hvilket trekkspill-lignende instrument brukes i tango?","Bandoneón","Banjo","Fiolin","Which accordion-like instrument is used in tango?","Bandoneón","Banjo","Violin"],
+  ["Hvilket år ble Argentina selvstendig?","1816","1776","1945","Which year did Argentina become independent?","1816","1776","1945"],
+  ["Hvilke øyer kriget Argentina og Storbritannia om i 1982?","Falklandsøyene","Kanariøyene","Galápagos","Which islands did Argentina and Britain fight over in 1982?","The Falkland Islands","The Canary Islands","The Galápagos"],
+  ["Hvilken kjent kvinne kalles «Evita»?","Eva Perón","Frida Kahlo","Shakira","Which famous woman is called «Evita»?","Eva Perón","Frida Kahlo","Shakira"]]}]}
+});
+// Små destinasjoner. Bruker landets jobber, varer og historie.
+const SMALL=[
+{id:"bergen",cc:"NO",la:60.39,lo:5.32,lm:"EA",port:1,pr:120,
+ no:{n:"Bergen",item:"Bryggen-hus i tre",fact:"Bergen var Norges hovedstad på 1200-tallet og en viktig hansaby. De fargerike trehusene på Bryggen står på UNESCOs verdensarvliste. Byen er kjent for å ha regn nesten 240 dager i året, og fra Fløyen ser du hele byen mellom de sju fjellene."},
+ en:{n:"Bergen",item:"Wooden Bryggen house",fact:"Bergen was Norway's capital in the 1200s and an important Hanseatic town. The colourful wooden houses of Bryggen are a UNESCO World Heritage Site. The city is famous for rain almost 240 days a year, and from Mount Fløyen you can see the whole city between the seven mountains."}},
+{id:"tromso",cc:"NO",la:69.65,lo:18.96,lm:"EA",port:1,pr:140,
+ no:{n:"Tromsø",item:"Nordlys-postkort",fact:"Tromsø kalles «Nordens Paris» og ligger langt nord for polarsirkelen. Om vinteren er sola borte i to måneder (mørketid), og om sommeren går den aldri ned (midnattssol). Her ser du ofte nordlyset danse på himmelen. Polfarere som Roald Amundsen startet ekspedisjonene sine herfra."},
+ en:{n:"Tromsø",item:"Northern lights postcard",fact:"Tromsø is called «the Paris of the North» and lies far north of the Arctic Circle. In winter the sun disappears for two months (the polar night), and in summer it never sets (the midnight sun). The northern lights often dance in the sky here. Polar explorers like Roald Amundsen started their expeditions from here."}},
+{id:"kiruna",cc:"SE",la:67.86,lo:20.23,lm:"EA",port:0,pr:160,
+ no:{n:"Kiruna",item:"Jernmalm-stein",fact:"Kiruna er Sveriges nordligste by og har verdens største underjordiske jernmalmgruve. Fordi gruva får bakken til å sige, flyttes hele sentrum flere kilometer østover – også den gamle trekirken! I nærheten ligger det berømte Ishotellet i Jukkasjärvi."},
+ en:{n:"Kiruna",item:"Iron ore stone",fact:"Kiruna is Sweden's northernmost town and has the world's largest underground iron ore mine. Because the mine makes the ground sink, the whole town centre is being moved several kilometres east – including the old wooden church! The famous Icehotel in Jukkasjärvi is nearby."}},
+{id:"edinburgh",cc:"GB",la:55.95,lo:-3.19,lm:"EA",port:1,pr:180,
+ no:{n:"Edinburgh",item:"Skotsk skjørt (kilt)",fact:"Edinburgh er hovedstaden i Skottland. Over byen troner Edinburgh Castle på en gammel vulkan. Hver august holdes verdens største kunstfestival her. J.K. Rowling skrev deler av den første Harry Potter-boka på kafeer i Edinburgh."},
+ en:{n:"Edinburgh",item:"Scottish kilt",fact:"Edinburgh is the capital of Scotland. Edinburgh Castle towers over the city on an old volcano. Every August the world's largest arts festival is held here. J.K. Rowling wrote parts of the first Harry Potter book in cafés in Edinburgh."}},
+{id:"nice",cc:"FR",la:43.70,lo:7.27,lm:"EA",port:1,pr:200,
+ no:{n:"Nice",item:"Lavendelpose",fact:"Nice ligger på den franske Rivieraen ved Middelhavet. Den lange strandpromenaden heter Promenade des Anglais, fordi rike engelskmenn overvintret her på 1800-tallet. Like ved ligger bystaten Monaco, og i Provence vokser store lavendelåkre."},
+ en:{n:"Nice",item:"Lavender bag",fact:"Nice lies on the French Riviera by the Mediterranean. The long seaside promenade is called the Promenade des Anglais, because rich English people spent the winter here in the 1800s. The city-state of Monaco is nearby, and big lavender fields grow in Provence."}},
+{id:"munchen",cc:"DE",la:48.14,lo:11.58,lm:"EA",port:0,pr:150,
+ no:{n:"München",item:"Lederhose",fact:"München er hovedstad i delstaten Bayern. Byen er kjent for Oktoberfest, fotballklubben Bayern München og bilmerket BMW. Ikke langt unna ligger eventyrslottet Neuschwanstein og Alpene."},
+ en:{n:"Munich",item:"Lederhosen",fact:"Munich is the capital of the state of Bavaria. The city is famous for Oktoberfest, the football club Bayern Munich and the car brand BMW. The fairy-tale castle of Neuschwanstein and the Alps are not far away."}},
+{id:"barcelona",cc:"ES",la:41.39,lo:2.17,lm:"EA",port:1,pr:170,
+ no:{n:"Barcelona",item:"Gaudí-flis",fact:"Barcelona er hovedstaden i Catalonia, der mange snakker katalansk. Arkitekten Antoni Gaudí tegnet den fantastiske kirken Sagrada Família, som de har bygd på siden 1882. Byen arrangerte sommer-OL i 1992 og er hjem til FC Barcelona."},
+ en:{n:"Barcelona",item:"Gaudí tile",fact:"Barcelona is the capital of Catalonia, where many people speak Catalan. The architect Antoni Gaudí designed the amazing Sagrada Família church, which has been under construction since 1882. The city hosted the 1992 Summer Olympics and is home to FC Barcelona."}},
+{id:"venezia",cc:"IT",la:45.44,lo:12.33,lm:"EA",port:1,pr:230,
+ no:{n:"Venezia",item:"Gondol-modell",fact:"Venezia er bygd på over 100 små øyer i en lagune, med kanaler i stedet for gater. Folk reiser med båt og gondol, og det finnes over 400 broer. Venezia var en mektig handelsrepublikk i tusen år, og Marco Polo reiste herfra helt til Kina."},
+ en:{n:"Venice",item:"Gondola model",fact:"Venice is built on over 100 small islands in a lagoon, with canals instead of streets. People travel by boat and gondola, and there are over 400 bridges. Venice was a powerful trading republic for a thousand years, and Marco Polo travelled from here all the way to China."}},
+{id:"goreme",cc:"TR",la:38.64,lo:34.83,lm:"EA",port:0,pr:130,
+ no:{n:"Kappadokia",item:"Keramikkfat",fact:"I Kappadokia står rare steinsøyler kalt «eventyrpiper», formet av vind og regn. Folk har hugget ut hus, kirker og til og med hele underjordiske byer i det myke fjellet. Hver morgen svever hundrevis av luftballonger over landskapet."},
+ en:{n:"Cappadocia",item:"Ceramic plate",fact:"In Cappadocia strange rock pillars called «fairy chimneys» stand, shaped by wind and rain. People have carved houses, churches and even whole underground cities into the soft rock. Every morning hundreds of hot-air balloons float over the landscape."}},
+{id:"stpetersburg",cc:"RU",la:59.94,lo:30.31,lm:"EA",port:1,pr:200,
+ no:{n:"St. Petersburg",item:"Fabergé-egg (kopi)",fact:"St. Petersburg ble grunnlagt av tsar Peter den store i 1703 og var Russlands hovedstad i 200 år. I Vinterpalasset ligger Eremitasjen, et av verdens største kunstmuseer. Om sommeren er det «hvite netter» da det nesten aldri blir mørkt."},
+ en:{n:"St Petersburg",item:"Fabergé egg (replica)",fact:"St Petersburg was founded by Tsar Peter the Great in 1703 and was Russia's capital for 200 years. The Winter Palace houses the Hermitage, one of the world's largest art museums. In summer there are «white nights» when it hardly gets dark."}},
+{id:"luxor",cc:"EG",la:25.69,lo:32.64,lm:"EA",port:0,pr:140,
+ no:{n:"Luxor",item:"Alabastkrukke",fact:"Luxor ligger der den gamle byen Theben lå, Egypts hovedstad for over 3000 år siden. Her finnes Karnak-tempelet, et av verdens største tempelanlegg, og på andre siden av Nilen ligger Kongenes dal med faraoenes graver – også Tutankhamons."},
+ en:{n:"Luxor",item:"Alabaster jar",fact:"Luxor stands where the ancient city of Thebes was, Egypt's capital over 3000 years ago. Here you find Karnak Temple, one of the world's largest temple complexes, and across the Nile lies the Valley of the Kings with the pharaohs' tombs – including Tutankhamun's."}},
+{id:"mombasa",cc:"KE",la:-4.04,lo:39.67,lm:"EA",port:1,pr:110,
+ no:{n:"Mombasa",item:"Kokosnøttfigur",fact:"Mombasa er Kenyas eldste by og største havn, med hvite strender ved Indiahavet. Portugiserne bygde Fort Jesus her i 1593. Byen har vært et møtested for afrikansk, arabisk og indisk kultur i hundrevis av år, og her snakkes mye swahili."},
+ en:{n:"Mombasa",item:"Coconut figure",fact:"Mombasa is Kenya's oldest city and largest port, with white beaches on the Indian Ocean. The Portuguese built Fort Jesus here in 1593. The city has been a meeting place for African, Arab and Indian culture for hundreds of years, and a lot of Swahili is spoken here."}},
+{id:"agra",cc:"IN",la:27.18,lo:78.01,lm:"EA",port:0,pr:180,
+ no:{n:"Agra",item:"Taj Mahal-miniatyr",fact:"I Agra står Taj Mahal, bygd av stormogulen Shah Jahan som et gravmæle for kona Mumtaz. Det tok rundt 20 000 arbeidere over 20 år å bygge det. Marmoren skifter farge – rosa om morgenen, hvit om dagen og gyllen i måneskinn."},
+ en:{n:"Agra",item:"Taj Mahal miniature",fact:"Agra is home to the Taj Mahal, built by the Mughal emperor Shah Jahan as a tomb for his wife Mumtaz. It took around 20,000 workers over 20 years to build. The marble changes colour – pink in the morning, white in the day and golden in moonlight."}},
+{id:"goa",cc:"IN",la:15.50,lo:73.83,lm:"EA",port:1,pr:90,
+ no:{n:"Goa",item:"Kasjunøtter",fact:"Goa er Indias minste delstat og var portugisisk koloni i over 450 år, helt til 1961. Derfor finnes det hvite kirker og portugisisk mat her. I dag er Goa kjent for palmestrender og avslappede strandkafeer."},
+ en:{n:"Goa",item:"Cashew nuts",fact:"Goa is India's smallest state and was a Portuguese colony for over 450 years, until 1961. That is why there are white churches and Portuguese food here. Today Goa is famous for palm beaches and relaxed beach cafés."}},
+{id:"shanghai",cc:"CN",la:31.23,lo:121.47,lm:"EA",port:1,pr:160,
+ no:{n:"Shanghai",item:"Silkevifte",fact:"Shanghai er Kinas største by og har verdens travleste containerhavn. Langs elvepromenaden The Bund står gamle europeiske bygninger, og på andre siden reiser skyskraperne seg i Pudong – blant dem Shanghai Tower på 632 meter. Byens magnettog kjører i over 400 km/t."},
+ en:{n:"Shanghai",item:"Silk fan",fact:"Shanghai is China's largest city and has the world's busiest container port. Along the riverside Bund stand old European buildings, and across the river the skyscrapers of Pudong rise up – including the 632-metre Shanghai Tower. The city's maglev train runs at over 400 km/h."}},
+{id:"kyoto",cc:"JP",la:35.01,lo:135.77,lm:"JP",port:0,pr:200,
+ no:{n:"Kyoto",item:"Geisha-vifte",fact:"Kyoto var Japans hovedstad i over 1000 år og har rundt 2000 templer og helligdommer. Det gylne tempelet Kinkaku-ji og de tusenvis av oransje toriiportene ved Fushimi Inari er verdenskjente. I bydelen Gion kan man fortsatt se geishaer."},
+ en:{n:"Kyoto",item:"Geisha fan",fact:"Kyoto was Japan's capital for over 1000 years and has around 2000 temples and shrines. The golden temple Kinkaku-ji and the thousands of orange torii gates at Fushimi Inari are world famous. In the Gion district you can still see geishas."}},
+{id:"phuket",cc:"TH",la:7.88,lo:98.39,lm:"EA",port:1,pr:90,
+ no:{n:"Phuket",item:"Skjellhalskjede",fact:"Phuket er Thailands største øy og et populært feriested for nordmenn. Øya har hvite strender, turkist hav og kalksteinsklipper som stiger rett opp av sjøen i Phang Nga-bukta. Før turismen tjente øya penger på tinn og gummi."},
+ en:{n:"Phuket",item:"Shell necklace",fact:"Phuket is Thailand's largest island and a popular holiday spot. The island has white beaches, turquoise sea and limestone cliffs rising straight out of the water in Phang Nga Bay. Before tourism, the island earned its money from tin and rubber."}},
+{id:"cairns",cc:"AU",la:-16.92,lo:145.77,lm:"AU",port:1,pr:150,
+ no:{n:"Cairns",item:"Korallformet glass",fact:"Cairns er porten til Great Barrier Reef, verdens største korallrev, som kan sees fra verdensrommet. Like ved ligger Daintree, en av verdens eldste regnskoger. Her lever også store saltvannskrokodiller, så pass deg ved elvene!"},
+ en:{n:"Cairns",item:"Coral-shaped glass",fact:"Cairns is the gateway to the Great Barrier Reef, the world's largest coral reef, which can be seen from space. Nearby is the Daintree, one of the world's oldest rainforests. Big saltwater crocodiles live here too, so be careful by the rivers!"}},
+{id:"queenstown",cc:"NZ",la:-45.03,lo:168.66,lm:"NZ",port:0,pr:180,
+ no:{n:"Queenstown",item:"Strikkhopp-T-skjorte",fact:"Queenstown kalles verdens eventyrhovedstad. Her ble det kommersielle strikkhoppet startet i 1988, og man kan også stå på ski, rafte og hoppe i fallskjerm. Byen ligger ved innsjøen Wakatipu med fjellene The Remarkables i bakgrunnen."},
+ en:{n:"Queenstown",item:"Bungee T-shirt",fact:"Queenstown is called the adventure capital of the world. Commercial bungee jumping started here in 1988, and you can also ski, raft and skydive. The town lies by Lake Wakatipu with the Remarkables mountains in the background."}},
+{id:"sanfrancisco",cc:"US",la:37.77,lo:-122.42,lm:"AM",port:1,pr:180,
+ no:{n:"San Francisco",item:"Golden Gate-modell",fact:"San Francisco er kjent for den røde Golden Gate-broen, bratte bakker og gamle kabeltrikker. Ute i bukta ligger fengselsøya Alcatraz. Like sør for byen ligger Silicon Valley, der selskaper som Apple og Google holder til. I 1906 ble byen ødelagt av et stort jordskjelv."},
+ en:{n:"San Francisco",item:"Golden Gate model",fact:"San Francisco is famous for the red Golden Gate Bridge, steep hills and old cable cars. Out in the bay lies the prison island of Alcatraz. Just south of the city is Silicon Valley, home to companies like Apple and Google. In 1906 the city was destroyed by a huge earthquake."}},
+{id:"lasvegas",cc:"US",la:36.17,lo:-115.14,lm:"AM",port:0,pr:120,
+ no:{n:"Las Vegas",item:"Spillkort-kortstokk",fact:"Las Vegas ligger midt i Mojave-ørkenen og er kjent for gigantiske hoteller, show og lys som kan sees fra verdensrommet. Ikke langt unna ligger Hoover-demningen og Grand Canyon, en kløft som er opptil 1,8 km dyp."},
+ en:{n:"Las Vegas",item:"Deck of playing cards",fact:"Las Vegas lies in the middle of the Mojave Desert and is famous for giant hotels, shows and lights that can be seen from space. Not far away are the Hoover Dam and the Grand Canyon, a gorge up to 1.8 km deep."}},
+{id:"miami",cc:"US",la:25.76,lo:-80.19,lm:"AM",port:1,pr:150,
+ no:{n:"Miami",item:"Flamingo-figur",fact:"Miami ligger sør i Florida og har mange innbyggere med røtter fra Cuba og Latin-Amerika. Byen er kjent for strender, art deco-hus i pastellfarger og cruiseskip. Like ved ligger Everglades, en stor sumpskog med alligatorer."},
+ en:{n:"Miami",item:"Flamingo figure",fact:"Miami lies in southern Florida and has many residents with roots in Cuba and Latin America. The city is famous for beaches, pastel art deco buildings and cruise ships. Nearby is the Everglades, a huge swamp with alligators."}},
+{id:"vancouver",cc:"CA",la:49.28,lo:-123.12,lm:"AM",port:1,pr:150,
+ no:{n:"Vancouver",item:"Totempæl-miniatyr",fact:"Vancouver ligger mellom havet og snødekte fjell, og du kan gå på ski og bade samme dag. I Stanley Park står flotte totempæler laget av urfolket ved kysten. Byen arrangerte vinter-OL i 2010."},
+ en:{n:"Vancouver",item:"Mini totem pole",fact:"Vancouver lies between the sea and snowy mountains, and you can ski and swim on the same day. In Stanley Park stand beautiful totem poles made by the coastal Indigenous peoples. The city hosted the 2010 Winter Olympics."}},
+{id:"cancun",cc:"MX",la:21.16,lo:-86.85,lm:"AM",port:1,pr:110,
+ no:{n:"Cancún",item:"Maya-kalender",fact:"Cancún ligger på Yucatán-halvøya ved Det karibiske hav, med kritthvite strender. I nærheten finnes maya-pyramiden Chichén Itzá og cenoter – naturlige brønner med krystallklart vann der man kan bade og dykke."},
+ en:{n:"Cancún",item:"Maya calendar",fact:"Cancún lies on the Yucatán Peninsula by the Caribbean Sea, with chalk-white beaches. Nearby are the Maya pyramid of Chichén Itzá and cenotes – natural wells with crystal-clear water where you can swim and dive."}},
+{id:"cusco",cc:"PE",la:-13.53,lo:-71.97,lm:"AM",port:0,pr:120,
+ no:{n:"Cusco",item:"Inka-terrassemodell",fact:"Cusco var hovedstaden i Inkariket og ligger 3400 meter over havet. Spanjolene bygde kirker oppå inkaenes steinmurer, som er så presise at man ikke får et papirark mellom steinene. Herfra starter turen til Machu Picchu."},
+ en:{n:"Cusco",item:"Inca terrace model",fact:"Cusco was the capital of the Inca Empire and lies 3400 metres above sea level. The Spanish built churches on top of the Inca stone walls, which are so precise you can't fit a sheet of paper between the stones. The journey to Machu Picchu starts here."}},
+{id:"manaus",cc:"BR",la:-3.12,lo:-60.02,lm:"AM",port:1,pr:130,
+ no:{n:"Manaus",item:"Papegøyefjær-smykke",fact:"Manaus ligger midt i Amazonas-regnskogen og kan nesten bare nås med fly eller båt. Under gummiboomen rundt 1900 ble byen så rik at de bygde et praktfullt operahus. Rett utenfor byen møtes to elver med ulik farge uten å blande seg på flere kilometer."},
+ en:{n:"Manaus",item:"Parrot feather jewellery",fact:"Manaus lies in the middle of the Amazon rainforest and can almost only be reached by plane or boat. During the rubber boom around 1900 the city became so rich that they built a magnificent opera house. Just outside the city two rivers of different colours meet without mixing for several kilometres."}},
+{id:"ushuaia",cc:"AR",la:-54.80,lo:-68.30,lm:"AM",port:1,pr:170,
+ no:{n:"Ushuaia",item:"Pingvin-krus",fact:"Ushuaia kaller seg verdens sørligste by og kalles «verdens ende». Herfra går de fleste turistskipene til Antarktis. Byen startet som en fangekoloni, og rundt i Beaglekanalen kan du se sjøløver, pingviner og albatrosser."},
+ en:{n:"Ushuaia",item:"Penguin mug",fact:"Ushuaia calls itself the southernmost city in the world and is known as «the end of the world». Most tourist ships to Antarctica leave from here. The town started as a prison colony, and in the Beagle Channel you can see sea lions, penguins and albatrosses."}}
+];
+// Kobling mellom de store byene og landkoden
+const CITY_CC={oslo:"NO",stockholm:"SE",reykjavik:"IS",london:"GB",paris:"FR",berlin:"DE",madrid:"ES",roma:"IT",istanbul:"TR",moskva:"RU",kairo:"EG",marrakech:"MA",lagos:"NG",nairobi:"KE",kapp:"ZA",dubai:"AE",delhi:"IN",kathmandu:"NP",beijing:"CN",tokyo:"JP",bangkok:"TH",singapore:"SG",sydney:"AU",auckland:"NZ",newyork:"US",toronto:"CA",losangeles:"US",mexico:"MX",havana:"CU",lima:"PE",rio:"BR",buenos:"AR"};
+// Spillbutikk-jobb – finnes i de fleste land
+const GAMER={ic:"🎮",no:"Spillbutikk-ansatt",en:"Game shop clerk",tn:"spill, konsoller og Roblox",te:"games, consoles and Roblox",skip:["NP","CU"],q:[
+["Hvilket selskap lager PlayStation?","Sony","Microsoft","Nintendo","Which company makes the PlayStation?","Sony","Microsoft","Nintendo"],
+["Hvilket selskap lager Xbox?","Microsoft","Sony","Sega","Which company makes the Xbox?","Microsoft","Sony","Sega"],
+["Hvilket selskap lager Switch?","Nintendo","Sony","Apple","Which company makes the Switch?","Nintendo","Sony","Apple"],
+["Hva heter pengene man bruker i Roblox?","Robux","V-Bucks","Minecoins","What is the currency used in Roblox called?","Robux","V-Bucks","Minecoins"],
+["Hva heter pengene man bruker i Fortnite?","V-Bucks","Robux","Gull-mynter","What is the currency used in Fortnite called?","V-Bucks","Robux","Gold coins"],
+["Hvilket grønt Minecraft-monster eksploderer?","Creeper","Zombie","Enderman","Which green Minecraft mob explodes?","Creeper","Zombie","Enderman"],
+["Hva heter den farlige lavadimensjonen i Minecraft?","Nether","The End","Overworld","What is the dangerous lava dimension in Minecraft called?","The Nether","The End","The Overworld"],
+["Hvilket land kommer firmaet som laget Minecraft (Mojang) fra?","Sverige","USA","Japan","Which country does Mojang, the company that made Minecraft, come from?","Sweden","USA","Japan"],
+["Hva heter standardfigurene i Minecraft?","Steve og Alex","Mario og Luigi","Tom og Jerry","What are the default characters in Minecraft called?","Steve and Alex","Mario and Luigi","Tom and Jerry"],
+["Hva heter rørleggeren med rød lue i Nintendo-spill?","Mario","Luigi","Wario","What is the name of the plumber with a red cap in Nintendo games?","Mario","Luigi","Wario"],
+["Hva heter Marios bror med grønn lue?","Luigi","Toad","Yoshi","What is the name of Mario's brother with a green cap?","Luigi","Toad","Yoshi"],
+["Hva heter Nintendos grønne dinosaur?","Yoshi","Bowser","Rex","What is Nintendo's green dinosaur called?","Yoshi","Bowser","Rex"],
+["Hvilket dyr er Sonic?","Pinnsvin","Rev","Kanin","What kind of animal is Sonic?","Hedgehog","Fox","Rabbit"],
+["Hva heter den rosa ballen som suger inn fiender?","Kirby","Jigglypuff","Pac-Man","What is the pink ball that inhales enemies called?","Kirby","Jigglypuff","Pac-Man"],
+["Hvilken gul figur er mest kjent fra Pokémon?","Pikachu","Kirby","Pac-Man","Which yellow character is most famous from Pokémon?","Pikachu","Kirby","Pac-Man"],
+["Hvilken Pokémon er nummer 1 i Pokédexen?","Bulbasaur","Pikachu","Charmander","Which Pokémon is number 1 in the Pokédex?","Bulbasaur","Pikachu","Charmander"],
+["I hvilket spill hopper man ut av en flygende «Battle Bus»?","Fortnite","Minecraft","Mario Kart","In which game do you jump out of a flying «Battle Bus»?","Fortnite","Minecraft","Mario Kart"],
+["I hvilket spill kaster man skall og bananer mens man kjører?","Mario Kart","FIFA","Tetris","In which game do you throw shells and bananas while racing?","Mario Kart","FIFA","Tetris"],
+["Hvilket spill går ut på å spille fotball med raketter på bilene?","Rocket League","Gran Turismo","Forza","Which game is about playing football with rocket-powered cars?","Rocket League","Gran Turismo","Forza"],
+["Hva heter de som saboterer i Among Us?","Impostors","Crewmates","Zombier","What are the saboteurs in Among Us called?","Impostors","Crewmates","Zombies"],
+["Hva het fotballspillet EA Sports FC tidligere?","FIFA","PES","Football Manager","What was the football game EA Sports FC called before?","FIFA","PES","Football Manager"],
+["Hvilket Roblox-spill handler om å adoptere og passe kjæledyr?","Adopt Me!","Brookhaven","Blox Fruits","Which Roblox game is about adopting and caring for pets?","Adopt Me!","Brookhaven","Blox Fruits"],
+["Hvilket Roblox-spill om å dyrke en hage ble enormt populært i 2025?","Grow a Garden","Farm Life","Plant Party","Which Roblox gardening game became hugely popular in 2025?","Grow a Garden","Farm Life","Plant Party"],
+["Hvilket spill med fallende blokker ble laget i Sovjetunionen?","Tetris","Pac-Man","Pong","Which falling-block game was made in the Soviet Union?","Tetris","Pac-Man","Pong"],
+["Hvilken gul figur spiser prikker og flykter fra spøkelser?","Pac-Man","Pikachu","Kirby","Which yellow character eats dots and runs from ghosts?","Pac-Man","Pikachu","Kirby"],
+["Hva betyr «GG» etter en kamp?","Good game","Go go","Great goal","What does «GG» mean after a match?","Good game","Go go","Great goal"],
+["Hva står «NPC» for i spill?","Non-player character","New power card","No player connected","What does «NPC» stand for in games?","Non-player character","New power card","No player connected"],
+["Hva kalles det å sende spillingen sin direkte på Twitch eller YouTube?","Strømming","Modding","Speedrun","What is it called to broadcast your gaming live on Twitch or YouTube?","Streaming","Modding","Speedrunning"],
+["Hva kalles det å klare et spill så raskt som mulig?","Speedrun","Grinding","Lagging","What is it called to finish a game as fast as possible?","Speedrun","Grinding","Lagging"],
+["Hva betyr det når spillet «lagger»?","Det henger og går tregt","Du har vunnet","Du har fått nytt liv","What does it mean when a game «lags»?","It freezes and runs slowly","You have won","You got an extra life"]
+]};
 /* ================= KART ================= */
+// Reservekart (enkle kontinenter) – brukes hvis ekte landgrenser ikke kan lastes
 const LAND=[
 [[-168,66],[-162,70],[-140,70],[-120,72],[-95,72],[-80,70],[-65,62],[-55,52],[-66,45],[-70,42],[-76,35],[-80,32],[-81,25],[-83,29],[-90,30],[-97,27],[-97,21],[-90,21],[-87,15],[-83,9],[-78,8],[-80,7],[-85,10],[-92,14],[-105,20],[-110,24],[-117,32],[-124,40],[-124,48],[-135,58],[-150,60],[-165,60]],
 [[-45,60],[-20,70],[-20,80],[-40,83],[-65,80],[-55,70]],
@@ -277,28 +1045,49 @@ const LAND=[
 [[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
 [[80,6],[82,7],[80,10]]
 ];
+const LAND_COL=['#f3d46b','#9fd38a','#f2a7b9','#f6b26b','#c3a6dc','#9fd38a','#c3a6dc','#f2a7b9','#9fd38a','#f6b26b','#f3d46b','#9fd38a','#f6b26b','#f3d46b','#f6b26b','#f2a7b9','#f6b26b','#f3d46b'];
+const POL=['#f3d46b','#9fd38a','#f2a7b9','#f6b26b','#c3a6dc','#e9e27a','#8fcfb8','#f5c28a','#e6a3c9','#b9d97a'];
 const P=(lo,la)=>[(lo+180)/360*1000,(84-la)/142*395];
 const NS='http://www.w3.org/2000/svg';
 const svg=document.getElementById('map');
+let WORLD=null;
 
+function ringPath(r){let s='';r.forEach((p,i)=>{const [x,y]=P(p[0],p[1]);s+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);});return s+'Z';}
+function countryLayer(){
+  if(!WORLD)return LAND.map((p,i)=>`<path class="land" fill="${LAND_COL[i%LAND_COL.length]}" d="${ringPath(p)}"/>`).join('');
+  let s='';
+  WORLD.forEach((f,i)=>{
+    let h=0;for(const ch of f.name)h=(h*31+ch.charCodeAt(0))>>>0;
+    const col=POL[h%POL.length];let d='';
+    f.polys.forEach(poly=>poly.forEach(r=>{d+=ringPath(r);}));
+    s+=`<path class="land real" fill="${col}" d="${d}"><title>${f.name}</title></path>`;
+  });
+  return s;
+}
+const OCEANS=[[-40,30,'ATLANTERHAVET','ATLANTIC OCEAN'],[-140,10,'STILLEHAVET','PACIFIC OCEAN'],[160,5,'STILLEHAVET','PACIFIC OCEAN'],[78,-25,'INDIAHAVET','INDIAN OCEAN'],[-20,-35,'ATLANTERHAVET','ATLANTIC OCEAN'],[0,78,'NORDISHAVET','ARCTIC OCEAN']];
 function drawMap(){
-  let s='<rect width="1000" height="395" fill="url(#sea)"/><defs><radialGradient id="sea" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#2a73a6"/><stop offset="1" stop-color="#123c5c"/></radialGradient></defs>';
+  let s=`<defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe9f6"/><stop offset=".5" stop-color="#a9d6ef"/><stop offset="1" stop-color="#c4e3f3"/></linearGradient>
+  <filter id="ls" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="0.6" stdDeviation="0.8" flood-color="#3a6f8f" flood-opacity=".45"/></filter></defs>
+  <rect width="1000" height="395" fill="url(#sea)"/>`;
   for(let lo=-150;lo<=150;lo+=30){const x=P(lo,0)[0];s+=`<line class="grid" x1="${x}" y1="0" x2="${x}" y2="395"/>`;}
-  for(let la=-30;la<=60;la+=30){const y=P(0,la)[1];s+=`<line class="${la===0?'eq':'grid'}" x1="0" y1="${y}" x2="1000" y2="${y}"/>`;}
-  s+=`<text x="6" y="${P(0,0)[1]-4}" fill="#f0b429aa" font-size="11">Ekvator</text>`;
-  LAND.forEach(p=>{s+=`<polygon class="land" points="${p.map(([lo,la])=>P(lo,la).map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`;});
+  for(let la=-45;la<=75;la+=15){const y=P(0,la)[1];s+=`<line class="${la===0?'eq':'grid'}" x1="0" y1="${y}" x2="1000" y2="${y}"/>`;}
+  OCEANS.forEach(([lo,la,no,en])=>{const [x,y]=P(lo,la);s+=`<text class="ocean" x="${x}" y="${y}" text-anchor="middle">${L(no,en)}</text>`;});
+  s+=`<text class="ocean small" x="8" y="${P(0,0)[1]-4}">${L('Ekvator','Equator')}</text>`;
+  s+=`<g filter="url(#ls)">${countryLayer()}</g>`;
   s+='<g id="routes"></g><g id="rings"></g><g id="cities"></g><g id="labels"></g><text id="plane" class="hidden" text-anchor="middle" dominant-baseline="middle">✈️</text>';
   svg.innerHTML=s;
   const g=document.getElementById('cities');
   CITIES.forEach(c=>{
     const [x,y]=P(c.lo,c.la);
-    const el=document.createElementNS(NS,'g');el.setAttribute('class','city');el.dataset.id=c.id;
-    el.innerHTML=`<circle class="hit" cx="${x}" cy="${y}" r="13"/><circle class="dot" cx="${x}" cy="${y}" r="5"/>`;
-    el.addEventListener('click',()=>{ if(c.id===S.at) openAbout(); else openTravelTo(c.id); });
+    const el=document.createElementNS(NS,'g');el.setAttribute('class','city'+(c.small?' small':''));el.dataset.id=c.id;
+    el.innerHTML=`<circle class="hit" cx="${x}" cy="${y}" r="11"/><circle class="dot" cx="${x}" cy="${y}" r="${c.small?3.4:4.8}"/>`;
+    el.addEventListener('click',()=>{ if(!S)return; if(c.id===S.at) openAbout(); else openTravelTo(c.id); });
     g.appendChild(el);
   });
+  if(S)updateMap(false);
 }
-function updateMap(){
+function updateMap(center=true){
+  if(!S)return;
   document.querySelectorAll('.city').forEach(el=>{
     const id=el.dataset.id;
     el.classList.toggle('here',id===S.at);
@@ -307,35 +1096,99 @@ function updateMap(){
   const rings=document.getElementById('rings'), labels=document.getElementById('labels');
   let r='',l='';const shown=new Set([S.at]);
   S.missions.forEach(m=>{
-    const has=(S.inv[m.from]||0)>0;
-    const cid=has?m.to:m.from; const c=byId[cid]; const [x,y]=P(c.lo,c.la);
-    r+=`<circle class="ring ${has?'drop':'buy'}" cx="${x}" cy="${y}" r="10"/>`; shown.add(cid);
+    const has=(S.inv[m.from]||0)>0;const cid=has?m.to:m.from;const c=byId[cid];const [x,y]=P(c.lo,c.la);
+    r+=`<circle class="ring ${has?'drop':'buy'}" cx="${x}" cy="${y}" r="9"/>`;shown.add(cid);
   });
-  shown.forEach(id=>{const c=byId[id];const [x,y]=P(c.lo,c.la);l+=`<text class="lbl" x="${x+8}" y="${y-7}">${cn(id)}</text>`;});
+  shown.forEach(id=>{const c=byId[id];const [x,y]=P(c.lo,c.la);l+=`<text class="lbl" x="${x+7}" y="${y-6}">${cn(id)}</text>`;});
   rings.innerHTML=r;labels.innerHTML=l;
-  // sentrer kartet på mobil
-  const wrap=document.getElementById('mapwrap');
-  if(wrap.scrollWidth>wrap.clientWidth){const c=byId[S.at];const px=P(c.lo,c.la)[0]/1000*wrap.scrollWidth;wrap.scrollLeft=px-wrap.clientWidth/2;}
+  if(center)centerMap();
 }
-
+let ZOOM=1;
+function applyZoom(){
+  const wrap=document.getElementById('mapwrap');
+  const base=Math.max(760,wrap.clientWidth);
+  svg.style.width=Math.round(base*ZOOM)+'px';
+  document.getElementById('zIn').disabled=ZOOM>=3;document.getElementById('zOut').disabled=ZOOM<=1;
+  centerMap();
+}
+function centerMap(){
+  if(!S)return;const wrap=document.getElementById('mapwrap');const c=byId[S.at];
+  const [x,y]=P(c.lo,c.la);const sc=svg.clientWidth/1000;
+  wrap.scrollLeft=x*sc-wrap.clientWidth/2;wrap.scrollTop=y*sc-wrap.clientHeight/2;
+}
+// Henter ekte landgrenser (fungerer når spillet er på nett)
+function loadWorld(){
+  try{
+    window.echarts={registerMap:(name,geo)=>{try{WORLD=decodeWorld(geo);drawMap();}catch(e){}}};
+    const sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js';
+    sc.onerror=()=>{};document.body.appendChild(sc);
+  }catch(e){}
+}
+function decodeWorld(geo){
+  const scale=geo.UTF8Scale||1024;
+  const dec=(str,off)=>{const out=[];let px=off[0],py=off[1];
+    for(let i=0;i<str.length;i+=2){let x=str.charCodeAt(i)-64,y=str.charCodeAt(i+1)-64;x=(x>>1)^(-(x&1));y=(y>>1)^(-(y&1));x+=px;y+=py;px=x;py=y;out.push([x/scale,y/scale]);}
+    return out;};
+  const res=[];
+  geo.features.forEach(f=>{
+    const g=f.geometry;if(!g)return;let polys=[];
+    if(geo.UTF8Encoding&&g.encodeOffsets){
+      if(g.type==='Polygon')polys=[g.coordinates.map((r,i)=>dec(r,g.encodeOffsets[i]))];
+      else if(g.type==='MultiPolygon')polys=g.coordinates.map((p,j)=>p.map((r,i)=>dec(r,g.encodeOffsets[j][i])));
+    }else{
+      if(g.type==='Polygon')polys=[g.coordinates];else if(g.type==='MultiPolygon')polys=g.coordinates;
+    }
+    if(polys.length)res.push({name:(f.properties&&f.properties.name)||'',polys});
+  });
+  if(res.length<50)throw new Error('for få land');
+  return res;
+}
 /* ================= SPRÅK ================= */
 let LANG='no';
 try{LANG=localStorage.getItem('globetrotter_lang')||'no';}catch(e){}
 const L=(no,en)=>LANG==='en'?en:no;
-const TXT={no:NO.cities,en:EN.cities};
-const CT=id=>TXT[LANG][id];
 const GEN=()=>LANG==='en'?EN.general:NO.general;
 const JOBL=()=>LANG==='en'?EN.jobs:NO.jobs;
 const EVL=()=>LANG==='en'?EN.events:NO.events;
 const PEOPLE=['Ahmed','Maria','Kenji','Lucia','Olav','Priya','Tom','Fatima','Pedro','Ingrid','Chen','Amara','Sofia','Jack','Nils','Aisha','Mateo','Yuki','Emma','Kwame'];
 
+/* ================= BYER OG LAND ================= */
 const DEF={EU:[350,320],NA:[350,320],OC:[330,300],AS:[180,200],AF:[150,170],SA:[170,190]};
-const CITIES=BASE.map(c=>Object.assign({},c,{h:c.h||DEF[c.k][0],p:c.p||DEF[c.k][1]}));
+const CC_OVR={AE:[380,330],JP:[380,340],SG:[360,320]};
+const CC_K={};BASE.forEach(c=>{CC_K[CITY_CC[c.id]]=c.k;});
+const CITIES=[];
+BASE.forEach(c=>{const cc=CITY_CC[c.id];CITIES.push(Object.assign({},c,{cc,small:false}));});
+SMALL.forEach(s=>{CITIES.push({id:s.id,cc:s.cc,f:COUNTRIES[s.cc].f,k:CC_K[s.cc],la:s.la,lo:s.lo,lm:s.lm,port:s.port,pr:s.pr,small:true});});
+CITIES.forEach(c=>{const d=CC_OVR[c.cc]||DEF[c.k];c.h=d[0];c.p=d[1];c.f=COUNTRIES[c.cc].f;});
 const byId=Object.fromEntries(CITIES.map(c=>[c.id,c]));
-const GOAL=8, MAXBAG=6, MAXMIS=3, SAVEKEY='globetrotter_save_v2', HSKEY='globetrotter_hs_v1';
-const cn=id=>CT(id).n;          // bynavn
-const itemName=id=>CT(id).item; // suvenir fra byen
+const SMALLBY=Object.fromEntries(SMALL.map(s=>[s.id,s]));
+const CO=cc=>COUNTRIES[cc][LANG];
+// Tekst for en by på valgt språk: navn, land, suvenir, fakta
+function CT(id){
+  const s=SMALLBY[id];
+  if(s){const t=s[LANG];return {n:t.n,item:t.item,fact:t.fact,c:CO(s.cc).n};}
+  const t=(LANG==='en'?EN.cities:NO.cities)[id];return {n:t.n,item:t.item,fact:t.fact,c:CO(byId[id].cc).n};
+}
+// Spørsmål om landet (turistguide) – fra landets store byer
+function countryPool(cc){const src=LANG==='en'?EN.cities:NO.cities;let q=[];BASE.forEach(c=>{if(CITY_CC[c.id]===cc)q=q.concat(src[c.id].q);});return q;}
+const capCity=cc=>CITIES.find(c=>c.cc===cc&&!c.small);
+const GOAL=8, MAXBAG=6, MAXMIS=3, SAVEKEY='globetrotter_save_v3', HSKEY='globetrotter_hs_v1';
+const cn=id=>CT(id).n;
 const hotelPrice=c=>r50(c.h*2.2);
+
+/* --- Varer: nøkkel er by-id (suvenir) eller «LAND:nr» (landets varer) --- */
+function itemInfo(key){
+  if(key.includes(':')){const [cc,i]=key.split(':');const it=COUNTRIES[cc].items[+i];return {name:L(it[0],it[1]),price:it[2],cc,origin:capCity(cc)};}
+  const c=byId[key];return {name:CT(key).item,price:c.pr,cc:c.cc,origin:c};
+}
+const itemName=key=>itemInfo(key).name;
+function sellPrice(key){
+  const it=itemInfo(key),here=byId[S.at];
+  if(here.cc===it.cc)return Math.round(it.price*0.5/10)*10;
+  const d=dist(it.origin,here);
+  return Math.round(it.price*Math.min(1.9,0.8+d/9000)/10)*10;
+}
 
 /* ================= STATE ================= */
 let S=null;
@@ -443,6 +1296,8 @@ function murderSting(){
 
 
 
+
+
 function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2200);}
 function diary(t){S.diary=t;$('diary').textContent='📓 '+t;}
 function modal(html){$('mcontent').innerHTML=html;$('modal').classList.remove('hidden');$('mbox').scrollTop=0;}
@@ -460,19 +1315,19 @@ function applyLang(){
   set('newBtn',L('🎒 Start ny reise','🎒 Start a new journey'));
   set('contBtn',L('▶ Fortsett reisen','▶ Continue journey'));
   set('tHow',L(`<h3>Slik spiller du</h3>Du starter i Oslo med 2000 kr i lomma. Ta på deg <b>oppdrag</b> fra oppslagstavla: kjøp en ting i én by og lever den til noen i en annen by.
-    Mangler du penger? <b>Ta en jobb</b> – svar på 5–10 spørsmål om landet, og har du minst 80 % riktig, får du lønn. Helt blakk? <b>Ring hjem</b> og lån penger!
-    Velg mellom hotell, hostell eller å sove ute – men pass deg for ran! Reis med fly, tog eller båt, samle stempler i <b>passet</b> og fullfør <b>8 oppdrag</b> på færrest mulig dager!`,
+    Mangler du penger? <b>Ta en jobb</b> – velg mellom 4 jobber i hvert land og svar på 5–10 spørsmål. Har du minst 80 % riktig, får du lønn. Du kan også <b>handle</b>: kjøp varer billig og selg dem dyrt langt unna. Helt blakk? <b>Ring hjem</b> og lån penger!
+    Velg mellom hotell, hostell eller å sove ute – men pass deg for ran! Besøk ${CITIES.length} steder, samle stempler i <b>passet</b> og fullfør <b>8 oppdrag</b> på færrest mulig dager!`,
    `<h3>How to play</h3>You start in Oslo with 2000 kr in your pocket. Take <b>missions</b> from the notice board: buy an item in one city and deliver it to someone in another city.
-    Short of money? <b>Take a job</b> – answer 5–10 questions about the country, and if you get at least 80% right, you get paid. Totally broke? <b>Call home</b> and borrow money!
-    Choose between a hotel, a hostel or sleeping outside – but watch out for robbers! Travel by plane, train or boat, collect stamps in your <b>passport</b> and complete <b>8 missions</b> in as few days as possible!`));
-  const acts={about:L('Om byen','About'),job:L('Ta en jobb','Get a job'),market:L('Marked','Market'),board:L('Oppdrag','Missions'),travel:L('Reis','Travel'),bag:L('Ryggsekk','Backpack'),pass:L('Passet','Passport'),home:L('Ring hjem','Call home'),menu:L('Meny','Menu')};
+    Short of money? <b>Take a job</b> – choose between 4 jobs in each country and answer 5–10 questions. Get at least 80% right and you get paid. You can also <b>trade</b>: buy goods cheaply and sell them for more far away. Totally broke? <b>Call home</b> and borrow money!
+    Choose between a hotel, a hostel or sleeping outside – but watch out for robbers! Visit ${CITIES.length} places, collect stamps in your <b>passport</b> and complete <b>8 missions</b> in as few days as possible!`));
+  const acts={about:L('Om landet','About'),job:L('Ta en jobb','Get a job'),market:L('Marked','Market'),board:L('Oppdrag','Missions'),travel:L('Reis','Travel'),bag:L('Ryggsekk','Backpack'),pass:L('Passet','Passport'),home:L('Ring hjem','Call home'),menu:L('Meny','Menu')};
   document.querySelectorAll('.act').forEach(b=>{b.lastChild.textContent=acts[b.dataset.a];});
   document.querySelectorAll('.langbtn').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
   $('musicBtn').textContent=MUS.on?L('🎵 På','🎵 On'):L('🔇 Av','🔇 Off');
   document.title=L('Globetrotter – Jorda rundt med ryggsekk','Globetrotter – Around the world with a backpack');
   showHS();
 }
-function setLang(l){LANG=l;try{localStorage.setItem('globetrotter_lang',l);}catch(e){}applyLang();if(S&&!$('game').classList.contains('hidden'))render();}
+function setLang(l){LANG=l;try{localStorage.setItem('globetrotter_lang',l);}catch(e){}applyLang();drawMap();if(S&&!$('game').classList.contains('hidden'))render();}
 
 /* ================= UI ================= */
 function render(){
@@ -508,7 +1363,7 @@ function sleepAt(k){
   if(Math.random()<o.risk&&(S.money>0||bagCount()>0)){
     const lost=Math.min(S.money,Math.max(100,Math.round(S.money*(0.3+Math.random()*0.2))));
     S.money-=lost;let item='';
-    if(bagCount()>0&&Math.random()<0.5){const id=rnd(Object.keys(S.inv));S.inv[id]--;if(!S.inv[id])delete S.inv[id];item=itemName(id);}
+    if(bagCount()>0&&Math.random()<0.5){const key=rnd(Object.keys(S.inv));item=itemName(key);S.inv[key]--;if(!S.inv[key])delete S.inv[key];}
     murderSting();
     const where={hotell:L('Noen dirket opp døra til hotellrommet i natt!','Someone picked the lock of your hotel room last night!'),hostell:L('En på sovesalen rotet i sekken din mens du sov!','Someone in the dorm went through your bag while you slept!'),ute:L('Mens du sov på benken, kom en skummel skikkelse snikende …','While you slept on the bench, a creepy figure came sneaking up …')}[k];
     const and=L(' og ',' and ');
@@ -522,31 +1377,63 @@ function sleepAt(k){
   diary(txt);render();modal(h);
 }
 
-/* --- Om byen --- */
+/* --- Om byen og landet --- */
 function openAbout(){
-  const c=byId[S.at],t=CT(c.id);
-  modal(`<h2>${c.f} ${t.n}</h2><div class="fact">${t.fact}</div>
-  <p><span class="tag">${L('Land','Country')}: ${t.c}</span><span class="tag">${L('Hostell','Hostel')}: ${kr(c.h)}</span><span class="tag">${L('Hotell','Hotel')}: ${kr(hotelPrice(c))}</span><span class="tag">${L('Jobb: 5–10 spørsmål, 80 % riktig','Job: 5–10 questions, 80% correct')}</span><span class="tag">${L('Suvenir','Souvenir')}: ${t.item}</span>${c.port?`<span class="tag">⚓ ${L('Havneby','Port city')}</span>`:''}</p>
+  const c=byId[S.at],t=CT(c.id),co=CO(c.cc);
+  modal(`<h2>${c.f} ${t.n}</h2>
+  <div class="fact">${t.fact}</div>
+  <h3 class="sec">🌍 ${co.n}</h3>
+  <div class="facts">
+   <div><span>${L('Hovedstad','Capital')}</span><b>${co.cap}</b></div>
+   <div><span>${L('Språk','Language')}</span><b>${co.lang}</b></div>
+   <div><span>${L('Valuta','Currency')}</span><b>${co.cur}</b></div>
+   <div><span>${L('Folketall','Population')}</span><b>${co.pop}</b></div>
+  </div>
+  <h3 class="sec">📜 ${L('Historie','History')}</h3>
+  <div class="fact">${co.hist}</div>
+  <p><span class="tag">${L('Hostell','Hostel')}: ${kr(c.h)}</span><span class="tag">${L('Hotell','Hotel')}: ${kr(hotelPrice(c))}</span><span class="tag">${L('Suvenir','Souvenir')}: ${t.item}</span>${c.port?`<span class="tag">⚓ ${L('Havneby','Port city')}</span>`:''}</p>
   <button class="btn blue" onclick="closeModal()">${L('Lukk','Close')}</button>`);
 }
 
-/* --- Jobb --- */
+/* --- Jobb: velg mellom 4 jobber --- */
 let JOB=null;
+function jobsFor(cc){
+  const co=COUNTRIES[cc];
+  const mk=(j,own)=>({ic:j.ic,t:L(j.no,j.en),th:L(j.tn,j.te),own,q:j.q.map(r=>LANG==='en'?r.slice(4,8):r.slice(0,4))});
+  let list=[{ic:'🗺️',t:L('Turistguide','Tour guide'),th:L('landet','the country'),q:[]}].concat(co.jobs.map(j=>mk(j,false)));
+  if(!GAMER.skip.includes(cc))list.push(mk(GAMER,true));
+  return list;
+}
 function openJob(){
-  const c=byId[S.at],t=CT(c.id);
+  const c=byId[S.at],co=CO(c.cc);
+  let h=`<h2>💼 ${L('Ledige jobber i','Jobs available in')} ${co.n}</h2><p class="small">${L('Hver jobb tar én dag. Du får 5–10 spørsmål og må ha 80 % riktig for å få lønn.','Each job takes one day. You get 5–10 questions and need 80% correct to get paid.')}</p><div class="jobs">`;
+  jobsFor(c.cc).forEach((j,i)=>{h+=`<button class="jobcard" onclick="startJob(${i})"><span>${j.ic}</span><b>${j.t}</b><small>${L('Spørsmål om','Questions about')} ${j.th}</small></button>`;});
+  h+=`</div><button class="btn gray" onclick="closeModal()">${L('Tilbake','Back')}</button>`;
+  modal(h);
+}
+function startJob(i){
+  const c=byId[S.at],t=CT(c.id),j=jobsFor(c.cc)[i];
   const n=5+Math.floor(Math.random()*6);
-  const gen=n>=8?2:1;
-  const qs=shuffle(t.q).slice(0,n-gen).concat(shuffle(GEN()).slice(0,gen));
+  if(j.own){JOB={ic:j.ic,title:j.t,qs:shuffle(j.q).slice(0,n),i:0,right:0,n,need:Math.ceil(n*0.8),pay:r50(n*c.p*0.5)};return jobIntro(j);}
+  const gen=n>=8?1:0;
+  const themed=shuffle(j.q).slice(0,Math.min(j.q.length,n-gen));
+  const fill=shuffle(countryPool(c.cc)).slice(0,n-gen-themed.length);
+  const qs=themed.concat(fill).concat(shuffle(GEN()).slice(0,gen));
   const need=Math.ceil(n*0.8), pay=r50(n*c.p*0.5);
-  JOB={title:rnd(JOBL()),qs:shuffle(qs),i:0,right:0,n,need,pay};
-  modal(`<h2>💼 ${L('Jobb i','Job in')} ${t.n}</h2><p>${L('Du kan få jobb som','You can get a job as')} <b>${JOB.title.toLowerCase()}</b> ${L('for en dag!','for a day!')}</p>
-  <div class="fact">${L(`Sjefen vil teste hva du kan om <b>${t.c}</b>. Du får <b>${n} spørsmål</b> og må ha minst <b>${need} riktige (80 %)</b> for å få lønn.`,`The boss wants to test what you know about <b>${t.c}</b>. You get <b>${n} questions</b> and need at least <b>${need} correct (80%)</b> to get paid.`)}<br><br>💰 ${L('Lønn','Pay')}: <b>${kr(pay)}</b><br>❌ ${L('Klarer du det ikke, får du ingenting.','If you fail, you get nothing.')}</div>
-  <p class="small">${L('Jobben tar én dag, og etterpå må du finne et sted å sove.','The job takes one day, and afterwards you need somewhere to sleep.')}</p>
-  <button class="btn green" onclick="jobQ()">${L('Start arbeidsdagen','Start the working day')}</button>`);
+  JOB={ic:j.ic,title:j.t,qs:shuffle(qs),i:0,right:0,n,need,pay};
+  jobIntro(j);
+}
+function jobIntro(j){
+  const n=JOB.n,need=JOB.need,pay=JOB.pay;
+  modal(`<h2>${j.ic} ${j.t}</h2>
+  <div class="fact">${L(`Sjefen vil teste hva du kan om <b>${j.th}</b>. Du får <b>${n} spørsmål</b> og må ha minst <b>${need} riktige (80 %)</b> for å få lønn.`,`The boss wants to test what you know about <b>${j.th}</b>. You get <b>${n} questions</b> and need at least <b>${need} correct (80%)</b> to get paid.`)}<br><br>💰 ${L('Lønn','Pay')}: <b>${kr(pay)}</b><br>❌ ${L('Klarer du det ikke, får du ingenting.','If you fail, you get nothing.')}</div>
+  <p class="small">${L('Etterpå må du finne et sted å sove.','Afterwards you need somewhere to sleep.')}</p>
+  <button class="btn green" onclick="jobQ()">${L('Start arbeidsdagen','Start the working day')}</button>
+  <button class="btn gray" onclick="openJob()">${L('Velg en annen jobb','Choose another job')}</button>`);
 }
 function jobQ(){
   const q=JOB.qs[JOB.i];const opts=shuffle(q.slice(1));
-  let h=`<h2>${L('Spørsmål','Question')} ${JOB.i+1} ${L('av','of')} ${JOB.n}</h2><p class="small">${L('Riktige så langt','Correct so far')}: ${JOB.right} · ${L('Du trenger','You need')} ${JOB.need}</p><div class="q">${q[0]}</div>`;
+  let h=`<h2>${JOB.ic} ${L('Spørsmål','Question')} ${JOB.i+1} ${L('av','of')} ${JOB.n}</h2><p class="small">${L('Riktige så langt','Correct so far')}: ${JOB.right} · ${L('Du trenger','You need')} ${JOB.need}</p><div class="q">${q[0]}</div>`;
   opts.forEach(o=>{h+=`<button class="ans" data-o="${encodeURIComponent(o)}">${o}</button>`;});
   h+='<div id="jobfb"></div>';
   modal(h);
@@ -564,7 +1451,8 @@ function jobEnd(){
   S.money+=pay;S.day++;S.needNight=true;
   if(passed)sndCoin();else sndBad();
   const msg=passed?(JOB.right===JOB.n?L('Alt riktig! Sjefen klappet deg på skulderen.','All correct! The boss patted you on the back.'):L('Godkjent! Sjefen betalte deg lønna.','Approved! The boss paid your wages.')):L('Sjefen ristet på hodet: «Du må lære mer om landet vårt.» Ingen lønn i dag …','The boss shook his head: «You need to learn more about our country.» No pay today …');
-  diary(passed?L(`Jobbet som ${JOB.title.toLowerCase()} i ${cn(c.id)} og tjente ${kr(pay)}.`,`Worked as a ${JOB.title.toLowerCase()} in ${cn(c.id)} and earned ${kr(pay)}.`):L(`Strøk på jobben i ${cn(c.id)} (${JOB.right} av ${JOB.n}) og fikk ingen lønn.`,`Failed the job in ${cn(c.id)} (${JOB.right} of ${JOB.n}) and got no pay.`));
+  const title=JOB.title.toLowerCase();
+  diary(passed?L(`Jobbet som ${title} i ${cn(c.id)} og tjente ${kr(pay)}.`,`Worked as a ${title} in ${cn(c.id)} and earned ${kr(pay)}.`):L(`Strøk som ${title} i ${cn(c.id)} (${JOB.right} av ${JOB.n}) og fikk ingen lønn.`,`Failed as a ${title} in ${cn(c.id)} (${JOB.right} of ${JOB.n}) and got no pay.`));
   modal(`<h2>${passed?L('Arbeidsdagen er over','The working day is over'):L('Ikke godkjent','Not approved')}</h2><p class="big">${JOB.right} ${L('av','of')} ${JOB.n} ${L('riktige','correct')} (${pct} %)</p><p class="big" style="color:${passed?'var(--green)':'var(--red)'}">${passed?'+ '+kr(pay):'0 kr'}</p><p>${msg}</p><button class="btn green" onclick="openNight()">🌙 ${L('Finn overnatting','Find a place to sleep')}</button>`);
   render();
 }
@@ -576,7 +1464,7 @@ const HOME_LOAN=()=>L(['Pappa: «Greit da, jeg setter inn 1000 kr. Men du må be
  ['Dad: «Alright then, I\'ll send 1000 kr. But you have to pay it back, you hear!»','Mum: «Of course, sweetheart. 1000 kr is on its way. Don\'t spend it all on souvenirs!»','Dad: «Hmm … OK. 1000 kr. I\'m writing it down in my little book.»']);
 function openHome(){
   const debt=S.debt||0;ring();
-  let h=`<h2>📞 ${L('Ring hjem','Call home')}</h2><div class="fact">📱 ${L('Ring ring … ring ring …','Ring ring … ring ring …')}<br><br><i>${rnd(HOME_HI())}</i></div>
+  let h=`<h2>📞 ${L('Ring hjem','Call home')}</h2><div class="fact">📱 Ring ring … ring ring …<br><br><i>${rnd(HOME_HI())}</i></div>
   <p>${L('Du skylder hjemme','You owe at home')}: <b>${kr(debt)}</b> (${L('maks','max')} ${kr(3000)})</p>`;
   h+=`<button class="btn green" onclick="borrow()" ${debt>=3000?'disabled':''}>💸 ${L('Lån 1000 kr','Borrow 1000 kr')}</button>`;
   if(debt>=3000)h+=`<p class="small" style="color:var(--red)"><b>${L('Pappa: «Nå får du klare deg selv en stund! Ta deg en jobb.»','Dad: «Now you\'ll have to manage on your own for a while! Get a job.»')}</b></p>`;
@@ -591,24 +1479,30 @@ function borrow(){if((S.debt||0)>=3000)return;S.debt=(S.debt||0)+1000;S.money+=1
 function repay(){if(!S.debt||S.money<1000)return;S.debt-=1000;S.money-=1000;sndOk();diary(L('Betalte tilbake 1000 kr til mamma og pappa.','Paid back 1000 kr to Mum and Dad.'));render();
   modal(`<h2>📞 ${L('Ring hjem','Call home')}</h2><div class="fact"><i>${L('Mamma: «Så flink du er! Takk for pengene.»','Mum: «Well done you! Thanks for the money.»')}</i></div><p>${L('Du skylder nå','You now owe')}: <b>${kr(S.debt)}</b></p><button class="btn gray" onclick="closeModal()">${L('Ha det! 👋','Bye! 👋')}</button>`);}
 
-/* --- Marked --- */
+/* --- Marked: byens suvenir + landets egne varer --- */
 function openMarket(){
   const c=byId[S.at];const n=bagCount();
-  const want=S.missions.some(m=>m.from===S.at);
-  modal(`<h2>🛒 ${L('Marked i','Market in')} ${cn(c.id)}</h2>
-  <div class="row"><div><b>${itemName(c.id)}</b><div class="small">${L('Lokal suvenir fra','Local souvenir from')} ${cn(c.id)}${want?` · <b style="color:var(--red)">${L('Du trenger denne til et oppdrag!','You need this for a mission!')}</b>`:''}</div></div>
-  <button class="mini" id="buyBtn" ${S.money<c.pr||n>=MAXBAG?'disabled':''}>${L('Kjøp','Buy')} ${kr(c.pr)}</button></div>
-  <p class="small">${L('Ryggsekken','Backpack')}: ${n}/${MAXBAG}. ${n>=MAXBAG?L('Ryggsekken er full!','Your backpack is full!'):''} ${S.money<c.pr?L('Du har ikke nok penger – ta en jobb!','Not enough money – get a job!'):''}</p>
-  <button class="btn gray" onclick="closeModal()">${L('Tilbake','Back')}</button>`);
-  $('buyBtn').onclick=()=>{S.money-=c.pr;S.inv[c.id]=(S.inv[c.id]||0)+1;sndCoin();diary(L(`Kjøpte ${itemName(c.id)} i ${cn(c.id)} for ${kr(c.pr)}.`,`Bought a ${itemName(c.id)} in ${cn(c.id)} for ${kr(c.pr)}.`));toast(L('Lagt i ryggsekken: ','Added to backpack: ')+itemName(c.id));render();openMarket();};
+  const keys=[c.id].concat(COUNTRIES[c.cc].items.map((_,i)=>c.cc+':'+i));
+  let h=`<h2>🛒 ${L('Marked i','Market in')} ${cn(c.id)}</h2><p class="small">${L(`Varer fra ${CT(c.id).c}. Tips: Varer kan selges dyrere jo lenger unna du kommer!`,`Goods from ${CT(c.id).c}. Tip: Goods sell for more the further away you take them!`)}</p>`;
+  keys.forEach((k,i)=>{const it=itemInfo(k);const need=S.missions.some(m=>m.from===k);
+    h+=`<div class="row"><div><b>${it.name}</b><div class="small">${i===0?L('Suvenir fra ','Souvenir from ')+cn(c.id):L('Typisk for ','Typical of ')+CT(c.id).c}${need?` · <b style="color:var(--red)">${L('Trengs til oppdrag!','Needed for a mission!')}</b>`:''}</div></div>
+    <button class="mini" ${S.money<it.price||n>=MAXBAG?'disabled':''} onclick="buyItem('${k}')">${L('Kjøp','Buy')} ${kr(it.price)}</button></div>`;});
+  h+=`<p class="small">${L('Ryggsekken','Backpack')}: ${n}/${MAXBAG}. ${n>=MAXBAG?L('Ryggsekken er full!','Your backpack is full!'):''}</p>`;
+  const mine=Object.keys(S.inv);
+  if(mine.length){h+=`<p><b>${L('Selg fra ryggsekken','Sell from your backpack')}</b></p>`;
+    mine.forEach(k=>{const it=itemInfo(k);const sp=sellPrice(k);h+=`<div class="row"><div>${COUNTRIES[it.cc].f} ${it.name} ${S.inv[k]>1?'× '+S.inv[k]:''}<div class="small">${L('Kjøpt for','Bought for')} ${kr(it.price)}${sp>it.price?' · <b style="color:var(--green)">'+L('Fortjeneste!','Profit!')+'</b>':''}</div></div><button class="mini gray" onclick="sellItem('${k}',true)">${L('Selg','Sell')} ${kr(sp)}</button></div>`;});}
+  h+=`<button class="btn gray" onclick="closeModal()">${L('Tilbake','Back')}</button>`;
+  modal(h);
 }
+function buyItem(k){const it=itemInfo(k);if(S.money<it.price||bagCount()>=MAXBAG)return;S.money-=it.price;S.inv[k]=(S.inv[k]||0)+1;sndCoin();
+  diary(L(`Kjøpte ${it.name} i ${cn(S.at)} for ${kr(it.price)}.`,`Bought ${it.name} in ${cn(S.at)} for ${kr(it.price)}.`));toast(L('Lagt i ryggsekken: ','Added to backpack: ')+it.name);render();openMarket();}
 
 /* --- Oppdrag --- */
 function makeOffers(){
   const offers=[];let tries=0;
-  while(offers.length<3&&tries<100){tries++;
+  while(offers.length<3&&tries<150){tries++;
     const from=rnd(CITIES),to=rnd(CITIES);
-    if(from.id===to.id||to.id===S.at)continue;
+    if(from.id===to.id||to.id===S.at||from.cc===to.cc)continue;
     if(offers.some(o=>o.from===from.id||o.to===to.id))continue;
     if(S.missions.some(m=>m.from===from.id&&m.to===to.id))continue;
     const d=dist(from,to)+dist(byId[S.at],from);
@@ -617,7 +1511,7 @@ function makeOffers(){
   S.offers=offers;
 }
 function missionText(m){const f=byId[m.from],t=byId[m.to];
-  return L(`Kjøp <b>${itemName(m.from)}</b> i ${f.f} ${cn(f.id)} og lever den til <b>${m.who}</b> i ${t.f} ${cn(t.id)}.`,`Buy a <b>${itemName(m.from)}</b> in ${f.f} ${cn(f.id)} and deliver it to <b>${m.who}</b> in ${t.f} ${cn(t.id)}.`);}
+  return L(`Kjøp <b>${itemName(m.from)}</b> i ${f.f} ${cn(f.id)} og lever den til <b>${m.who}</b> i ${t.f} ${cn(t.id)}.`,`Buy <b>${itemName(m.from)}</b> in ${f.f} ${cn(f.id)} and deliver it to <b>${m.who}</b> in ${t.f} ${cn(t.id)}.`);}
 function openBoard(){
   const c=byId[S.at];let h=`<h2>📌 ${L('Oppslagstavla i','Notice board in')} ${cn(c.id)}</h2>`;
   S.missions.filter(m=>m.to===S.at&&(S.inv[m.from]||0)>0).forEach(m=>{h+=`<div class="mission" style="border-color:var(--green)">🎉 ${m.who} ${L('venter på deg her!','is waiting for you here!')} ${missionText(m)}<br><button class="btn green" onclick="deliver(${m.id})">${L('Lever og få','Deliver and get')} ${kr(m.reward)}</button></div>`;});
@@ -628,7 +1522,7 @@ function openBoard(){
   modal(h);
 }
 function accept(id){const o=S.offers.find(x=>x.id===id);if(!o||S.missions.length>=MAXMIS)return;S.missions.push(o);S.offers=S.offers.filter(x=>x.id!==id);sndOk();
-  diary(L(`Nytt oppdrag: hente ${itemName(o.from)} i ${cn(o.from)} til ${o.who} i ${cn(o.to)}.`,`New mission: bring a ${itemName(o.from)} from ${cn(o.from)} to ${o.who} in ${cn(o.to)}.`));render();openBoard();}
+  diary(L(`Nytt oppdrag: hente ${itemName(o.from)} i ${cn(o.from)} til ${o.who} i ${cn(o.to)}.`,`New mission: bring ${itemName(o.from)} from ${cn(o.from)} to ${o.who} in ${cn(o.to)}.`));render();openBoard();}
 function deliver(id){
   const m=S.missions.find(x=>x.id===id);if(!m||!(S.inv[m.from]>0))return;
   S.inv[m.from]--;if(!S.inv[m.from])delete S.inv[m.from];
@@ -647,10 +1541,13 @@ function modes(a,b){
   if(a.port&&b.port)list.push({k:'baat',ic:'🚢',n:L('Båt','Boat'),price:r50(100+d*0.035),days:Math.max(1,Math.ceil(d/650))});
   return list;
 }
-function openTravel(){
+let TRAVEL_F='all';
+function openTravel(f){
+  if(f)TRAVEL_F=f;
   const a=byId[S.at];
-  const list=CITIES.filter(c=>c.id!==S.at).map(c=>({c,d:dist(a,c)})).sort((x,y)=>x.d-y.d);
-  let h=`<h2>✈️ ${L('Hvor vil du reise?','Where do you want to go?')}</h2><p class="small">${L('Du kan også trykke på en by på kartet. 🟡 = kjøp ting der · 🟢 = lever ting der','You can also tap a city on the map. 🟡 = buy an item there · 🟢 = deliver an item there')}</p>`;
+  const conts=[['all',L('Alle','All')],['EU','Europa'],['AS',L('Asia','Asia')],['AF',L('Afrika','Africa')],['NA',L('Nord-Am.','N. America')],['SA',L('Sør-Am.','S. America')],['OC',L('Oseania','Oceania')]];
+  const list=CITIES.filter(c=>c.id!==S.at&&(TRAVEL_F==='all'||c.k===TRAVEL_F)).map(c=>({c,d:dist(a,c)})).sort((x,y)=>x.d-y.d);
+  let h=`<h2>✈️ ${L('Hvor vil du reise?','Where do you want to go?')}</h2><div class="chips">${conts.map(([k,t])=>`<button class="chip ${TRAVEL_F===k?'on':''}" onclick="openTravel('${k}')">${t}</button>`).join('')}</div><p class="small">${L('Du kan også trykke på en prikk på kartet. 🟡 = kjøp ting der · 🟢 = lever ting der','You can also tap a dot on the map. 🟡 = buy an item there · 🟢 = deliver an item there')}</p>`;
   list.forEach(({c,d})=>{
     const buy=S.missions.some(m=>m.from===c.id&&!(S.inv[m.from]>0)),drop=S.missions.some(m=>m.to===c.id&&S.inv[m.from]>0);
     const cheapest=Math.min(...modes(a,c).map(m=>m.price));
@@ -660,11 +1557,11 @@ function openTravel(){
 }
 function openTravelTo(id){
   const a=byId[S.at],b=byId[id],d=dist(a,b),ms=modes(a,b);
-  let h=`<h2>${b.f} ${L('Reise til','Travel to')} ${cn(b.id)}</h2><p>${cn(a.id)} → ${cn(b.id)}: <b>${km(d)}</b></p>`;
+  let h=`<h2>${b.f} ${L('Reise til','Travel to')} ${cn(b.id)}</h2><p>${cn(a.id)} → ${cn(b.id)} (${CT(b.id).c}): <b>${km(d)}</b></p>`;
   ms.forEach(m=>{h+=`<div class="row"><div><span style="font-size:24px">${m.ic}</span> <b>${m.n}</b><div class="small">${days(m.days)} · ${kr(m.price)}</div></div><button class="mini" ${S.money<m.price?'disabled':''} onclick="travel('${id}','${m.k}')">${L('Kjøp billett','Buy ticket')}</button></div>`;});
   if(!ms.some(m=>S.money>=m.price))h+=`<p class="small" style="color:var(--red)"><b>${L('Du har ikke råd til billett. Ta en jobb eller ring hjem!','You can\'t afford a ticket. Get a job or call home!')}</b></p>`;
   if(a.lm!==b.lm)h+=`<p class="small">${L('Tog går ikke over havet. Båt går bare mellom havnebyer ⚓.','Trains don\'t cross the sea. Boats only go between port cities ⚓.')}</p>`;
-  h+=`<button class="btn gray" onclick="openTravel()">${L('Velg en annen by','Choose another city')}</button>`;
+  h+=`<button class="btn gray" onclick="openTravel()">${L('Velg et annet sted','Choose another place')}</button>`;
   modal(h);
 }
 let busy=false;
@@ -687,7 +1584,7 @@ function arrive(id,m){
   let stamp=false;
   if(!S.visited.includes(id)){S.visited.push(id);S.stampDay[id]=S.day;stamp=true;}
   let ev='';
-  if(Math.random()<0.3){const i=Math.floor(Math.random()*EVL().length),e=EVL()[i];S.money=Math.max(0,S.money+e[1]);if(e[1]<0)setTimeout(murderSting,600);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
+  if(Math.random()<0.3){const e=rnd(EVL());S.money=Math.max(0,S.money+e[1]);if(e[1]<0)setTimeout(murderSting,600);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
   S.needNight=true;makeOffers();
   diary(L(`Kom fram til ${t.n} etter ${days(m.days)} med ${m.n.toLowerCase()}.`,`Arrived in ${t.n} after ${days(m.days)} by ${m.n.toLowerCase()}.`));
   render();
@@ -707,19 +1604,20 @@ function openBag(){
   const items=Object.entries(S.inv);
   h+=`<p><b>${L('Ting','Items')} (${bagCount()}/${MAXBAG}):</b></p>`;
   if(!items.length)h+=`<p class="small">${L('Ryggsekken er tom.','Your backpack is empty.')}</p>`;
-  items.forEach(([id,n])=>{const src=byId[id];h+=`<div class="row"><div>${src.f} ${itemName(id)} ${n>1?'× '+n:''}</div><button class="mini gray" onclick="sellItem('${id}')">${L('Selg','Sell')} ${kr(Math.round(src.pr/2))}</button></div>`;});
+  items.forEach(([k,n])=>{const it=itemInfo(k);h+=`<div class="row"><div>${COUNTRIES[it.cc].f} ${it.name} ${n>1?'× '+n:''}</div><button class="mini gray" onclick="sellItem('${k}')">${L('Selg','Sell')} ${kr(sellPrice(k))}</button></div>`;});
   h+=`<p><b>${L('Mine oppdrag','My missions')} (${S.missions.length}/${MAXMIS}):</b></p>`;
   if(!S.missions.length)h+=`<p class="small">${L('Ingen oppdrag. Se på oppslagstavla!','No missions. Check the notice board!')}</p>`;
   S.missions.forEach(m=>{const has=(S.inv[m.from]||0)>0;h+=`<div class="mission">${has?'🟢 '+L('Har tingen – lever i ','Got it – deliver in ')+cn(m.to):'🟡 '+L('Må kjøpes i ','Buy it in ')+cn(m.from)}<br>${missionText(m)}<br><span class="tag">${L('Belønning','Reward')}: ${kr(m.reward)}</span> <button class="mini red" style="margin-top:6px" onclick="dropMission(${m.id})">${L('Avbryt','Cancel')}</button></div>`;});
   h+=`<button class="btn gray" onclick="closeModal()">${L('Lukk','Close')}</button>`;
   modal(h);
 }
-function sellItem(id){const src=byId[id];if(!S.inv[id])return;const v=Math.round(src.pr/2);S.inv[id]--;if(!S.inv[id])delete S.inv[id];S.money+=v;sndCoin();diary(L(`Solgte ${itemName(id)} for ${kr(v)}.`,`Sold a ${itemName(id)} for ${kr(v)}.`));render();openBag();}
+function sellItem(k,fromMarket){if(!S.inv[k])return;const v=sellPrice(k),name=itemName(k);S.inv[k]--;if(!S.inv[k])delete S.inv[k];S.money+=v;sndCoin();
+  diary(L(`Solgte ${name} for ${kr(v)}.`,`Sold ${name} for ${kr(v)}.`));render();fromMarket?openMarket():openBag();}
 function dropMission(id){S.missions=S.missions.filter(m=>m.id!==id);diary(L('Du ga opp et oppdrag.','You gave up a mission.'));render();openBag();}
 
 /* --- Pass --- */
 function openPass(){
-  let h=`<h2>🛂 ${L('Passet til','Passport of')} ${S.name}</h2><p>${S.visited.length} ${L('av','of')} ${CITIES.length} ${L('byer besøkt','cities visited')}</p><div class="stamps">`;
+  let h=`<h2>🛂 ${L('Passet til','Passport of')} ${S.name}</h2><p>${S.visited.length} ${L('av','of')} ${CITIES.length} ${L('steder besøkt','places visited')}</p><div class="stamps">`;
   CITIES.forEach(c=>{h+=S.visited.includes(c.id)?`<div class="stamp"><div class="f">${c.f}</div>${cn(c.id)}<br>${L('Dag','Day')} ${S.stampDay[c.id]||1}</div>`:`<div class="stamp empty"><div class="f">❔</div>${cn(c.id)}</div>`;});
   h+=`</div><button class="btn gray" onclick="closeModal()">${L('Lukk','Close')}</button>`;
   modal(h);
@@ -728,7 +1626,7 @@ function openPass(){
 /* --- Meny --- */
 function openMenu(){
   modal(`<h2>⚙️ ${L('Meny','Menu')}</h2><p>${L('Spillet lagres automatisk.','The game saves automatically.')}</p>
-  <p><b>${L('Språk','Language')}</b></p><div style="display:flex;gap:8px"><button class="mini ${LANG==='no'?'':'gray'}" onclick="setLang('no');openMenu()">🇳🇴 Norsk</button><button class="mini ${LANG==='en'?'':'gray'}" onclick="setLang('en');openMenu()">🇬🇧 English</button></div>
+  <p><b>${L('Språk','Language')}</b></p><div style="display:flex;gap:8px"><button class="mini ${LANG==='no'?'':'gray'}" onclick="setLang('no');openMenu()">Norsk</button><button class="mini ${LANG==='en'?'':'gray'}" onclick="setLang('en');openMenu()">English</button></div>
   <button class="btn blue" onclick="toStart()">${L('Til startskjermen','Back to start screen')}</button>
   <button class="btn" onclick="askRestart()">${L('Start helt på nytt','Start all over')}</button>
   <button class="btn gray" onclick="closeModal()">${L('Tilbake','Back')}</button>`);
@@ -744,7 +1642,7 @@ function win(){
   clearSave();
   [523,659,784,1047].forEach((f,i)=>beep(f,.25,'square',.06,i*.15));
   modal(`<h2>🏆 ${L('Gratulerer','Congratulations')}, ${S.name}!</h2><p class="big">${L(`Du har fullført alle ${GOAL} oppdragene!`,`You have completed all ${GOAL} missions!`)}</p>
-  <div class="fact">📅 ${L('Dager brukt','Days used')}: <b>${S.day}</b><br>🛂 ${L('Byer besøkt','Cities visited')}: <b>${S.visited.length}</b><br>💰 ${L('Penger igjen','Money left')}: <b>${kr(S.money)}</b>${(S.debt||0)>0?'<br>📞 '+L('Gjeld hjemme','Debt at home')+': <b>'+kr(S.debt)+'</b>':''}</div>
+  <div class="fact">📅 ${L('Dager brukt','Days used')}: <b>${S.day}</b><br>🛂 ${L('Steder besøkt','Places visited')}: <b>${S.visited.length}</b><br>💰 ${L('Penger igjen','Money left')}: <b>${kr(S.money)}</b>${(S.debt||0)>0?'<br>📞 '+L('Gjeld hjemme','Debt at home')+': <b>'+kr(S.debt)+'</b>':''}</div>
   <p class="big">${L('Poengsum','Score')}: ${sc}</p>
   <button class="btn green" onclick="S=null;toStart()">${L('Til startskjermen','Back to start screen')}</button>`);
 }
@@ -753,11 +1651,11 @@ function win(){
 function showHS(){let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
   $('hsBox').innerHTML=hs.length?`<b>🏆 ${L('Beste reisende','Best travellers')}</b><ol>`+hs.map(h=>`<li>${h.n} – ${h.s} ${L('poeng','points')} (${days(h.d)})</li>`).join('')+'</ol>':'';}
 function toStart(){$('modal').classList.add('hidden');$('game').classList.add('hidden');$('start').classList.remove('hidden');$('contBtn').classList.toggle('hidden',!load());applyLang();}
-function startGame(st){startMusic();S=st;if(S.debt==null)S.debt=0;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();if(S.needNight)openNight();}
+function startGame(st){startMusic();S=st;if(S.debt==null)S.debt=0;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();applyZoom();if(S.needNight)openNight();}
 function beginNew(){
   S=newState($('pname').value.trim());makeOffers();startGame(S);
-  modal(`<h2>🎒 ${L('God tur','Have a great trip')}, ${S.name}!</h2><div class="fact">${L(`Du står på Oslo S med 2000 kr i lomma og en tom ryggsekk.<br><br>1. Gå til <b>📌 Oppdrag</b> og ta et oppdrag.<br>2. Reis til byen der tingen selges og kjøp den på <b>🛒 Marked</b>.<br>3. Reis videre og lever den.<br><br>Går du tom for penger? <b>💼 Ta en jobb</b> eller <b>📞 ring hjem</b> og lån!<br>Fullfør ${GOAL} oppdrag på færrest mulig dager.`,
-   `You are standing at Oslo Central Station with 2000 kr and an empty backpack.<br><br>1. Go to <b>📌 Missions</b> and take a mission.<br>2. Travel to the city where the item is sold and buy it at the <b>🛒 Market</b>.<br>3. Travel on and deliver it.<br><br>Out of money? <b>💼 Get a job</b> or <b>📞 call home</b> and borrow!<br>Complete ${GOAL} missions in as few days as possible.`)}</div>
+  modal(`<h2>🎒 ${L('God tur','Have a great trip')}, ${S.name}!</h2><div class="fact">${L(`Du står på Oslo S med 2000 kr i lomma og en tom ryggsekk.<br><br>1. Gå til <b>📌 Oppdrag</b> og ta et oppdrag.<br>2. Reis til stedet der tingen selges og kjøp den på <b>🛒 Marked</b>.<br>3. Reis videre og lever den.<br><br>Går du tom for penger? <b>💼 Ta en jobb</b>, <b>handle</b> med varer eller <b>📞 ring hjem</b>!<br>Les om landet og historien under <b>📖 Om landet</b>. Fullfør ${GOAL} oppdrag på færrest mulig dager.`,
+   `You are standing at Oslo Central Station with 2000 kr and an empty backpack.<br><br>1. Go to <b>📌 Missions</b> and take a mission.<br>2. Travel to the place where the item is sold and buy it at the <b>🛒 Market</b>.<br>3. Travel on and deliver it.<br><br>Out of money? <b>💼 Get a job</b>, <b>trade</b> goods or <b>📞 call home</b>!<br>Read about the country and its history under <b>📖 About</b>. Complete ${GOAL} missions in as few days as possible.`)}</div>
   <button class="btn green" onclick="openBoard()">${L('Se oppslagstavla','See the notice board')}</button>`);
 }
 $('newBtn').onclick=()=>{
@@ -765,10 +1663,13 @@ $('newBtn').onclick=()=>{
   beginNew();
 };
 $('contBtn').onclick=()=>{const s=load();if(s)startGame(s);};
-document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:openTravel,bag:openBag,pass:openPass,home:openHome,menu:openMenu})[b.dataset.a]();});
+document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:()=>openTravel(),bag:openBag,pass:openPass,home:openHome,menu:openMenu})[b.dataset.a]();});
 document.querySelectorAll('.langbtn').forEach(b=>b.onclick=()=>setLang(b.dataset.l));
 $('musicBtn').onclick=()=>setMusic(!MUS.on);
-drawMap();toStart();
+$('zIn').onclick=()=>{ZOOM=Math.min(3,ZOOM+0.5);applyZoom();};
+$('zOut').onclick=()=>{ZOOM=Math.max(1,ZOOM-0.5);applyZoom();};
+window.addEventListener('resize',()=>{if(S)applyZoom();});
+drawMap();toStart();loadWorld();
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
 
 </script>
