@@ -1,810 +1,707 @@
-<!DOCTYPE html>
-<html lang="no">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#5b3a21">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Globetrotter">
-<title>Globetrotter – Jorda rundt med ryggsekk</title>
+<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Andebu Rivals</title><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0b2a4a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Andebu Rivals">
 <style>
-:root{--sea:#1d5b86;--sea2:#14476b;--land:#dcc78f;--land2:#a98b4f;--ink:#2b2118;--paper:#f7eed6;--paper2:#eadbb4;--red:#b8322a;--green:#1e7b45;--gold:#f0b429;--leather:#5b3a21}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%}
-body{font-family:"Trebuchet MS",Verdana,sans-serif;background:radial-gradient(circle at 30% 20%,#3a2414,#1c120a);color:var(--ink)}
-button{font:inherit;cursor:pointer}
-.hidden{display:none!important}
-
-/* START */
-#start{min-height:100%;display:flex;align-items:center;justify-content:center;padding:12px}
-@media(max-width:480px){.card{padding:16px 14px}.globe{font-size:48px}#top{font-size:13px;padding:6px}#top .stat{padding:3px 7px}#cityhead h2{font-size:22px}#mbox{padding:14px}}
-.card{background:var(--paper);border:4px solid var(--leather);border-radius:14px;box-shadow:0 10px 40px #000a,inset 0 0 40px #c9b07a55;padding:24px;max-width:560px;width:100%}
-.logo{font-family:Georgia,serif;font-size:clamp(24px,8.5vw,42px);font-weight:bold;text-align:center;color:var(--red);letter-spacing:1px;overflow-wrap:anywhere;text-shadow:2px 2px 0 #f0b42988;margin:0}
-.sub{text-align:center;font-style:italic;margin:4px 0 18px;color:#6b4c2c}
-.globe{font-size:64px;text-align:center;animation:spin 6s linear infinite;display:block}
-@keyframes spin{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
-label{font-weight:bold;display:block;margin-bottom:6px}
-input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid var(--land2);border-radius:8px;background:#fffaf0}
-.btn{display:block;width:100%;padding:13px;margin-top:10px;border:none;border-radius:10px;font-size:18px;font-weight:bold;color:#fff;background:var(--red);box-shadow:0 4px 0 #7a1d17;transition:transform .08s}
-.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #7a1d17}
-.btn.green{background:var(--green);box-shadow:0 4px 0 #0f4a28}
-.btn.blue{background:#2471a3;box-shadow:0 4px 0 #154a6d}
-.btn.gray{background:#8a7a62;box-shadow:0 4px 0 #574c3c}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.how{font-size:14px;line-height:1.5;background:var(--paper2);border-radius:8px;padding:10px 14px;margin-top:16px}
-.how h3{margin:0 0 4px}
-.credit{text-align:center;font-size:13px;color:#7a5a3a;margin-top:16px;font-weight:bold;letter-spacing:1px}
-.hs{font-size:14px;margin-top:12px}
-.hs ol{margin:4px 0;padding-left:22px}
-
-/* GAME */
-#game{display:flex;flex-direction:column;height:100%;max-width:1100px;margin:0 auto}
-#top{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-between;align-items:center;background:var(--leather);color:#fbe9c4;padding:8px 10px;border-bottom:3px solid #2e1d10;font-weight:bold;font-size:15px}
-#top .stat{background:#0003;border-radius:8px;padding:4px 9px;white-space:nowrap}
-#mapwrap{position:relative;overflow:auto;background:var(--sea2);border-bottom:3px solid #2e1d10;flex:0 0 auto}
-#map{display:block;width:100%;min-width:760px;height:auto}
-.land{fill:var(--land);stroke:var(--land2);stroke-width:1.2;stroke-linejoin:round}
-.grid{stroke:#ffffff22;stroke-width:1}
-.eq{stroke:#f0b42966;stroke-dasharray:6 5;stroke-width:1.2}
-.city{cursor:pointer}
-.city .dot{fill:var(--red);stroke:#fff;stroke-width:1.5}
-.city.visited .dot{fill:var(--green)}
-.city.here .dot{fill:var(--gold);stroke:#000;stroke-width:2}
-.city .hit{fill:transparent}
-.city:hover .dot{r:7}
-.lbl{font-size:12px;font-weight:bold;fill:#2b2118;paint-order:stroke;stroke:#f7eed6;stroke-width:3px;pointer-events:none}
-.ring{fill:none;stroke-width:2.5;animation:pulse 1.4s ease-in-out infinite}
-.ring.buy{stroke:#f0b429}.ring.drop{stroke:#2ecc71}
-@keyframes pulse{50%{stroke-opacity:.25}}
-.route{stroke:#fff;stroke-width:2;stroke-dasharray:5 5;fill:none}
-#plane{font-size:20px}
-
-#panel{flex:1;overflow:auto;background:var(--paper);padding:12px}
-#cityhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-#cityhead .flag{font-size:38px}
-#cityhead h2{margin:0;font-family:Georgia,serif;font-size:26px}
-#cityhead small{color:#6b4c2c}
-#actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-@media(max-width:560px){#actions{grid-template-columns:repeat(3,1fr)}}
-.act{background:#fffaf0;border:2px solid var(--land2);border-radius:10px;padding:9px 4px;text-align:center;font-weight:bold;font-size:14px;box-shadow:0 3px 0 var(--land2)}
-.act span{display:block;font-size:26px}
-.act:active{transform:translateY(2px);box-shadow:0 1px 0 var(--land2)}
-.act.badge{position:relative}
-.act.badge::after{content:"!";position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:50%;width:20px;height:20px;line-height:20px;font-size:13px}
-#diary{margin-top:10px;background:var(--paper2);border-left:5px solid var(--land2);border-radius:6px;padding:8px 12px;font-size:14px;font-style:italic;min-height:38px}
-
-/* MODAL */
-#modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:12px;z-index:10}
-#mbox{background:var(--paper);border:4px solid var(--leather);border-radius:14px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:18px;position:relative;box-shadow:0 10px 40px #000}
-#mbox h2{margin:0 0 10px;font-family:Georgia,serif;color:var(--red)}
-#mclose{position:absolute;top:8px;right:10px;background:none;border:none;font-size:26px;color:#6b4c2c}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border-bottom:1px dashed var(--land2)}
-.row:last-child{border-bottom:none}
-.row .small{font-size:13px;color:#6b4c2c}
-.mini{padding:8px 12px;border:none;border-radius:8px;font-weight:bold;color:#fff;background:var(--green);white-space:nowrap}
-.mini.red{background:var(--red)}.mini.blue{background:#2471a3}.mini.gray{background:#8a7a62}
-.mini:disabled{opacity:.4}
-.ans{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;border:2px solid var(--land2);border-radius:10px;background:#fffaf0;font-size:16px}
-.ans.ok{background:#bfe8c9;border-color:var(--green)}
-.ans.bad{background:#f3c1bb;border-color:var(--red)}
-.q{font-size:18px;font-weight:bold;margin:8px 0}
-.fact{background:var(--paper2);padding:12px;border-radius:10px;line-height:1.5}
-.stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
-.stamp{border:3px dashed var(--red);border-radius:10px;padding:6px;text-align:center;font-size:12px;font-weight:bold;color:var(--red);transform:rotate(-4deg);background:#fff5}
-.stamp:nth-child(even){transform:rotate(3deg);border-color:#2471a3;color:#2471a3}
-.stamp .f{font-size:26px}
-.stamp.empty{border-color:#ccc;color:#bbb;transform:none}
-.mission{background:#fffaf0;border:2px solid var(--land2);border-radius:10px;padding:10px;margin:8px 0}
-.mission b{color:var(--red)}
-.tag{display:inline-block;font-size:12px;padding:2px 7px;border-radius:10px;background:var(--paper2);margin-right:4px}
-#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:bold;z-index:20;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
-#toast.show{opacity:1}
-.big{font-size:22px;text-align:center;font-weight:bold}
-</style>
-</head>
-<body>
-
-<!-- STARTSKJERM -->
-<div id="start">
-  <div class="card">
-    <span class="globe">🌍</span>
-    <h1 class="logo">GLOBETROTTER</h1>
-    <p class="sub">Jorda rundt med ryggsekk</p>
-    <label for="pname">Hva heter du, reisende?</label>
-    <input type="text" id="pname" maxlength="16" placeholder="Skriv navnet ditt">
-    <button class="btn" id="newBtn">🎒 Start ny reise</button>
-    <button class="btn green hidden" id="contBtn">▶ Fortsett reisen</button>
-    <div class="how">
-      <h3>Slik spiller du</h3>
-      Du starter i Oslo med 2000 kr i lomma. Ta på deg <b>oppdrag</b> fra oppslagstavla: kjøp en ting i én by og lever den til noen i en annen by.
-      Mangler du penger? <b>Ta en jobb</b> – svar på 5–10 spørsmål om landet, og har du minst 80 % riktig, får du lønn. Helt blakk? <b>Ring hjem</b> og lån penger!
-      Reis med fly, tog eller båt, samle stempler i <b>passet</b> og fullfør <b>8 oppdrag</b> på færrest mulig dager!
-    </div>
-    <div class="hs" id="hsBox"></div>
-    <div class="credit">Wåle production 2026</div>
-  </div>
-</div>
-
-<!-- SPILL -->
-<div id="game" class="hidden">
-  <div id="top">
-    <span class="stat" id="sName">🎒</span>
-    <span class="stat" id="sMoney">💰</span>
-    <span class="stat" id="sDay">📅</span>
-    <span class="stat" id="sDone">📦</span>
-    <span class="stat" id="sStamps">🛂</span>
-    <button class="stat" id="musicBtn" style="border:none;color:#fbe9c4;cursor:pointer">🎵 På</button>
-  </div>
-  <div id="mapwrap"><svg id="map" viewBox="0 0 1000 395"></svg></div>
-  <div id="panel">
-    <div id="cityhead"><span class="flag" id="cFlag"></span><div><h2 id="cName"></h2><small id="cSub"></small></div></div>
-    <div id="actions">
-      <button class="act" data-a="about"><span>📖</span>Om byen</button>
-      <button class="act" data-a="job"><span>💼</span>Ta en jobb</button>
-      <button class="act" data-a="market"><span>🛒</span>Marked</button>
-      <button class="act" data-a="board" id="boardBtn"><span>📌</span>Oppdrag</button>
-      <button class="act" data-a="travel"><span>✈️</span>Reis</button>
-      <button class="act" data-a="bag"><span>🎒</span>Ryggsekk</button>
-      <button class="act" data-a="pass"><span>🛂</span>Passet</button>
-      <button class="act" data-a="home"><span>📞</span>Ring hjem</button>
-      <button class="act" data-a="menu"><span>⚙️</span>Meny</button>
-    </div>
-    <div id="diary"></div>
-  </div>
-</div>
-
-<div id="modal" class="hidden"><div id="mbox"><button id="mclose">✕</button><div id="mcontent"></div></div></div>
-<div id="toast"></div>
-
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:system-ui,Arial,sans-serif;color:#fff;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#hud{position:fixed;inset:0;pointer-events:none;display:none}
+#top{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#0009;padding:6px 18px;border-radius:20px;font-weight:800;font-size:18px;white-space:nowrap}
+#hpw{position:absolute;left:14px;bottom:14px;width:200px;height:16px;background:#0008;border-radius:8px;overflow:hidden}
+#hp{height:100%;width:100%;background:linear-gradient(90deg,#e33,#4d4)}
+#x{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border:2px solid #fff;border-radius:50%;opacity:.8}
+#x.h{border-color:#f33;transform:scale(1.6)}
+#pr{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);background:#000a;padding:6px 14px;border-radius:10px;font-weight:700;display:none}
+#v{position:absolute;inset:0;box-shadow:inset 0 0 120px 40px #f00;opacity:0;transition:opacity .4s}
+#dead{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:34px;font-weight:900;background:#400a}
+#menu{position:fixed;inset:0;background:linear-gradient(#0b2a4a,#173d2a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:14px;text-align:center;overflow:auto}
+h1{margin:0;font-size:clamp(32px,8vw,60px);letter-spacing:2px;text-shadow:0 4px 0 #c0392b}
+#maps{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;width:min(640px,100%)}
+button,select{font:inherit;font-weight:800;border:0;border-radius:12px;padding:12px;color:#fff;background:#2c5aa0;cursor:pointer}
+#maps button.s{background:#e67e22;outline:3px solid #fff}
+#go{background:#27ae60;font-size:22px;padding:14px 40px}
+small{opacity:.75;max-width:560px}
+.tc{display:none;position:fixed;pointer-events:auto;width:76px;height:76px;border-radius:50%;background:#fff3;border:2px solid #fff8;font-size:14px}
+@media(pointer:coarse){.tc{display:block}}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud"><div id="top"></div><div id="x"></div><div id="pr"></div><div id="hpw"><div id="hp"></div></div><div id="v"></div><div id="dead">Du ble tatt ut…</div>
+<button class="tc" data-b="f" style="right:22px;bottom:90px;width:96px;height:96px;background:#e74c3c88">SKYT</button>
+<button class="tc" data-b="j" style="right:130px;bottom:30px">HOPP</button>
+<button class="tc" data-b="e" style="right:130px;bottom:120px">BRUK</button></div>
+<div id="menu"><h1>ANDEBU RIVALS</h1><div id="msg" style="font-size:20px;font-weight:700"></div>
+<div id="maps"></div>
+<div><select id="mode"></select></div>
+<button id="go">SPILL!</button>
+<small>PC: WASD gå · mus sikte · klikk skyt · Mellomrom hopp · Shift løp · Mobil: pinne til venstre, dra til høyre for å se seg rundt.</small></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* ================= DATA ================= */
-// q: [spørsmål, riktig svar, feil, feil]
-const CITIES=[
-{id:'oslo',n:'Oslo',c:'Norge',f:'🇳🇴',k:'EU',la:59.91,lo:10.75,lm:'EA',port:1,item:'Trollfigur',pr:150,
- fact:'Oslo het Christiania helt fram til 1925. I Frognerparken står over 200 skulpturer laget av Gustav Vigeland, og fra Holmenkollen kan du se hele byen.',
- q:[['Hva het Oslo før 1925?','Christiania','Nidaros','Bjørgvin'],['Hvem laget skulpturene i Frognerparken?','Gustav Vigeland','Edvard Munch','Henrik Ibsen'],['Hva heter den kjente hoppbakken i Oslo?','Holmenkollen','Granåsen','Vikersundbakken']]},
-{id:'stockholm',n:'Stockholm',c:'Sverige',f:'🇸🇪',k:'EU',la:59.33,lo:18.07,lm:'EA',port:1,item:'Dalahest',pr:200,
- fact:'Stockholm er bygd på 14 øyer. Hvert år deles Nobelprisen ut her, og på museum kan du se krigsskipet Vasa som sank i 1628.',
- q:[['Hvor mange øyer er Stockholm bygd på?','14','3','40'],['Hvilken pris deles ut i Stockholm hvert år?','Nobelprisen','Oscar','Ballon d\'Or'],['Hva heter det gamle krigsskipet på museum?','Vasa','Titanic','Oseberg']]},
-{id:'reykjavik',n:'Reykjavik',c:'Island',f:'🇮🇸',k:'EU',la:64.15,lo:-21.94,lm:'IS',port:1,item:'Lavastein',pr:90,
- fact:'Reykjavik er verdens nordligste hovedstad. Mange hus varmes opp med varmt vann fra jorda, og rundt byen finnes vulkaner og sprutende geysirer.',
- q:[['Hva varmer opp mange hus på Island?','Varmt vann fra jorda','Kull','Atomkraft'],['Hva kalles varme kilder som spruter vann?','Geysir','Fjord','Delta'],['Island er kjent for mange …','Vulkaner','Ørkener','Jungler']]},
-{id:'london',n:'London',c:'Storbritannia',f:'🇬🇧',k:'EU',la:51.51,lo:-0.13,lm:'EA',port:1,item:'Dobbeltdekker-modell',pr:250,
- fact:'Big Ben er egentlig navnet på den store klokka inne i tårnet. De røde dobbeltdekkerbussene og Buckingham Palace er kjent over hele verden.',
- q:[['Hva heter elva som renner gjennom London?','Themsen','Seinen','Donau'],['Hvilken farge har de klassiske bussene i London?','Rød','Blå','Gul'],['Hva heter kongeslottet i London?','Buckingham Palace','Versailles','Kreml']]},
-{id:'paris',n:'Paris',c:'Frankrike',f:'🇫🇷',k:'EU',la:48.86,lo:2.35,lm:'EA',port:0,item:'Baguette',pr:60,
- fact:'Eiffeltårnet ble bygd til verdensutstillingen i 1889. På kunstmuseet Louvre henger Mona Lisa, verdens mest kjente maleri.',
- q:[['Når ble Eiffeltårnet ferdig?','1889','1789','1950'],['Hvilket kjent maleri henger på Louvre?','Mona Lisa','Skrik','Solsikker'],['Hva heter elva i Paris?','Seinen','Rhinen','Themsen']]},
-{id:'berlin',n:'Berlin',c:'Tyskland',f:'🇩🇪',k:'EU',la:52.52,lo:13.4,lm:'EA',port:0,item:'Bit av Berlinmuren',pr:120,
- fact:'Fra 1961 til 1989 delte Berlinmuren byen i to. Brandenburger Tor er byens mest kjente landemerke.',
- q:[['Når falt Berlinmuren?','1989','1945','2001'],['Hva heter den kjente porten i Berlin?','Brandenburger Tor','Triumfbuen','Holstentor'],['Hvilken valuta bruker Tyskland?','Euro','Mark','Krone']]},
-{id:'madrid',n:'Madrid',c:'Spania',f:'🇪🇸',k:'EU',la:40.42,lo:-3.7,lm:'EA',port:0,item:'Flamencovifte',pr:140,
- fact:'Madrid ligger nesten midt i Spania, ca. 650 meter over havet. Byen er hjem til fotballklubben Real Madrid.',
- q:[['Hvilken fotballklubb i hvite drakter kommer fra Madrid?','Real Madrid','FC Barcelona','Sevilla'],['Hvilket språk snakkes i Spania?','Spansk','Portugisisk','Italiensk'],['Hva heter den spanske risretten med sjømat?','Paella','Lasagne','Sushi']]},
-{id:'roma',n:'Roma',c:'Italia',f:'🇮🇹',k:'EU',la:41.9,lo:12.5,lm:'EA',port:0,item:'Pizzaspade',pr:180,
- fact:'Inne i Roma ligger verdens minste land, Vatikanstaten. I Colosseum kjempet gladiatorer for nesten 2000 år siden.',
- q:[['Hvilket land ligger inne i Roma?','Vatikanstaten','Monaco','Liechtenstein'],['Hvor kjempet gladiatorene?','Colosseum','Akropolis','Alhambra'],['Hvem grunnla Roma ifølge sagnet?','Romulus og Remus','Zevs og Hera','Tor og Odin']]},
-{id:'istanbul',n:'Istanbul',c:'Tyrkia',f:'🇹🇷',k:'EU',la:41.01,lo:28.98,lm:'EA',port:1,item:'Tyrkisk lampe',pr:300,
- fact:'Istanbul ligger både i Europa og Asia – sundet Bosporos renner midt gjennom byen. Før het byen Konstantinopel.',
- q:[['Hvilke to verdensdeler ligger Istanbul i?','Europa og Asia','Asia og Afrika','Europa og Afrika'],['Hva heter sundet gjennom Istanbul?','Bosporos','Gibraltarstredet','Panamakanalen'],['Hva het Istanbul tidligere?','Konstantinopel','Babylon','Troja']]},
-{id:'moskva',n:'Moskva',c:'Russland',f:'🇷🇺',k:'EU',la:55.75,lo:37.62,lm:'EA',port:0,item:'Matrjosjka-dukke',pr:220,
- fact:'Russland er verdens største land. Midt i Moskva ligger festningen Kreml, og herfra går Den transsibirske jernbanen helt til Stillehavet.',
- q:[['Hva heter festningen midt i Moskva?','Kreml','Akropolis','Alhambra'],['Hvilket alfabet brukes i Russland?','Kyrillisk','Latinsk','Arabisk'],['Hvilken lang jernbane starter i Moskva?','Den transsibirske','Orientekspressen','Bergensbanen']]},
-{id:'kairo',n:'Kairo',c:'Egypt',f:'🇪🇬',k:'AF',la:30.04,lo:31.24,lm:'EA',port:0,item:'Papyrusrull',pr:160,
- fact:'Like utenfor Kairo står pyramidene i Giza og Sfinksen. De er over 4500 år gamle! Nilen er en av verdens lengste elver.',
- q:[['Hvilken elv renner gjennom Kairo?','Nilen','Kongo','Amazonas'],['Hva heter løvefiguren ved pyramidene?','Sfinksen','Kolossen','Kentauren'],['Hvem ble begravet i pyramidene?','Faraoer','Vikinger','Romerske keisere']]},
-{id:'marrakech',n:'Marrakech',c:'Marokko',f:'🇲🇦',k:'AF',la:31.63,lo:-8.0,lm:'EA',port:0,item:'Krydderpose',pr:80,
- fact:'Marrakech kalles «den røde byen» på grunn av de rødlige murene. Like ved ligger Atlasfjellene, og lenger sør begynner Sahara.',
- q:[['Hvilken ørken ligger sør for Marokko?','Sahara','Gobi','Atacama'],['Hva kalles Marrakech?','Den røde byen','Den blå byen','Den hvite byen'],['Hvilke fjell ligger ved Marrakech?','Atlasfjellene','Alpene','Andesfjellene']]},
-{id:'lagos',n:'Lagos',c:'Nigeria',f:'🇳🇬',k:'AF',la:6.52,lo:3.38,lm:'EA',port:1,item:'Afrikansk tromme',pr:170,
- fact:'Nigeria har flest innbyggere i hele Afrika. Landets filmindustri, Nollywood, lager tusenvis av filmer hvert år.',
- q:[['Hvilket land i Afrika har flest innbyggere?','Nigeria','Egypt','Kenya'],['Hva kalles Nigerias filmindustri?','Nollywood','Bollywood','Hollywood'],['Ved hvilket hav ligger Lagos?','Atlanterhavet','Indiahavet','Stillehavet']]},
-{id:'nairobi',n:'Nairobi',c:'Kenya',f:'🇰🇪',k:'AF',la:-1.29,lo:36.82,lm:'EA',port:0,item:'Treløve',pr:130,
- fact:'Rett utenfor Nairobi ligger en nasjonalpark med løver, sjiraffer og neshorn – med skyskrapere i bakgrunnen! Kenya er kjent for verdens beste langdistanseløpere.',
- q:[['Hva kalles en tur for å se ville dyr?','Safari','Fjelltur','Cruise'],['Hva heter Afrikas høyeste fjell?','Kilimanjaro','Mount Everest','Mont Blanc'],['Kenya er kjent for gode …','Langdistanseløpere','Skihoppere','Ishockeyspillere']]},
-{id:'kapp',n:'Cape Town',c:'Sør-Afrika',f:'🇿🇦',k:'AF',la:-33.92,lo:18.42,lm:'EA',port:1,item:'Diamant',pr:900,
- fact:'Over Cape Town står Taffelberget, et fjell som er helt flatt på toppen. På Boulders Beach bor det pingviner!',
- q:[['Hva heter det flate fjellet over Cape Town?','Taffelberget','Matterhorn','Fuji'],['Hvilke fugler bor på Boulders Beach?','Pingviner','Flamingoer','Papegøyer'],['Hvem var Sør-Afrikas første svarte president?','Nelson Mandela','Kofi Annan','Barack Obama']]},
-{id:'dubai',n:'Dubai',c:'De forente arabiske emirater',f:'🇦🇪',k:'AS',la:25.2,lo:55.27,lm:'EA',port:1,item:'Gullkamel',pr:400,h:380,p:330,
- fact:'Her står Burj Khalifa, verdens høyeste bygning – hele 828 meter! For 60 år siden var Dubai en liten fiskerlandsby i ørkenen.',
- q:[['Hva heter verdens høyeste bygning?','Burj Khalifa','Eiffeltårnet','Empire State Building'],['Hva har gjort landet rikt?','Olje','Kaffe','Fisk'],['Hvilket dyr forbinder man med ørkenen?','Kamel','Pingvin','Elg']]},
-{id:'delhi',n:'Delhi',c:'India',f:'🇮🇳',k:'AS',la:28.61,lo:77.21,lm:'EA',port:0,item:'Silkesjal',pr:200,
- fact:'India har flest innbyggere i verden. Ikke langt fra Delhi ligger Taj Mahal, et hvitt marmorbygg som ble bygd av kjærlighet.',
- q:[['Hva heter det hvite marmorbygget i Agra?','Taj Mahal','Angkor Wat','Alhambra'],['Hva kalles Indias filmindustri?','Bollywood','Nollywood','Hollywood'],['Hvilket dyr er hellig for mange hinduer?','Kua','Grisen','Hunden']]},
-{id:'kathmandu',n:'Kathmandu',c:'Nepal',f:'🇳🇵',k:'AS',la:27.7,lo:85.32,lm:'EA',port:0,item:'Bønneflagg',pr:70,
- fact:'Nepal har åtte av verdens ti høyeste fjell, blant dem Mount Everest. Sherpaene er kjent som verdens beste fjellførere.',
- q:[['Hva heter verdens høyeste fjell?','Mount Everest','K2','Mont Blanc'],['Hvilken fjellkjede ligger i Nepal?','Himalaya','Andesfjellene','Alpene'],['Hva er sherpaer kjent for?','Fjellføring','Fiske','Sjørøveri']]},
-{id:'beijing',n:'Beijing',c:'Kina',f:'🇨🇳',k:'AS',la:39.9,lo:116.4,lm:'EA',port:0,item:'Tekanne',pr:190,
- fact:'Nord for Beijing går Den kinesiske mur. Midt i byen ligger Den forbudte by, der keiserne bodde i 500 år.',
- q:[['Hva heter keiserpalasset i Beijing?','Den forbudte by','Kreml','Versailles'],['Hvilket dyr spiser bambus og er Kinas symbol?','Panda','Tiger','Koala'],['Hva spiser man ofte med i Kina?','Spisepinner','Bare kniv','Bare fingrene']]},
-{id:'tokyo',n:'Tokyo',c:'Japan',f:'🇯🇵',k:'AS',la:35.68,lo:139.69,lm:'JP',port:1,item:'Samuraisverd (tre)',pr:350,h:380,p:340,
- fact:'Tokyo er verdens største byområde med rundt 37 millioner mennesker. Herfra kan du se det snødekte fjellet Fuji og ta lyntoget Shinkansen.',
- q:[['Hva heter Japans høyeste fjell?','Fuji','Kilimanjaro','Everest'],['Hva kalles rå fisk på risbiter?','Sushi','Taco','Pizza'],['Hva heter Japans lyntog?','Shinkansen','TGV','Flytoget']]},
-{id:'bangkok',n:'Bangkok',c:'Thailand',f:'🇹🇭',k:'AS',la:13.76,lo:100.5,lm:'EA',port:1,item:'Tuk-tuk-modell',pr:110,
- fact:'Bangkok har et av verdens lengste stedsnavn på thai! Gatene er fulle av trehjulte tuk-tuk-taxier og deilig gatemat.',
- q:[['Hva er Thailands nasjonaldyr?','Elefant','Løve','Kenguru'],['Hva heter de trehjulte taxiene?','Tuk-tuk','Gondol','Sampan'],['Hva het Thailand tidligere?','Siam','Persia','Ceylon']]},
-{id:'singapore',n:'Singapore',c:'Singapore',f:'🇸🇬',k:'AS',la:1.35,lo:103.82,lm:'EA',port:1,item:'Orkidé',pr:140,h:360,p:320,
- fact:'Singapore er både en by og et eget land. Byens symbol, Merlion, er halvt løve og halvt fisk. Landet ligger nesten rett på ekvator.',
- q:[['Singapore er både en by og …','Et eget land','En del av Kina','En del av Japan'],['Hva heter figuren som er halvt løve, halvt fisk?','Merlion','Sfinksen','Griffen'],['Singapore ligger nær …','Ekvator','Nordpolen','Sørpolen']]},
-{id:'sydney',n:'Sydney',c:'Australia',f:'🇦🇺',k:'OC',la:-33.87,lo:151.21,lm:'AU',port:1,item:'Boomerang',pr:120,
- fact:'Operahuset i Sydney ser ut som store seil. Australia er både et land og en verdensdel, og her bor kenguruer og koalaer.',
- q:[['Hvilket kjent bygg i Sydney ser ut som seil?','Operahuset','Big Ben','Taj Mahal'],['Hvilket dyr hopper og bærer ungen i en pung?','Kenguru','Bever','Lama'],['Hva heter Australias hovedstad?','Canberra','Sydney','Melbourne']]},
-{id:'auckland',n:'Auckland',c:'New Zealand',f:'🇳🇿',k:'OC',la:-36.85,lo:174.76,lm:'NZ',port:1,item:'Kiwi-bamse',pr:100,
- fact:'New Zealand ligger nesten så langt fra Norge du kan komme. Urfolket heter maori, og landets fugl, kiwien, kan ikke fly.',
- q:[['Hva heter urfolket i New Zealand?','Maori','Samer','Inuitter'],['Hva er en kiwi (dyret)?','En fugl som ikke kan fly','En fisk','Et insekt'],['Hvilken sport spiller All Blacks?','Rugby','Baseball','Håndball']]},
-{id:'newyork',n:'New York',c:'USA',f:'🇺🇸',k:'NA',la:40.71,lo:-74.0,lm:'AM',port:1,item:'Frihetsgudinne-figur',pr:150,
- fact:'Frihetsgudinnen var en gave fra Frankrike i 1886. New York kalles «The Big Apple», og midt på Manhattan ligger Central Park.',
- q:[['Hvilket land ga Frihetsgudinnen til USA?','Frankrike','England','Norge'],['Hva heter den store parken på Manhattan?','Central Park','Hyde Park','Frognerparken'],['Hva er kallenavnet til New York?','Det store eplet','Vindbyen','Lysbyen']]},
-{id:'toronto',n:'Toronto',c:'Canada',f:'🇨🇦',k:'NA',la:43.65,lo:-79.38,lm:'AM',port:0,item:'Lønnesirup',pr:90,
- fact:'Toronto er Canadas største by. Ikke langt unna ligger Niagarafallene. Canada har både engelsk og fransk som offisielle språk.',
- q:[['Hvilket blad er på Canadas flagg?','Lønneblad','Eikeblad','Bjørkeblad'],['Hva heter de store fossene nær Toronto?','Niagarafallene','Victoriafallene','Iguazufallene'],['Hvilke språk er offisielle i Canada?','Engelsk og fransk','Spansk og engelsk','Tysk og fransk']]},
-{id:'losangeles',n:'Los Angeles',c:'USA',f:'🇺🇸',k:'NA',la:34.05,lo:-118.24,lm:'AM',port:1,item:'Surfebrett',pr:450,
- fact:'I bydelen Hollywood lages mange av verdens mest kjente filmer. Hvert år deles Oscar-prisen ut her.',
- q:[['Hvilken bydel i Los Angeles er kjent for film?','Hollywood','Bollywood','Nollywood'],['Ved hvilket hav ligger Los Angeles?','Stillehavet','Atlanterhavet','Indiahavet'],['Hvilken filmpris deles ut i Los Angeles?','Oscar','Nobelprisen','Spellemann']]},
-{id:'mexico',n:'Mexico by',c:'Mexico',f:'🇲🇽',k:'NA',la:19.43,lo:-99.13,lm:'AM',port:0,item:'Sombrero',pr:130,
- fact:'Mexico by ble bygd der aztekernes hovedstad Tenochtitlan lå. Byen ligger over 2200 meter over havet.',
- q:[['Hva heter retten med fyll i et maisbrød?','Taco','Sushi','Lasagne'],['Hvilket folk bygde pyramider i Mexico?','Aztekerne','Vikingene','Romerne'],['Hvilket språk snakkes i Mexico?','Spansk','Portugisisk','Engelsk']]},
-{id:'havana',n:'Havana',c:'Cuba',f:'🇨🇺',k:'NA',la:23.11,lo:-82.37,lm:'CU',port:1,item:'Veteranbil-modell',pr:160,
- fact:'Cuba er den største øya i Karibia. I gatene i Havana kjører fortsatt fargerike amerikanske biler fra 1950-tallet.',
- q:[['Hva slags land er Cuba?','En øy','En ørken','Et fjell-land'],['Havana er kjent for gamle …','Amerikanske biler','Trikker','Kameler'],['Hvilken dans kommer fra Cuba?','Salsa','Vals','Polka']]},
-{id:'lima',n:'Lima',c:'Peru',f:'🇵🇪',k:'SA',la:-12.05,lo:-77.04,lm:'AM',port:1,item:'Lamaull-lue',pr:110,
- fact:'Fra Lima kan du reise opp i Andesfjellene til Machu Picchu, en gammel inka-by på en fjelltopp.',
- q:[['Hva heter inka-byen i fjellene?','Machu Picchu','Petra','Pompeii'],['Hvilket ullent dyr bor i Andes?','Lama','Kenguru','Isbjørn'],['Hvilken fjellkjede går gjennom Peru?','Andesfjellene','Alpene','Himalaya']]},
-{id:'rio',n:'Rio de Janeiro',c:'Brasil',f:'🇧🇷',k:'SA',la:-22.91,lo:-43.17,lm:'AM',port:1,item:'Fotball',pr:200,
- fact:'Over Rio står den store Kristusstatuen. Brasil har vunnet fotball-VM fem ganger – flere enn noe annet land!',
- q:[['Hvilken statue står på fjellet over Rio?','Kristusstatuen','Frihetsgudinnen','Sfinksen'],['Hvilket språk snakkes i Brasil?','Portugisisk','Spansk','Fransk'],['Hvilket land har vunnet flest fotball-VM?','Brasil','Tyskland','Norge']]},
-{id:'buenos',n:'Buenos Aires',c:'Argentina',f:'🇦🇷',k:'SA',la:-34.6,lo:-58.38,lm:'AM',port:1,item:'Tangosko',pr:250,
- fact:'Buenos Aires er tangoens hjemby. Argentina vant fotball-VM i 2022 med Lionel Messi som kaptein.',
- q:[['Hvilken dans kommer fra Buenos Aires?','Tango','Samba','Halling'],['Hvem var Argentinas kaptein da de vant VM i 2022?','Lionel Messi','Cristiano Ronaldo','Erling Haaland'],['Hva er en gaucho?','En cowboy','En sjømann','En munk']]}
-];
-const GENERAL=[
-['Hva er verdens største hav?','Stillehavet','Atlanterhavet','Indiahavet'],
-['Hvilket land er verdens største?','Russland','Kina','Canada'],
-['Hva heter verdens største regnskog?','Amazonas','Sahara','Taiga'],
-['Hvilket land har form som en støvel?','Italia','Chile','Norge'],
-['Hva er hovedstaden i Danmark?','København','Aarhus','Odense'],
-['Hva er hovedstaden i Finland?','Helsinki','Turku','Tampere'],
-['Hvor mange land grenser Norge til?','3','1','5'],
-['Hva deler ekvator jorda i?','Nord og sør','Øst og vest','Hav og land'],
-['I hvilken verdensdel ligger Egypt?','Afrika','Asia','Europa'],
-['Hva er verdens største varme ørken?','Sahara','Gobi','Kalahari'],
-['Hvilken verdensdel er minst?','Oseania','Europa','Antarktis'],
-['Hvilket land har flest innbyggere?','India','USA','Brasil'],
-['Hva heter verdens lengste elv?','Nilen','Glomma','Donau'],
-['Hvor mange verdensdeler regner vi vanligvis med?','7','5','12'],
-['Hvilket hav ligger mellom Europa og Amerika?','Atlanterhavet','Stillehavet','Indiahavet'],
-['Hvilken by er hovedstaden i USA?','Washington D.C.','New York','Los Angeles']
-];
-const JOBS=['Oppvasker på restaurant','Turistguide','Servitør på kafé','Fruktplukker','Resepsjonist på hostell','Gatemusikant','Avisbud','Fotograf for turister','Kokkelærling','Hundelufter','Bagasjebærer','Kioskselger'];
-const PEOPLE=['Ahmed','Maria','Kenji','Lucia','Olav','Priya','Tom','Fatima','Pedro','Ingrid','Chen','Amara','Sofia','Jack','Nils','Aisha','Mateo','Yuki','Emma','Kwame'];
-const EVENTS=[
-['Du fant en 200-lapp på fortauet!',200],['En lommetyv stjal 300 kr fra deg!',-300],
-['Bagasjen ble forsinket – du måtte kjøpe tannbørste og klær.',-150],['En hyggelig familie spanderte middag på deg.',100],
-['Du vant quizkvelden på hostellet!',250],['Du gikk deg vill og måtte ta taxi.',-120],
-['Du fikk rabatt på rommet fordi du hjalp til på kjøkkenet.',150],['Du mistet solbrillene og kjøpte nye.',-90],
-['En turist kjøpte bildet du tegnet av byen.',180],['Du ble med på en gratis byvandring og lærte masse.',0]
-];
-// Ekstra spørsmål om landet du er i (brukes på jobb)
-const EXTRA={
-oslo:[['Hva heter Norges høyeste fjell?','Galdhøpiggen','Glittertind','Snøhetta'],['Hva heter Norges lengste elv?','Glomma','Numedalslågen','Tana'],['Hvilken dag er Norges nasjonaldag?','17. mai','1. mai','24. juni'],['Hva heter Norges konge?','Harald V','Olav V','Carl Gustaf'],['Hva heter Norges største innsjø?','Mjøsa','Femunden','Tyrifjorden'],['Hva er Norges valuta?','Krone','Euro','Mark'],['Hvilken by er Norges nest største?','Bergen','Trondheim','Stavanger']],
-stockholm:[['Hva heter Sveriges konge?','Carl XVI Gustaf','Harald V','Frederik X'],['Hva er Sveriges nasjonaldag?','6. juni','17. mai','1. august'],['Hvilken svensk gruppe vant Eurovision i 1974?','ABBA','Roxette','Ace of Base'],['Hva heter Sveriges nest største by?','Göteborg','Malmö','Uppsala'],['Hvilken bro går fra Malmö til Danmark?','Øresundsbroen','Svinesundbrua','Storebæltsbroen'],['Hvilket møbelfirma kommer fra Sverige?','IKEA','Jysk','Bohus'],['Hva er Sveriges valuta?','Krona','Euro','Daler']],
-reykjavik:[['Hvilken islandsk vulkan stanset flytrafikken i 2010?','Eyjafjallajökull','Etna','Vesuv'],['Hvem kom først og bosatte seg på Island?','Nordmenn','Spanjoler','Russere'],['Hva heter Islands største isbre?','Vatnajökull','Jostedalsbreen','Svartisen'],['Hvilken hesterase er kjent fra Island?','Islandshest','Fjordhest','Shetlandsponni'],['Hva er Islands valuta?','Islandsk krone','Euro','Pund'],['Hva kalles det grønne lyset på vinterhimmelen?','Nordlys','Regnbue','Stjerneskudd'],['Omtrent hvor mange bor på Island?','400 000','4 millioner','40 000']],
-london:[['Hvilke land er med i Storbritannia?','England, Skottland, Wales og Nord-Irland','England, Irland, Wales og Island','England, Skottland, Norge og Wales'],['Hva heter Storbritannias konge?','Charles III','William','George VI'],['Hva er valutaen i Storbritannia?','Pund','Euro','Dollar'],['Hvilken side av veien kjører britene på?','Venstre','Høyre','Midten'],['Hvilket kjent band kom fra Liverpool?','The Beatles','ABBA','a-ha'],['Hva heter tunnelen under havet til Frankrike?','Kanaltunnelen','Øresundstunnelen','Seikantunnelen'],['Hvilken drikk er britene kjent for å elske?','Te','Kaffe','Melk']],
-paris:[['Hvilket sykkelritt arrangeres i Frankrike hver sommer?','Tour de France','Giro d\'Italia','Vuelta'],['Hva heter Frankrikes høyeste fjell?','Mont Blanc','Matterhorn','Etna'],['Hva kalles det halvmåneformede franske bakverket?','Croissant','Bagel','Kanelbolle'],['Hvilken kjent fransk keiser var kort av vekst?','Napoleon','Cæsar','Karl den store'],['Hva er Frankrikes nasjonaldag?','14. juli','4. juli','17. mai'],['Hvilke farger har Frankrikes flagg?','Blå, hvit og rød','Grønn, hvit og rød','Svart, rød og gul'],['Hvilken fornøyelsespark ligger ved Paris?','Disneyland Paris','Tivoli','Liseberg']],
-berlin:[['Hvilke farger har Tysklands flagg?','Svart, rød og gull','Blå, hvit og rød','Grønn, hvit og rød'],['Hvilken bilprodusent er tysk?','Volkswagen','Volvo','Toyota'],['Hva heter den store folkefesten i München?','Oktoberfest','Karneval','Midtsommer'],['Hvilken elv renner gjennom mange tyske byer?','Rhinen','Seinen','Themsen'],['Hvilken kjent komponist var tysk?','Beethoven','Grieg','Chopin'],['Hvor mange ganger har Tysklands herrer vunnet fotball-VM?','4','1','7'],['Hva er en bratwurst?','En pølse','En kake','En hatt']],
-madrid:[['Hva heter Barcelonas berømte uferdige kirke?','Sagrada Família','Notre-Dame','Peterskirken'],['Hvilke spanske øyer drar mange nordmenn til?','Kanariøyene','Færøyene','Lofoten'],['Hva heter Spanias kjente dans med kastanjetter?','Flamenco','Tango','Polka'],['Hva kalles små spanske smakebiter?','Tapas','Sushi','Lefser'],['Hvilken kjent kunstner var fra Spania?','Pablo Picasso','Edvard Munch','Van Gogh'],['Hvilket hav ligger øst for Spania?','Middelhavet','Nordsjøen','Østersjøen'],['Hva heter Barcelonas store fotballstadion?','Camp Nou','Wembley','Ullevaal']],
-roma:[['Hvilken italiensk by har kanaler og gondoler?','Venezia','Milano','Napoli'],['Hvilket kjent tårn i Italia heller?','Tårnet i Pisa','Big Ben','Eiffeltårnet'],['Hvilken vulkan begravde byen Pompeii?','Vesuv','Etna','Hekla'],['Hvilken mat kommer fra Italia?','Pizza','Taco','Sushi'],['Hvem malte «Den siste nattverd»?','Leonardo da Vinci','Picasso','Munch'],['Hva heter den store øya sør for Italia?','Sicilia','Kreta','Mallorca'],['Hvilken bilprodusent med røde biler er italiensk?','Ferrari','Volvo','BMW']],
-istanbul:[['Hva heter Tyrkias hovedstad?','Ankara','Istanbul','Izmir'],['Hva heter den kjente moskeen med seks minareter i Istanbul?','Den blå moské','Taj Mahal','Alhambra'],['Hva heter det søte tyrkiske godteriet?','Lokum','Kvikk Lunsj','Smash'],['Hvordan ser Tyrkias flagg ut?','Rødt med hvit halvmåne og stjerne','Grønt med sol','Blått med kors'],['Hva heter det store markedet i Istanbul?','Grand Bazaar','Harrods','Mall of Scandinavia'],['Hvilken rett med grillet kjøtt kommer fra Tyrkia?','Kebab','Pizza','Sushi'],['Hvilket hav ligger nord for Tyrkia?','Svartehavet','Rødehavet','Nordsjøen']],
-moskva:[['Hva heter den store plassen ved Kreml?','Den røde plass','Times Square','Karl Johan'],['Hva heter Russlands nest største by?','St. Petersburg','Kyiv','Minsk'],['Hvem var første menneske i verdensrommet?','Jurij Gagarin','Neil Armstrong','Buzz Aldrin'],['Hvilken ballett skrev russeren Tsjajkovskij?','Svanesjøen','Peer Gynt','Carmen'],['Hva heter Russlands valuta?','Rubel','Krone','Euro'],['Hvor mange tidssoner har Russland?','11','2','24'],['Hva heter verdens dypeste innsjø, som ligger i Russland?','Bajkal','Mjøsa','Victoriasjøen']],
-kairo:[['Hva heter havet øst for Egypt?','Rødehavet','Svartehavet','Østersjøen'],['Hvilken kanal i Egypt forbinder to hav?','Suezkanalen','Panamakanalen','Telemarkskanalen'],['Hvilken faraos grav full av gull ble funnet i 1922?','Tutankhamon','Kleopatra','Ramses'],['Hva kalles den gamle egyptiske bildeskriften?','Hieroglyfer','Runer','Kyrillisk'],['Hva er en mumie?','En balsamert død kropp','En dans','En pyramide'],['Hvilket språk snakkes i Egypt?','Arabisk','Fransk','Gresk'],['Hvilken egyptisk dronning er verdenskjent?','Kleopatra','Elizabeth','Sonja']],
-marrakech:[['Hva heter Marokkos hovedstad?','Rabat','Marrakech','Casablanca'],['Hvilket hav ligger vest for Marokko?','Atlanterhavet','Stillehavet','Indiahavet'],['Hvilket sund skiller Marokko fra Spania?','Gibraltarstredet','Bosporos','Øresund'],['Hva er en tagine?','En gryterett og leirgryte','En hatt','En kamel'],['Hvilke språk snakkes mye i Marokko?','Arabisk og berbisk','Spansk og tysk','Engelsk og russisk'],['Hvilket dyr brukes til turer i ørkenen?','Kamel','Elg','Isbjørn'],['Hvilken drikk er veldig populær i Marokko?','Myntete','Melk','Cola']],
-lagos:[['Hva heter Nigerias hovedstad?','Abuja','Lagos','Kano'],['Hvilken stor elv renner gjennom Nigeria?','Niger','Nilen','Amazonas'],['Hva heter den populære risretten i Vest-Afrika?','Jollof-ris','Paella','Risotto'],['Hvilke farger har Nigerias flagg?','Grønt og hvitt','Rødt og gult','Blått og hvitt'],['Hvilket språk er offisielt i Nigeria?','Engelsk','Fransk','Portugisisk'],['Hva kalles Nigerias fotballandslag?','Super Eagles','All Blacks','Løvene'],['Nigeria er en av Afrikas største produsenter av …','Olje','Snø','Laks']],
-nairobi:[['Hvilken stor innsjø deler Kenya med Uganda og Tanzania?','Victoriasjøen','Mjøsa','Bajkal'],['Hva betyr «hakuna matata» på swahili?','Ingen problemer','God morgen','Takk for maten'],['Hvilket språk snakkes mye i Kenya?','Swahili','Hindi','Spansk'],['Hvilke dyr er «de store fem» på safari?','Løve, leopard, elefant, bøffel, neshorn','Elg, rev, ulv, bjørn, gaupe','Panda, tiger, koala, kenguru, lama'],['Hvilken drikk dyrker Kenya mye av?','Te','Kakao','Brus'],['Hva heter Kenyas høyeste fjell?','Mount Kenya','Kilimanjaro','Atlas'],['Hvilken linje går gjennom Kenya?','Ekvator','Polarsirkelen','Datolinjen']],
-kapp:[['Hvor mange hovedsteder har Sør-Afrika?','3','1','5'],['Hva heter det kjente neset ved Cape Town?','Kapp det gode håp','Nordkapp','Kapp Horn'],['Hvilket år arrangerte Sør-Afrika fotball-VM?','2010','1998','2022'],['Hva het det bråkete plasthornet fra VM 2010?','Vuvuzela','Didgeridoo','Lur'],['Hvilke verdifulle steiner graves ut i Sør-Afrika?','Diamanter','Granitt','Rav'],['Hvor lenge satt Nelson Mandela i fengsel?','27 år','2 år','50 år'],['Hvilke to hav møtes ved sørspissen av Afrika?','Atlanterhavet og Indiahavet','Nordsjøen og Østersjøen','Stillehavet og Middelhavet']],
-dubai:[['Hvor mange emirater er det i De forente arabiske emirater?','7','3','12'],['Hva heter landets hovedstad?','Abu Dhabi','Dubai','Doha'],['Hva heter den kunstige øya formet som et palmetre?','Palm Jumeirah','Hawaii','Maldivene'],['Hvilket språk snakkes i Dubai?','Arabisk','Persisk','Tyrkisk'],['Hvor kan man stå på ski i Dubai?','I en innendørs skihall','På sanddynene','Ingen steder'],['Hvilket hav ligger ved Dubai?','Persiabukta','Middelhavet','Rødehavet'],['Hvilken fugl brukes til jakt i tradisjonen her?','Falk','Struts','Pingvin']],
-delhi:[['Hva heter Indias hellige elv?','Ganges','Nilen','Donau'],['Hvilken sport er mest populær i India?','Cricket','Ishockey','Håndball'],['Hvem ledet Indias fredelige kamp for selvstendighet?','Mahatma Gandhi','Nelson Mandela','Martin Luther King'],['Hva heter Indias valuta?','Rupi','Yen','Dollar'],['Hva er karri?','En krydderblanding og rett','En dans','En båt'],['Hva heter Indias fargerike fargefestival?','Holi','Halloween','Midtsommer'],['Hva er Indias nasjonaldyr?','Tiger','Løve','Elefant']],
-kathmandu:[['Hva er spesielt med Nepals flagg?','Det er ikke firkantet','Det er helt hvitt','Det har et lønneblad'],['I hvilket land ble Buddha født?','Nepal','Japan','Thailand'],['Hvilke to land ligger rundt Nepal?','India og Kina','Russland og Japan','Brasil og Peru'],['Hvem kom først til toppen av Everest i 1953?','Hillary og Tenzing','Amundsen og Nansen','Armstrong og Aldrin'],['Omtrent hvor høyt er Mount Everest?','8849 meter','4800 meter','12 000 meter'],['Hva heter de populære dumplingene i Nepal?','Momo','Taco','Lefse'],['Hvilket dyr bærer ofte last i Himalaya?','Jak','Kamel','Kenguru']],
-beijing:[['Omtrent hvor lang er Den kinesiske mur?','Over 20 000 km','2 km','200 km'],['Hvilket år hadde Beijing sommer-OL?','2008','1994','2016'],['Hva er Kinas valuta?','Yuan','Yen','Won'],['Hva heter Kinas lengste elv?','Yangtze','Mekong','Ganges'],['Hva kalles det kinesiske nyttåret også?','Vårfestivalen','Høstfesten','Lysfesten'],['Hvilken oppfinnelse kommer fra Kina?','Papir','Telefonen','Lyspæra'],['Hva heter den store leirhæren som ble funnet i Kina?','Terrakottahæren','Vikinghæren','Romerhæren']],
-tokyo:[['Hva heter Japans valuta?','Yen','Yuan','Won'],['Hva kalles festen når kirsebærtrærne blomstrer?','Hanami','Halloween','Holi'],['Hvilket spillselskap er japansk?','Nintendo','Microsoft','Apple'],['Hva heter japansk bryting med svære brytere?','Sumo','Boksing','Fekting'],['Japan kalles «den … sols land»','oppgående','nedgående','varme'],['Hva kalles kunsten å brette papir?','Origami','Karaoke','Manga'],['Hva heter japanske tegneserier?','Manga','Comics','Tintin']],
-bangkok:[['Hva heter Thailands valuta?','Baht','Rupi','Yen'],['Hvilken nudelrett kommer fra Thailand?','Pad thai','Ramen','Spaghetti'],['Hvilken kampsport kommer fra Thailand?','Thaiboksing','Judo','Taekwondo'],['Hvilken thailandsk ferieøy drar mange nordmenn til?','Phuket','Mallorca','Kreta'],['Hva kalles de buddhistiske templene i Thailand?','Wat','Moské','Katedral'],['Hvem er statsoverhode i Thailand?','En konge','En president','En keiser'],['Hvilken elv renner gjennom Bangkok?','Chao Phraya','Mekong','Ganges']],
-singapore:[['Hvilke språk er offisielle i Singapore?','Engelsk, malayisk, kinesisk og tamil','Bare engelsk','Fransk og spansk'],['Hva er det forbudt å selge i Singapore?','Tyggegummi','Is','Brus'],['Hva heter hotellet med basseng på taket?','Marina Bay Sands','Burj Al Arab','Grand Hotel'],['Hvilket billøp kjøres om natten i Singapore?','Formel 1','Rally','Le Mans'],['Hva heter de store kunstige trærne i Singapore?','Supertrees','Megapalmer','Kjempebjørker'],['Hvilket land er Singapores nabo i nord?','Malaysia','Japan','Australia'],['Hvordan er været i Singapore?','Varmt og fuktig hele året','Snø om vinteren','Tørt som en ørken']],
-sydney:[['Hva heter det store korallrevet i Australia?','Great Barrier Reef','Rødehavsrevet','Nordsjørevet'],['Hva heter den store røde klippen midt i Australia?','Uluru','Preikestolen','Taffelberget'],['Hvilket blåseinstrument spiller Australias urfolk?','Didgeridoo','Sekkepipe','Lur'],['Når er det sommer i Australia?','Desember–februar','Juni–august','Aldri'],['Hvilket dyr sover nesten hele dagen i eukalyptustrær?','Koala','Kenguru','Krokodille'],['Hva er Australias valuta?','Australsk dollar','Pund','Euro'],['Hvilken verdensdel hører Australia til?','Oseania','Asia','Afrika']],
-auckland:[['Hva heter New Zealands hovedstad?','Wellington','Auckland','Christchurch'],['Hvilken dans gjør All Blacks før kamp?','Haka','Tango','Halling'],['Hvor mange hovedøyer har New Zealand?','2','5','1'],['Hvilke kjente filmer ble spilt inn i New Zealand?','Ringenes herre','Harry Potter','Frost'],['Hvilket dyr finnes det mange flere av enn mennesker i New Zealand?','Sauer','Kenguruer','Løver'],['Hva er New Zealands valuta?','New Zealand-dollar','Euro','Yen'],['Hvilken newzealender var først på toppen av Everest?','Edmund Hillary','Peter Jackson','Russell Crowe']],
-newyork:[['Hvor mange stater har USA?','50','52','30'],['Hvem var USAs første president?','George Washington','Abraham Lincoln','Theodore Roosevelt'],['Hva er USAs nasjonaldag?','4. juli','17. mai','14. juli'],['Hva heter den travle plassen med store reklameskjermer?','Times Square','Den røde plass','Piccadilly Circus'],['Hva heter broen mellom Manhattan og Brooklyn?','Brooklyn Bridge','Golden Gate','Tower Bridge'],['Hva kalles USAs flagg?','Stars and Stripes','Union Jack','Dannebrog'],['Hvilken idrett spilles i NBA?','Basketball','Ishockey','Fotball']],
-toronto:[['Hva heter Canadas hovedstad?','Ottawa','Toronto','Vancouver'],['Hvilken idrett er størst i Canada?','Ishockey','Cricket','Rugby'],['Hva heter det høye tårnet i Toronto?','CN Tower','Eiffeltårnet','Burj Khalifa'],['Hvilken provins i Canada snakker mest fransk?','Québec','Ontario','Alberta'],['Hva kalles Canadas ridende politi?','Mounties','Bobbies','Carabinieri'],['Hvilket land grenser Canada til?','USA','Mexico','Russland'],['Hvilket stort dyr ser man ofte i Canadas skoger?','Elg','Løve','Sebra']],
-losangeles:[['Hvilken delstat ligger Los Angeles i?','California','Texas','Florida'],['Hva står det med store bokstaver i åsen over Los Angeles?','HOLLYWOOD','LOS ANGELES','AMERICA'],['Hvilken fornøyelsespark åpnet ved Los Angeles i 1955?','Disneyland','Tusenfryd','Legoland'],['Hvilket basketlag er fra Los Angeles?','Lakers','Celtics','Bulls'],['Hvilken by i California har Golden Gate-broen?','San Francisco','San Diego','Las Vegas'],['Hva hender ofte i California og får bakken til å riste?','Jordskjelv','Snøskred','Flodbølge av sjokolade'],['Hva heter gaten med kjendisstjerner i fortauet?','Walk of Fame','Champs-Élysées','Karl Johan']],
-mexico:[['Hva heter Mexicos valuta?','Peso','Dollar','Real'],['Hva er en piñata?','En figur fylt med godteri','En dans','En hatt'],['Hvilken høytid minnes de døde i Mexico?','Día de Muertos','Jul','Påske'],['Hvilket folk bygde Chichén Itzá?','Mayaene','Inkaene','Egypterne'],['Hva er guacamole laget av?','Avokado','Tomat','Potet'],['Hvilket land ligger nord for Mexico?','USA','Canada','Brasil'],['Hva heter halvøya med Cancún og maya-ruiner?','Yucatán','Krim','Jylland']],
-havana:[['Hva er Cuba kjent for å lage?','Sigarer','Biler','Datamaskiner'],['Hvilket hav ligger Cuba i?','Det karibiske hav','Nordsjøen','Middelhavet'],['Hvem ledet revolusjonen på Cuba i 1959?','Fidel Castro','Napoleon','Simón Bolívar'],['Hvilken idrett er størst på Cuba?','Baseball','Ishockey','Cricket'],['Hva dyrkes det mye av på Cuba?','Sukkerrør','Poteter','Epler'],['Hvilket land ligger like nord for Cuba?','USA','Canada','Brasil'],['Hvilket språk snakkes på Cuba?','Spansk','Engelsk','Fransk']],
-lima:[['Hva heter den høyt beliggende innsjøen mellom Peru og Bolivia?','Titicacasjøen','Mjøsa','Bajkal'],['Hvilket språk snakket inkaene?','Quechua','Latin','Spansk'],['Hvilken grønnsak kommer opprinnelig fra Andes i Peru?','Potet','Brokkoli','Gulrot'],['Hva heter Perus valuta?','Sol','Peso','Euro'],['Hvilken regnskog dekker øst i Peru?','Amazonas','Kongo','Taigaen'],['Hva heter den gamle inkahovedstaden i fjellene?','Cusco','Lima','Quito'],['Hva kalles rå fisk marinert i sitron i Peru?','Ceviche','Sushi','Lutefisk']],
-rio:[['Hva heter Brasils hovedstad?','Brasília','Rio de Janeiro','São Paulo'],['Hvilken dans danses på karnevalet i Rio?','Samba','Tango','Vals'],['Hva heter den kjente stranden i Rio?','Copacabana','Bondi Beach','Waikiki'],['Hvilken stor elv renner gjennom Brasil?','Amazonas','Nilen','Mississippi'],['Hvilken brasiliansk fotballegende vant tre VM?','Pelé','Maradona','Zidane'],['Hva produserer Brasil mest av i verden?','Kaffe','Epler','Ris'],['Hva heter fjellet med taubane i Rio?','Sukkertoppen','Matterhorn','Fløyen']],
-buenos:[['Hva heter den sørlige delen av Argentina med isbreer?','Patagonia','Sibir','Sahara'],['Hva er Argentinas valuta?','Peso','Dollar','Real'],['Hvilken fotballspiller scoret «Guds hånd»-målet?','Diego Maradona','Pelé','Lionel Messi'],['Hva er argentinerne kjent for å grille?','Biff','Fisk','Tofu'],['Hvilke store fosser ligger mellom Argentina og Brasil?','Iguazúfallene','Niagarafallene','Vøringsfossen'],['Hva heter Amerikas høyeste fjell, i Argentina?','Aconcagua','Denali','Kilimanjaro'],['Hva heter teen som drikkes av en kalebass?','Mate','Chai','Matcha']]
-};
-CITIES.forEach(c=>{c.q=c.q.concat(EXTRA[c.id]||[]);});
-const DEF={EU:[350,320],NA:[350,320],OC:[330,300],AS:[180,200],AF:[150,170],SA:[170,190]};
-CITIES.forEach(c=>{c.h=c.h||DEF[c.k][0];c.p=c.p||DEF[c.k][1];});
-const byId=Object.fromEntries(CITIES.map(c=>[c.id,c]));
-const GOAL=8, MAXBAG=6, MAXMIS=3, SAVEKEY='globetrotter_save_v1', HSKEY='globetrotter_hs_v1';
-
-/* ================= KART ================= */
-const LAND=[
-[[-168,66],[-162,70],[-140,70],[-120,72],[-95,72],[-80,70],[-65,62],[-55,52],[-66,45],[-70,42],[-76,35],[-80,32],[-81,25],[-83,29],[-90,30],[-97,27],[-97,21],[-90,21],[-87,15],[-83,9],[-78,8],[-80,7],[-85,10],[-92,14],[-105,20],[-110,24],[-117,32],[-124,40],[-124,48],[-135,58],[-150,60],[-165,60]],
-[[-45,60],[-20,70],[-20,80],[-40,83],[-65,80],[-55,70]],
-[[-78,8],[-60,10],[-50,0],[-35,-6],[-40,-22],[-48,-28],[-58,-38],[-65,-42],[-68,-55],[-75,-50],[-73,-38],[-71,-18],[-77,-12],[-81,-5],[-80,1]],
-[[-10,36],[-9,43],[-2,44],[-5,48],[2,51],[8,54],[10,58],[5,59],[5,62],[14,68],[22,71],[30,70],[40,67],[60,68],[60,45],[48,42],[40,41],[28,41],[26,38],[22,37],[20,40],[19,42],[14,45],[13,45],[16,41],[18,40],[16,38],[12,42],[9,44],[3,43],[-1,37],[-6,36]],
-[[26,38],[28,41],[40,41],[48,42],[60,45],[60,68],[80,73],[110,77],[140,72],[170,70],[180,66],[170,60],[160,60],[155,58],[140,54],[135,43],[130,42],[129,35],[126,35],[126,38],[122,40],[118,38],[122,30],[110,20],[108,12],[105,9],[103,2],[100,6],[98,16],[92,22],[88,22],[80,15],[77,8],[72,20],[67,25],[56,26],[59,22],[52,16],[44,12],[38,20],[34,28],[35,36],[30,36]],
-[[-17,21],[-17,15],[-15,10],[-8,4],[5,5],[9,4],[10,-2],[13,-12],[12,-18],[18,-35],[26,-34],[33,-26],[35,-18],[40,-11],[40,-3],[51,12],[43,12],[38,18],[33,28],[32,31],[20,32],[10,37],[-1,36],[-6,36],[-10,30]],
-[[114,-22],[114,-34],[118,-35],[130,-32],[137,-35],[141,-38],[150,-37],[153,-28],[146,-19],[142,-11],[137,-12],[131,-12],[125,-15]],
-[[-5,50],[1,51],[2,53],[-2,57],[-4,59],[-6,57],[-3,54]],
-[[-24,64],[-14,64],[-15,66],[-22,66]],
-[[130,31],[136,34],[141,36],[142,40],[141,43],[145,44],[140,41],[136,37],[131,34]],
-[[-85,22],[-80,23],[-74,20],[-78,20]],
-[[109,1],[117,7],[119,1],[116,-4],[110,-3]],
-[[95,5],[98,4],[104,-2],[106,-6],[102,-4],[96,2]],
-[[106,-6],[114,-7],[114,-8],[106,-7]],
-[[131,-1],[141,-3],[150,-10],[141,-9],[137,-5]],
-[[172,-35],[178,-38],[174,-42],[167,-46],[171,-44]],
-[[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
-[[80,6],[82,7],[80,10]]
-];
-const P=(lo,la)=>[(lo+180)/360*1000,(84-la)/142*395];
-const NS='http://www.w3.org/2000/svg';
-const svg=document.getElementById('map');
-
-function drawMap(){
-  let s='<rect width="1000" height="395" fill="url(#sea)"/><defs><radialGradient id="sea" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#2a73a6"/><stop offset="1" stop-color="#123c5c"/></radialGradient></defs>';
-  for(let lo=-150;lo<=150;lo+=30){const x=P(lo,0)[0];s+=`<line class="grid" x1="${x}" y1="0" x2="${x}" y2="395"/>`;}
-  for(let la=-30;la<=60;la+=30){const y=P(0,la)[1];s+=`<line class="${la===0?'eq':'grid'}" x1="0" y1="${y}" x2="1000" y2="${y}"/>`;}
-  s+=`<text x="6" y="${P(0,0)[1]-4}" fill="#f0b429aa" font-size="11">Ekvator</text>`;
-  LAND.forEach(p=>{s+=`<polygon class="land" points="${p.map(([lo,la])=>P(lo,la).map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`;});
-  s+='<g id="routes"></g><g id="rings"></g><g id="cities"></g><g id="labels"></g><text id="plane" class="hidden" text-anchor="middle" dominant-baseline="middle">✈️</text>';
-  svg.innerHTML=s;
-  const g=document.getElementById('cities');
-  CITIES.forEach(c=>{
-    const [x,y]=P(c.lo,c.la);
-    const el=document.createElementNS(NS,'g');el.setAttribute('class','city');el.dataset.id=c.id;
-    el.innerHTML=`<circle class="hit" cx="${x}" cy="${y}" r="13"/><circle class="dot" cx="${x}" cy="${y}" r="5"/><title>${c.n}, ${c.c}</title>`;
-    el.addEventListener('click',()=>{ if(c.id===S.at) openAbout(); else openTravelTo(c.id); });
-    g.appendChild(el);
-  });
-}
-function updateMap(){
-  document.querySelectorAll('.city').forEach(el=>{
-    const id=el.dataset.id;
-    el.classList.toggle('here',id===S.at);
-    el.classList.toggle('visited',S.visited.includes(id)&&id!==S.at);
-  });
-  const rings=document.getElementById('rings'), labels=document.getElementById('labels');
-  let r='',l='';const shown=new Set([S.at]);
-  S.missions.forEach(m=>{
-    const has=(S.inv[m.item]||0)>0;
-    const cid=has?m.to:m.from; const c=byId[cid]; const [x,y]=P(c.lo,c.la);
-    r+=`<circle class="ring ${has?'drop':'buy'}" cx="${x}" cy="${y}" r="10"/>`; shown.add(cid);
-  });
-  shown.forEach(id=>{const c=byId[id];const [x,y]=P(c.lo,c.la);l+=`<text class="lbl" x="${x+8}" y="${y-7}">${c.n}</text>`;});
-  rings.innerHTML=r;labels.innerHTML=l;
-  // sentrer kartet på mobil
-  const wrap=document.getElementById('mapwrap');
-  if(wrap.scrollWidth>wrap.clientWidth){const c=byId[S.at];const px=P(c.lo,c.la)[0]/1000*wrap.scrollWidth;wrap.scrollLeft=px-wrap.clientWidth/2;}
-}
-
-/* ================= STATE ================= */
-let S=null;
-function newState(name){
-  return {name:name||'Reisende',money:2000,day:1,at:'oslo',visited:['oslo'],stampDay:{oslo:1},inv:{},missions:[],done:0,offers:[],debt:0,diary:'Du står på Oslo S med ryggsekken på ryggen. Eventyret begynner!',seq:1};
-}
-function save(){try{localStorage.setItem(SAVEKEY,JSON.stringify(S));}catch(e){}}
-function load(){try{return JSON.parse(localStorage.getItem(SAVEKEY));}catch(e){return null;}}
-function clearSave(){try{localStorage.removeItem(SAVEKEY);}catch(e){}}
-
-/* ================= HJELPERE ================= */
-const $=id=>document.getElementById(id);
-const rnd=a=>a[Math.floor(Math.random()*a.length)];
-const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
-const kr=n=>n.toLocaleString('nb-NO')+' kr';
-const r50=n=>Math.round(n/50)*50;
-function dist(a,b){const R=6371,t=Math.PI/180;const dLa=(b.la-a.la)*t,dLo=(b.lo-a.lo)*t;const x=Math.sin(dLa/2)**2+Math.cos(a.la*t)*Math.cos(b.la*t)*Math.sin(dLo/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(x)));}
-function itemSource(item){return CITIES.find(c=>c.item===item);}
-function bagCount(){return Object.values(S.inv).reduce((a,b)=>a+b,0);}
-
-let AC=null;
-function beep(f,d=0.12,type='square',vol=0.06,delay=0){try{ac();const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(AC.destination);const t=AC.currentTime+delay;o.start(t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.stop(t+d+0.02);}catch(e){}}
-const sndOk=()=>{beep(660,.1);beep(880,.15,'square',.06,.1);};
-const sndBad=()=>{beep(200,.25,'sawtooth',.05);};
-const sndCoin=()=>{beep(988,.08,'square',.05);beep(1319,.2,'square',.05,.08);};
-const sndStamp=()=>{beep(120,.15,'triangle',.15);};
-
-
-/* ================= MUSIKK ================= */
-const MUS={on:true,started:false,next:0,step:0,timer:null,bus:null,lounge:null,dark:false};
-try{MUS.on=localStorage.getItem('globetrotter_music')!=='av';}catch(e){}
-const mf=m=>440*Math.pow(2,(m-69)/12);
-function ac(){AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
-let NOISE=null;
-function noiseBuf(){if(NOISE)return NOISE;const a=ac(),b=a.createBuffer(1,a.sampleRate*0.3,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return NOISE=b;}
-function setupMusic(){
-  const a=ac();if(MUS.bus)return;
-  MUS.bus=a.createGain();MUS.bus.gain.value=MUS.on?1:0;MUS.bus.connect(a.destination);
-  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;lp.connect(MUS.bus);
-  MUS.lounge=a.createGain();MUS.lounge.gain.value=0.55;MUS.lounge.connect(lp);
-  // litt romklang med ekko
-  const dl=a.createDelay();dl.delayTime.value=0.33;const fb=a.createGain();fb.gain.value=0.28;
-  MUS.lounge.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(lp);
-}
-function epiano(m,t,dur,vol){const a=AC;[0,7].forEach((det,i)=>{const o=a.createOscillator(),g=a.createGain();o.type=i?'triangle':'sine';o.frequency.value=mf(m);o.detune.value=i?det:-3;
-  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol*(i?0.35:1),t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-  o.connect(g);g.connect(MUS.lounge);o.start(t);o.stop(t+dur+0.05);});}
-function bassN(m,t,dur){const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=mf(m);
-  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.015);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-  o.connect(g);g.connect(MUS.lounge);o.start(t);o.stop(t+dur+0.05);}
-function brush(t,vol){const s=AC.createBufferSource();s.buffer=noiseBuf();const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=AC.createGain();
-  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.09);s.connect(f);f.connect(g);g.connect(MUS.lounge);s.start(t);s.stop(t+0.12);}
-function vibes(m,t){const o=AC.createOscillator(),g=AC.createGain(),tr=AC.createOscillator(),tg=AC.createGain();o.type='sine';o.frequency.value=mf(m);
-  tr.frequency.value=5.5;tg.gain.value=0.025;tr.connect(tg);tg.connect(g.gain);
-  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.07,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+1.4);
-  o.connect(g);g.connect(MUS.lounge);o.start(t);tr.start(t);o.stop(t+1.5);tr.stop(t+1.5);}
-// Akkorder: Dmaj7 – Bm7 – Em7 – A7(13)  ·  rolig 82 bpm, swing
-const CH=[[62,66,69,73],[59,62,66,69],[64,67,71,74],[61,64,67,71]],RT=[38,35,40,33];
-const MEL=[74,76,78,81,83,86,88];
-function scheduleStep(t){
-  const beat=60/82,i=MUS.step,bar=Math.floor(i/8)%4,e=i%8;
-  const sw=(e%2)?beat*0.17:0; // swing på åttendelene
-  const tt=t+sw,ch=CH[bar];
-  if(e===0)ch.forEach(m=>epiano(m,tt,beat*3.2,0.045));
-  if(e===3)ch.forEach(m=>epiano(m+(bar===3?0:0),tt,beat*0.9,0.03));
-  if(e===0)bassN(RT[bar],tt,beat*1.6);
-  if(e===4)bassN(RT[bar]+7,tt,beat*1.2);
-  if(e===7)bassN(RT[(bar+1)%4]+1,tt,beat*0.4);
-  brush(tt,e%2?0.025:0.012);
-  if(e%2===0&&Math.random()<0.22)vibes(rnd(MEL),tt);
-  MUS.step++;
-}
-function musicTick(){if(!AC)return;const beat=60/82;while(MUS.next<AC.currentTime+0.15){scheduleStep(MUS.next);MUS.next+=beat/2;}}
-function startMusic(){
-  try{ac();setupMusic();if(MUS.started)return;MUS.started=true;MUS.next=AC.currentTime+0.1;MUS.timer=setInterval(musicTick,40);}catch(e){}
-}
-function setMusic(on){MUS.on=on;try{localStorage.setItem('globetrotter_music',on?'på':'av');}catch(e){}
-  $('musicBtn').textContent=on?'🎵 På':'🔇 Av';
-  if(on)startMusic();
-  if(MUS.bus)MUS.bus.gain.setTargetAtTime(on?1:0,AC.currentTime,0.1);}
-// Dyster «mordmusikk» når noe går galt
-function murderSting(){
-  if(!MUS.on)return;try{ac();setupMusic();}catch(e){return;}
-  const a=AC,t=a.currentTime+0.05,out=a.createGain();out.gain.value=0.9;out.connect(MUS.bus);
-  MUS.lounge.gain.cancelScheduledValues(t);MUS.lounge.gain.setTargetAtTime(0.0001,t,0.08);
-  // lav, truende drone (to toner som skurrer mot hverandre)
-  [41,42].forEach(m=>{const o=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();o.type='sawtooth';o.frequency.value=mf(m);
-    f.type='lowpass';f.frequency.setValueAtTime(200,t);f.frequency.linearRampToValueAtTime(900,t+2.5);
-    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.12,t+0.6);g.gain.setValueAtTime(0.12,t+2.6);g.gain.exponentialRampToValueAtTime(0.0001,t+3.6);
-    o.connect(f);f.connect(g);g.connect(out);o.start(t);o.stop(t+3.7);});
-  // tre skarpe, skjærende stikk
-  [0,0.45,0.9].forEach((d,k)=>{[69,70,76].forEach(m=>{const o=a.createOscillator(),g=a.createGain();o.type='sawtooth';o.frequency.value=mf(m+k);
-    g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(0.06,t+d+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.3);
-    o.connect(g);g.connect(out);o.start(t+d);o.stop(t+d+0.35);});});
-  // dyp pauke-dunk
-  [0,1.8].forEach(d=>{const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.setValueAtTime(90,t+d);o.frequency.exponentialRampToValueAtTime(35,t+d+0.6);
-    g.gain.setValueAtTime(0.5,t+d);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.9);o.connect(g);g.connect(out);o.start(t+d);o.stop(t+d+1);});
-  // synkende, uhyggelig tone til slutt
-  {const o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.setValueAtTime(mf(75),t+1.4);o.frequency.exponentialRampToValueAtTime(mf(63),t+3.2);
-   g.gain.setValueAtTime(0.0001,t+1.4);g.gain.exponentialRampToValueAtTime(0.07,t+1.6);g.gain.exponentialRampToValueAtTime(0.0001,t+3.4);o.connect(g);g.connect(out);o.start(t+1.4);o.stop(t+3.5);}
-  // loungen kommer rolig tilbake
-  MUS.lounge.gain.setTargetAtTime(0.55,t+4,0.8);
-}
-
-function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2200);}
-function diary(t){S.diary=t;$('diary').textContent='📓 '+t;}
-
-function modal(html){$('mcontent').innerHTML=html;$('modal').classList.remove('hidden');$('mbox').scrollTop=0;}
-function closeModal(){if(S&&S.needNight&&!$('game').classList.contains('hidden')){openNight();return;}$('modal').classList.add('hidden');}
-$('mclose').onclick=closeModal;
-$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
-
-/* ================= UI ================= */
-function render(){
-  const c=byId[S.at];
-  $('sName').textContent='🎒 '+S.name;
-  $('sMoney').textContent='💰 '+kr(S.money);
-  $('sDay').textContent='📅 Dag '+S.day;
-  $('sDone').textContent='📦 '+S.done+'/'+GOAL+' oppdrag';
-  $('sStamps').textContent='🛂 '+S.visited.length+'/'+CITIES.length;
-  $('cFlag').textContent=c.f;$('cName').textContent=c.n;
-  $('cSub').textContent=c.c+' · Hostell '+kr(c.h)+' · Hotell '+kr(r50(c.h*2.2));
-  $('diary').textContent='📓 '+S.diary;
-  const canDeliver=S.missions.some(m=>m.to===S.at&&(S.inv[m.item]||0)>0);
-  $('boardBtn').classList.toggle('badge',canDeliver);
-  updateMap();save();
-}
-
-// Overnatting: én natt i byen
-function sleepNight(){
-  const c=byId[S.at];
-  if(S.money>=c.h){S.money-=c.h;return 'Du betalte '+kr(c.h)+' for en natt på hostellet.';}
-  return 'Du hadde ikke råd til hostell og sov på en parkbenk. Brrr!';
-}
-
-
-/* --- Overnatting --- */
-function nightOpts(c){return [
- {k:'hotell',ic:'🏨',n:'Hotell',price:r50(c.h*2.2),risk:0.02,d:'Eget rom med lås. Nesten helt trygt.'},
- {k:'hostell',ic:'🛏️',n:'Hostell',price:c.h,risk:0.10,d:'Køyeseng på sovesal. Litt fare for tyveri.'},
- {k:'ute',ic:'🌳',n:'Sove ute',price:0,risk:0.35,d:'Gratis på en parkbenk … men stor fare for å bli ranet!'}];}
-function openNight(){
-  const c=byId[S.at];S.needNight=true;save();
-  let h=`<h2>🌙 Hvor vil du sove i ${c.n}?</h2>`;
-  nightOpts(c).forEach(o=>{h+=`<div class="row"><div><span style="font-size:24px">${o.ic}</span> <b>${o.n}</b><div class="small">${o.d}</div></div><button class="mini ${o.k==='ute'?'gray':''}" ${S.money<o.price?'disabled':''} onclick="sleepAt('${o.k}')">${o.price?kr(o.price):'Gratis'}</button></div>`;});
-  h+=`<p class="small">Du har ${kr(S.money)}.</p>`;
-  modal(h);
-}
-function sleepAt(k){
-  const c=byId[S.at],o=nightOpts(c).find(x=>x.k===k);if(!o||S.money<o.price)return;
-  S.money-=o.price;S.needNight=false;
-  let h,txt;
-  if(Math.random()<o.risk&&(S.money>0||bagCount()>0)){
-    const lost=Math.min(S.money,Math.max(100,Math.round(S.money*(0.3+Math.random()*0.2))));
-    S.money-=lost;let item='';
-    if(bagCount()>0&&Math.random()<0.5){item=rnd(Object.keys(S.inv));S.inv[item]--;if(!S.inv[item])delete S.inv[item];}
-    murderSting();
-    const where={hotell:'Noen dirket opp døra til hotellrommet i natt!',hostell:'En på sovesalen rotet i sekken din mens du sov!',ute:'Mens du sov på benken, kom en skummel skikkelse snikende …'}[k];
-    txt=`Ble ranet i ${c.n}! Mistet ${kr(lost)}${item?' og '+item:''}.`;
-    h=`<h2 style="color:#000">🔪 RANET!</h2><div class="fact" style="background:#2b2118;color:#f3c1bb">${where}<br><br>Du mistet <b>${kr(lost)}</b>${item?' og <b>'+item+'</b> fra ryggsekken':''}.</div><p class="small">Tips: Hotell er tryggest – men koster mer.</p><button class="btn" onclick="closeModal()">Puh … en ny dag</button>`;
-  }else{
-    const good={hotell:'Du sov som en stein i en myk hotellseng. Frokosten var nydelig!',hostell:'Litt snorking fra køya over, men du sov greit.',ute:'Stjernene lyste, og ingen plaget deg. Du våknet stiv i ryggen, men med alt i behold.'}[k];
-    txt=`Sov på ${o.n.toLowerCase()} i ${c.n}${o.price?' for '+kr(o.price):''}.`;
-    h=`<h2>☀️ God morgen!</h2><div class="fact">${o.ic} ${good}</div>${o.price?`<p>Du betalte ${kr(o.price)}.</p>`:''}<button class="btn green" onclick="closeModal()">Ut og opplev ${c.n}!</button>`;
-  }
-  diary(txt);render();modal(h);
-}
-
-/* --- Om byen --- */
-function openAbout(){
-  const c=byId[S.at];
-  modal(`<h2>${c.f} ${c.n}</h2><div class="fact">${c.fact}</div>
-  <p><span class="tag">Land: ${c.c}</span><span class="tag">Hostell: ${kr(c.h)}</span><span class="tag">Hotell: ${kr(r50(c.h*2.2))}</span><span class="tag">Jobb: 5–10 spørsmål, 80 % riktig</span><span class="tag">Suvenir: ${c.item}</span>${c.port?'<span class="tag">⚓ Havneby</span>':''}</p>
-  <button class="btn blue" onclick="closeModal()">Lukk</button>`);
-}
-
-/* --- Jobb --- */
-let JOB=null;
-function openJob(){
-  const c=byId[S.at];
-  const n=5+Math.floor(Math.random()*6); // 5–10 spørsmål
-  const gen=n>=8?2:1;
-  const qs=shuffle(c.q).slice(0,n-gen).concat(shuffle(GENERAL).slice(0,gen));
-  const need=Math.ceil(n*0.8), pay=r50(n*c.p*0.5);
-  JOB={title:rnd(JOBS),qs:shuffle(qs),i:0,right:0,n,need,pay};
-  modal(`<h2>💼 Jobb i ${c.n}</h2><p>Du kan få jobb som <b>${JOB.title.toLowerCase()}</b> for en dag!</p>
-  <div class="fact">Sjefen vil teste hva du kan om <b>${c.c}</b>. Du får <b>${n} spørsmål</b> og må ha minst <b>${need} riktige (80 %)</b> for å få lønn.<br><br>💰 Lønn: <b>${kr(pay)}</b><br>❌ Klarer du det ikke, får du ingenting.</div>
-  <p class="small">Jobben tar én dag, og du sover på hostellet etterpå.</p>
-  <button class="btn green" onclick="jobQ()">Start arbeidsdagen</button>`);
-}
-function jobQ(){
-  const q=JOB.qs[JOB.i];const opts=shuffle(q.slice(1));
-  let h=`<h2>Spørsmål ${JOB.i+1} av ${JOB.n}</h2><p class="small">Riktige så langt: ${JOB.right} · Du trenger ${JOB.need}</p><div class="q">${q[0]}</div>`;
-  opts.forEach(o=>{h+=`<button class="ans" data-o="${encodeURIComponent(o)}">${o}</button>`;});
-  h+='<div id="jobfb"></div>';
-  modal(h);
-  document.querySelectorAll('.ans').forEach(b=>b.onclick=()=>{
-    const chosen=decodeURIComponent(b.dataset.o);const ok=chosen===q[1];
-    document.querySelectorAll('.ans').forEach(x=>{x.disabled=true;if(decodeURIComponent(x.dataset.o)===q[1])x.classList.add('ok');});
-    if(ok){JOB.right++;sndOk();}else{b.classList.add('bad');sndBad();}
-    JOB.i++;
-    const last=JOB.i>=JOB.n;
-    $('jobfb').innerHTML=`<p class="big">${ok?'✅ Riktig!':'❌ Feil – riktig svar er «'+q[1]+'»'}</p><button class="btn" onclick="${last?'jobEnd()':'jobQ()'}">${last?'Ferdig for i dag':'Neste spørsmål'}</button>`;
-  });
-}
-function jobEnd(){
-  const c=byId[S.at];const passed=JOB.right>=JOB.need;const pay=passed?JOB.pay:0;
-  const pct=Math.round(JOB.right/JOB.n*100);
-  S.money+=pay;S.day++;S.needNight=true;const night='';
-  if(passed)sndCoin();else sndBad();
-  const msg=passed?(JOB.right===JOB.n?'Alt riktig! Sjefen klappet deg på skulderen.':'Godkjent! Sjefen betalte deg lønna.'):'Sjefen ristet på hodet: «Du må lære mer om landet vårt.» Ingen lønn i dag …';
-  diary(passed?`Jobbet som ${JOB.title.toLowerCase()} i ${c.n} og tjente ${kr(pay)}. ${night}`:`Strøk på jobben i ${c.n} (${JOB.right} av ${JOB.n}) og fikk ingen lønn. ${night}`);
-  modal(`<h2>${passed?'Arbeidsdagen er over':'Ikke godkjent'}</h2><p class="big">${JOB.right} av ${JOB.n} riktige (${pct} %)</p><p class="big" style="color:${passed?'var(--green)':'var(--red)'}">${passed?'+ '+kr(pay):'0 kr'}</p><p>${msg}</p><button class="btn green" onclick="openNight()">🌙 Finn overnatting</button>`);
-  render();
-}
-
-/* --- Ring hjem --- */
-const HOME_HI=['Mamma: «Hei vennen! Har du husket å spise ordentlig?»','Pappa: «Jaså, er det deg? Hvor i all verden er du nå?»','Mamma: «Så hyggelig at du ringer! Har du det fint?»','Pappa: «Hallo? Det skurrer litt … er du i utlandet fortsatt?»','Mamma: «Har du med deg nok ullsokker?»'];
-const HOME_LOAN=['Pappa: «Greit da, jeg setter inn 1000 kr. Men du må betale tilbake, hører du!»','Mamma: «Selvfølgelig, vennen. 1000 kr er på vei. Ikke bruk alt på suvenirer!»','Pappa: «Hmm … OK. 1000 kr. Jeg skriver det opp i boka.»'];
-function openHome(){
-  const debt=S.debt||0;ring();
-  let h=`<h2>📞 Ring hjem</h2><div class="fact">📱 Ring ring … ring ring …<br><br><i>${rnd(HOME_HI)}</i></div>
-  <p>Du skylder hjemme: <b>${kr(debt)}</b> (maks ${kr(3000)})</p>`;
-  h+=`<button class="btn green" onclick="borrow()" ${debt>=3000?'disabled':''}>💸 Lån 1000 kr</button>`;
-  if(debt>=3000)h+='<p class="small" style="color:var(--red)"><b>Pappa: «Nå får du klare deg selv en stund! Ta deg en jobb.»</b></p>';
-  if(debt>0)h+=`<button class="btn blue" onclick="repay()" ${S.money<1000?'disabled':''}>Betal tilbake 1000 kr</button>`;
-  h+=`<p class="small">Gjeld som ikke er betalt tilbake, trekkes fra poengsummen når du er ferdig.</p><button class="btn gray" onclick="closeModal()">Legg på</button>`;
-  modal(h);
-}
-function ring(){[0,.35,1.2,1.55].forEach(d=>{beep(880,.25,'sine',.05,d);beep(1100,.25,'sine',.03,d);});}
-function borrow(){if((S.debt||0)>=3000)return;S.debt=(S.debt||0)+1000;S.money+=1000;sndCoin();
-  const t=rnd(HOME_LOAN);diary('Ringte hjem og lånte 1000 kr.');render();
-  modal(`<h2>📞 Ring hjem</h2><div class="fact"><i>${t}</i></div><p class="big" style="color:var(--green)">+ ${kr(1000)}</p><p>Du skylder nå hjemme: <b>${kr(S.debt)}</b></p><button class="btn gray" onclick="closeModal()">Ha det! 👋</button>`);}
-function repay(){if(!S.debt||S.money<1000)return;S.debt-=1000;S.money-=1000;sndOk();diary('Betalte tilbake 1000 kr til mamma og pappa.');render();
-  modal(`<h2>📞 Ring hjem</h2><div class="fact"><i>Mamma: «Så flink du er! Takk for pengene.»</i></div><p>Du skylder nå: <b>${kr(S.debt)}</b></p><button class="btn gray" onclick="closeModal()">Ha det! 👋</button>`);}
-
-/* --- Marked --- */
-function openMarket(){
-  const c=byId[S.at];const n=bagCount();
-  const want=S.missions.filter(m=>m.from===S.at);
-  modal(`<h2>🛒 Marked i ${c.n}</h2>
-  <div class="row"><div><b>${c.item}</b><div class="small">Lokal suvenir fra ${c.n}${want.length?' · <b style="color:var(--red)">Du trenger denne til et oppdrag!</b>':''}</div></div>
-  <button class="mini" id="buyBtn" ${S.money<c.pr||n>=MAXBAG?'disabled':''}>Kjøp ${kr(c.pr)}</button></div>
-  <p class="small">Ryggsekken: ${n}/${MAXBAG} ting. ${n>=MAXBAG?'Ryggsekken er full!':''} ${S.money<c.pr?'Du har ikke nok penger – ta en jobb!':''}</p>
-  <button class="btn gray" onclick="closeModal()">Tilbake</button>`);
-  $('buyBtn').onclick=()=>{S.money-=c.pr;S.inv[c.item]=(S.inv[c.item]||0)+1;sndCoin();diary(`Kjøpte ${c.item} i ${c.n} for ${kr(c.pr)}.`);toast('Lagt i ryggsekken: '+c.item);render();openMarket();};
-}
-
-/* --- Oppdrag --- */
-function makeOffers(){
-  const offers=[];let tries=0;
-  while(offers.length<3&&tries<100){tries++;
-    const from=rnd(CITIES),to=rnd(CITIES);
-    if(from.id===to.id||to.id===S.at)continue;
-    if(offers.some(o=>o.from===from.id||o.to===to.id))continue;
-    if(S.missions.some(m=>m.from===from.id&&m.to===to.id))continue;
-    const d=dist(from,to)+dist(byId[S.at],from);
-    offers.push({id:S.seq++,from:from.id,to:to.id,item:from.item,who:rnd(PEOPLE),reward:r50(350+from.pr*1.3+d*0.09)});
-  }
-  S.offers=offers;
-}
-function missionText(m){const f=byId[m.from],t=byId[m.to];return `Kjøp <b>${m.item}</b> i ${f.f} ${f.n} og lever den til <b>${m.who}</b> i ${t.f} ${t.n}.`;}
-function openBoard(){
-  const c=byId[S.at];let h=`<h2>📌 Oppslagstavla i ${c.n}</h2>`;
-  const deliver=S.missions.filter(m=>m.to===S.at&&(S.inv[m.item]||0)>0);
-  deliver.forEach(m=>{h+=`<div class="mission" style="border-color:var(--green)">🎉 ${m.who} venter på deg her! ${missionText(m)}<br><button class="btn green" onclick="deliver(${m.id})">Lever ${m.item} og få ${kr(m.reward)}</button></div>`;});
-  h+=`<p><b>Nye oppdrag</b> (du kan ha ${MAXMIS} om gangen – du har ${S.missions.length}):</p>`;
-  if(!S.offers.length)h+='<p class="small">Ingen nye oppdrag her akkurat nå. Kom tilbake senere!</p>';
-  S.offers.forEach(o=>{h+=`<div class="mission">✉️ ${missionText(o)}<br><span class="tag">Belønning: ${kr(o.reward)}</span><br><button class="mini blue" style="margin-top:6px" onclick="accept(${o.id})" ${S.missions.length>=MAXMIS?'disabled':''}>Ta oppdraget</button></div>`;});
-  h+='<button class="btn gray" onclick="closeModal()">Tilbake</button>';
-  modal(h);
-}
-function accept(id){const o=S.offers.find(x=>x.id===id);if(!o||S.missions.length>=MAXMIS)return;S.missions.push(o);S.offers=S.offers.filter(x=>x.id!==id);sndOk();diary(`Nytt oppdrag: hente ${o.item} i ${byId[o.from].n} til ${o.who} i ${byId[o.to].n}.`);render();openBoard();}
-function deliver(id){
-  const m=S.missions.find(x=>x.id===id);if(!m)return;
-  S.inv[m.item]--;if(!S.inv[m.item])delete S.inv[m.item];
-  S.missions=S.missions.filter(x=>x.id!==id);S.money+=m.reward;S.done++;sndCoin();setTimeout(sndOk,250);
-  diary(`${m.who} ble kjempeglad for ${m.item}! Du fikk ${kr(m.reward)}.`);
-  render();
-  if(S.done>=GOAL){win();return;}
-  modal(`<h2>🎉 Oppdrag fullført!</h2><p class="big">${m.who} takker så mye!</p><p class="big" style="color:var(--green)">+ ${kr(m.reward)}</p><p class="big">${S.done} av ${GOAL} oppdrag ferdig</p><button class="btn green" onclick="openBoard()">Tilbake til tavla</button>`);
-}
-
-/* --- Reise --- */
-function modes(a,b){
-  const d=dist(a,b),list=[];
-  list.push({k:'fly',ic:'✈️',n:'Fly',price:r50(300+d*0.12),days:d>7000?2:1});
-  if(a.lm===b.lm&&d<9000)list.push({k:'tog',ic:'🚆',n:'Tog / buss',price:r50(100+d*0.06),days:Math.max(1,Math.ceil(d/900))});
-  if(a.port&&b.port)list.push({k:'baat',ic:'🚢',n:'Båt',price:r50(100+d*0.035),days:Math.max(1,Math.ceil(d/650))});
-  return list;
-}
-function openTravel(){
-  const a=byId[S.at];
-  const list=CITIES.filter(c=>c.id!==S.at).map(c=>({c,d:dist(a,c)})).sort((x,y)=>x.d-y.d);
-  let h=`<h2>✈️ Hvor vil du reise?</h2><p class="small">Du kan også trykke på en by på kartet. 🟡 = kjøp ting der · 🟢 = lever ting der</p>`;
-  list.forEach(({c,d})=>{
-    const buy=S.missions.some(m=>m.from===c.id&&!(S.inv[m.item]>0)),drop=S.missions.some(m=>m.to===c.id&&S.inv[m.item]>0);
-    const cheapest=Math.min(...modes(a,c).map(m=>m.price));
-    h+=`<div class="row"><div>${c.f} <b>${c.n}</b> ${buy?'🟡':''}${drop?'🟢':''}${S.visited.includes(c.id)?' <span class="small">✔</span>':''}<div class="small">${c.c} · ${d.toLocaleString('nb-NO')} km · fra ${kr(cheapest)}</div></div><button class="mini blue" onclick="openTravelTo('${c.id}')">Velg</button></div>`;
-  });
-  modal(h);
-}
-function openTravelTo(id){
-  const a=byId[S.at],b=byId[id],d=dist(a,b);
-  let h=`<h2>${b.f} Reise til ${b.n}</h2><p>${a.n} → ${b.n}: <b>${d.toLocaleString('nb-NO')} km</b></p>`;
-  modes(a,b).forEach(m=>{
-    h+=`<div class="row"><div><span style="font-size:24px">${m.ic}</span> <b>${m.n}</b><div class="small">${m.days} ${m.days>1?'dager':'dag'} · ${kr(m.price)}</div></div><button class="mini" ${S.money<m.price?'disabled':''} onclick="travel('${id}','${m.k}')">Kjøp billett</button></div>`;
-  });
-  if(!modes(a,b).some(m=>S.money>=m.price))h+='<p class="small" style="color:var(--red)"><b>Du har ikke råd til billett. Ta en jobb først!</b></p>';
-  if(a.lm!==b.lm)h+='<p class="small">Tog går ikke over havet. Båt går bare mellom havnebyer ⚓.</p>';
-  h+=`<button class="btn gray" onclick="openTravel()">Velg en annen by</button>`;
-  modal(h);
-}
-let busy=false;
-function travel(id,k){
-  if(busy)return;const a=byId[S.at],b=byId[id];const m=modes(a,b).find(x=>x.k===k);
-  if(!m||S.money<m.price)return;
-  busy=true;closeModal();S.money-=m.price;render();
-  // animasjon
-  const [x1,y1]=P(a.lo,a.la),[x2,y2]=P(b.lo,b.la);
-  $('routes').innerHTML=`<line class="route" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
-  const pl=$('plane');pl.textContent=m.ic;pl.classList.remove('hidden');
-  const t0=performance.now(),dur=1400+Math.min(1600,dist(a,b)/8);
-  beep(300,.4,'triangle',.05);
-  function step(t){const p=Math.min(1,(t-t0)/dur),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
-    pl.setAttribute('x',x1+(x2-x1)*e);pl.setAttribute('y',y1+(y2-y1)*e-Math.sin(p*Math.PI)*25);
-    if(p<1)requestAnimationFrame(step);else{pl.classList.add('hidden');$('routes').innerHTML='';arrive(id,m);}}
-  requestAnimationFrame(step);
-}
-function arrive(id,m){
-  busy=false;S.at=id;S.day+=m.days;const c=byId[id];
-  let news=[];let stamp=false;
-  if(!S.visited.includes(id)){S.visited.push(id);S.stampDay[id]=S.day;stamp=true;}
-  let ev='';
-  if(Math.random()<0.3){const e=rnd(EVENTS);S.money=Math.max(0,S.money+e[1]);if(e[1]<0)setTimeout(murderSting,600);ev=e[0]+(e[1]?` (${e[1]>0?'+':''}${kr(e[1])})`:'');}
-  S.needNight=true;
-  makeOffers();
-  diary(`Kom fram til ${c.n} etter ${m.days} ${m.days>1?'dager':'dag'} med ${m.n.toLowerCase()}.`);
-  render();
-  const canDeliver=S.missions.some(x=>x.to===id&&(S.inv[x.item]||0)>0);
-  let h=`<h2>${c.f} Velkommen til ${c.n}!</h2>`;
-  if(stamp){sndStamp();h+=`<div style="text-align:center"><div class="stamp" style="display:inline-block;padding:10px 18px;font-size:16px"><div class="f">${c.f}</div>${c.n.toUpperCase()}<br>Dag ${S.day}</div><p><b>Nytt stempel i passet!</b></p></div>`;}
-  h+=`<div class="fact">${c.fact}</div>`;
-  if(ev)h+=`<p><b>📰 ${ev}</b></p>`;
-    if(canDeliver)h+=`<button class="btn green" onclick="openBoard()">🎉 Noen venter på en leveranse her!</button>`;
-  h+=`<button class="btn blue" onclick="openNight()">🌙 Finn overnatting i ${c.n}</button>`;
-  modal(h);
-}
-
-/* --- Ryggsekk --- */
-function openBag(){
-  let h='<h2>🎒 Ryggsekken</h2>'+((S.debt||0)>0?`<p>📞 Du skylder hjemme: <b>${kr(S.debt)}</b></p>`:'');
-  const items=Object.entries(S.inv);
-  h+=`<p><b>Ting (${bagCount()}/${MAXBAG}):</b></p>`;
-  if(!items.length)h+='<p class="small">Ryggsekken er tom.</p>';
-  items.forEach(([it,n])=>{const src=itemSource(it);h+=`<div class="row"><div>${src?src.f:''} ${it} ${n>1?'× '+n:''}</div><button class="mini gray" onclick="sellItem('${it.replace(/'/g,"\\'")}')">Selg ${kr(Math.round((src?src.pr:100)/2))}</button></div>`;});
-  h+=`<p><b>Mine oppdrag (${S.missions.length}/${MAXMIS}):</b></p>`;
-  if(!S.missions.length)h+='<p class="small">Ingen oppdrag. Se på oppslagstavla!</p>';
-  S.missions.forEach(m=>{const has=(S.inv[m.item]||0)>0;h+=`<div class="mission">${has?'🟢 Har tingen – lever i '+byId[m.to].n:'🟡 Må kjøpes i '+byId[m.from].n}<br>${missionText(m)}<br><span class="tag">Belønning: ${kr(m.reward)}</span> <button class="mini red" style="margin-top:6px" onclick="dropMission(${m.id})">Avbryt</button></div>`;});
-  h+='<button class="btn gray" onclick="closeModal()">Lukk</button>';
-  modal(h);
-}
-function sellItem(it){const src=itemSource(it);const v=Math.round((src?src.pr:100)/2);S.inv[it]--;if(!S.inv[it])delete S.inv[it];S.money+=v;sndCoin();diary(`Solgte ${it} for ${kr(v)}.`);render();openBag();}
-function dropMission(id){S.missions=S.missions.filter(m=>m.id!==id);diary('Du ga opp et oppdrag.');render();openBag();}
-
-/* --- Pass --- */
-function openPass(){
-  let h=`<h2>🛂 Passet til ${S.name}</h2><p>${S.visited.length} av ${CITIES.length} byer besøkt</p><div class="stamps">`;
-  CITIES.forEach(c=>{h+=S.visited.includes(c.id)?`<div class="stamp"><div class="f">${c.f}</div>${c.n}<br>Dag ${S.stampDay[c.id]||1}</div>`:`<div class="stamp empty"><div class="f">❔</div>${c.n}</div>`;});
-  h+='</div><button class="btn gray" onclick="closeModal()">Lukk</button>';
-  modal(h);
-}
-
-/* --- Meny --- */
-function openMenu(){
-  modal(`<h2>⚙️ Meny</h2><p>Spillet lagres automatisk.</p>
-  <button class="btn blue" onclick="toStart()">Til startskjermen</button>
-  <button class="btn" onclick="askRestart()">Start helt på nytt</button>
-  <button class="btn gray" onclick="closeModal()">Tilbake</button>`);
-}
-
-/* --- Seier --- */
-function score(){return Math.max(0,S.done*1000+S.visited.length*150+Math.round((S.money-(S.debt||0))/5)-S.day*40);}
-function win(){
-  const sc=score();let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
-  hs.push({n:S.name,s:sc,d:S.day});hs.sort((a,b)=>b.s-a.s);hs=hs.slice(0,5);
-  try{localStorage.setItem(HSKEY,JSON.stringify(hs));}catch(e){}
-  clearSave();
-  [523,659,784,1047].forEach((f,i)=>beep(f,.25,'square',.06,i*.15));
-  modal(`<h2>🏆 Gratulerer, ${S.name}!</h2><p class="big">Du har fullført alle ${GOAL} oppdragene!</p>
-  <div class="fact">📅 Dager brukt: <b>${S.day}</b><br>🛂 Byer besøkt: <b>${S.visited.length}</b><br>💰 Penger igjen: <b>${kr(S.money)}</b>${(S.debt||0)>0?'<br>📞 Gjeld hjemme: <b>'+kr(S.debt)+'</b>':''}</div>
-  <p class="big">Poengsum: ${sc}</p>
-  <button class="btn green" onclick="toStart()">Til startskjermen</button>`);
-}
-
-/* --- Start --- */
-function showHS(){let hs=[];try{hs=JSON.parse(localStorage.getItem(HSKEY))||[];}catch(e){}
-  $('hsBox').innerHTML=hs.length?'<b>🏆 Beste reisende</b><ol>'+hs.map(h=>`<li>${h.n} – ${h.s} poeng (${h.d} dager)</li>`).join('')+'</ol>':'';}
-function toStart(){$('modal').classList.add('hidden');$('game').classList.add('hidden');$('start').classList.remove('hidden');$('contBtn').classList.toggle('hidden',!load());showHS();}
-function startGame(st){startMusic();S=st;$('start').classList.add('hidden');$('game').classList.remove('hidden');render();if(S.needNight)openNight();}
-function askRestart(){modal(`<h2>Start på nytt?</h2><p>Reisen du holder på med forsvinner.</p><button class="btn" onclick="clearSave();toStart();">Ja, slett reisen</button><button class="btn gray" onclick="closeModal()">Nei, avbryt</button>`);}
-$('newBtn').onclick=()=>{
-  if(load()){modal(`<h2>Ny reise?</h2><p>Du har en reise som ikke er ferdig. Vil du starte en ny? Den gamle forsvinner.</p><button class="btn" onclick="clearSave();closeModal();$('newBtn').click()">Ja, start ny reise</button><button class="btn green" onclick="closeModal();$('contBtn').click()">Nei, fortsett den gamle</button>`);return;}
-  S=newState($('pname').value.trim());makeOffers();startGame(S);
-  modal(`<h2>🎒 God tur, ${S.name}!</h2><div class="fact">Du står på Oslo S med 2000 kr i lomma og en tom ryggsekk.<br><br>
-  1. Gå til <b>📌 Oppdrag</b> og ta et oppdrag.<br>2. Reis til byen der tingen selges og kjøp den på <b>🛒 Marked</b>.<br>3. Reis videre og lever den.<br><br>Går du tom for penger? <b>💼 Ta en jobb</b> eller <b>📞 ring hjem</b> og lån!<br>Fullfør ${GOAL} oppdrag på færrest mulig dager.</div>
-  <button class="btn green" onclick="openBoard()">Se oppslagstavla</button>`);
-};
-$('contBtn').onclick=()=>{const s=load();if(s)startGame(s);};
-document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{({about:openAbout,job:openJob,market:openMarket,board:openBoard,travel:openTravel,bag:openBag,pass:openPass,home:openHome,menu:openMenu})[b.dataset.a]();});
-
-$('musicBtn').onclick=()=>setMusic(!MUS.on);
-$('musicBtn').textContent=MUS.on?'🎵 På':'🔇 Av';
-drawMap();toStart();
-try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
+const $=i=>document.getElementById(i),cl=(v,a,b)=>Math.max(a,Math.min(b,v)),rnd=(a,b)=>a+Math.random()*(b-a),PI=Math.PI;
+const R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(75,1,.1,300);C.rotation.order='YXZ';S.add(C);
+function rs(){R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}addEventListener('resize',rs);rs();
+S.add(new THREE.HemisphereLight(0xffffff,0x667755,.85));
+const sun=new THREE.DirectionalLight(0xfff2d8,.9);sun.position.set(40,70,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-70,right:70,top:70,bottom:-70,near:1,far:200});S.add(sun);
+const gun=new THREE.Group(),gb=new THREE.Mesh(new THREE.BoxGeometry(.1,.13,.7),new THREE.MeshStandardMaterial({color:0x222222})),fl=new THREE.Mesh(new THREE.SphereGeometry(.07),new THREE.MeshBasicMaterial({color:0xffdd55}));
+gb.position.set(.28,-.26,-.6);fl.position.set(.28,-.24,-1.05);fl.visible=false;gun.add(gb,fl);C.add(gun);
+let W,BX,VS,M,bots=[],G={on:0},P={},keys={},jx=0,jy=0,fire=0,jump=0,touch=matchMedia('(pointer:coarse)').matches;
+const mat=(c,o=1)=>new THREE.MeshStandardMaterial({color:c,roughness:.85,transparent:o<1,opacity:o});
+function B(x,z,w,h,d,c,y=0,o=1){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,o));m.position.set(x,y+h/2,z);m.castShadow=m.receiveShadow=true;W.add(m);if(!y&&h>.1)BX.push({a:x-w/2,b:x+w/2,c:z-d/2,d:z+d/2,h});return m}
+const H=(x,z,w,h,d,c)=>{B(x,z,w,h+.15,d,c);B(x,z,w+.4,.16,d+.4,0x4a2f2a,h)};
+function Cn(x,y,z,r,h,c,s=7){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,s),mat(c));m.position.set(x,y+h/2,z);m.castShadow=true;W.add(m)}
+function T(x,z){const t=new THREE.Mesh(new THREE.CylinderGeometry(.3,.4,2.4,6),mat(0x6b4a2b));t.position.set(x,1.2,z);t.castShadow=true;W.add(t);Cn(x,1.8,z,2,5,0x2f7d3c);BX.push({a:x-.4,b:x+.4,c:z-.4,d:z+.4,h:6})}
+function SG(t,x,y,z,w,h,bg,fg){const c=document.createElement('canvas');c.width=512;c.height=Math.round(512*h/w);const g=c.getContext('2d');g.fillStyle=bg;g.fillRect(0,0,512,c.height);g.fillStyle=fg;g.font='bold '+Math.min(c.height*.65,480/(t.length*.62))+'px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(t,256,c.height/2);
+const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));m.position.set(x,y,z);W.add(m)}
+const VT=[{n:'bil',mx:26,c:0xd62839,s:[2,.9,4.2],e:1.5},{n:'elsparkesykkel',mx:14,c:0x20c0a0,s:[.5,1,1.6],e:1.7},{n:'sykkel',mx:11,c:0x2f7de1,s:[.5,.9,1.7],e:1.7},{n:'gokart',mx:22,c:0xf2a900,s:[1.4,.5,2.3],e:1.2}];
+function V(t,x,z){return;const T=VT[t],g=new THREE.Group(),b=new THREE.Mesh(new THREE.BoxGeometry(...T.s),mat(T.c));b.position.y=T.s[1]/2+.25;b.castShadow=true;g.add(b);
+if(t==0){const c=new THREE.Mesh(new THREE.BoxGeometry(1.7,.7,2),mat(0x223344));c.position.set(0,1.35,.2);g.add(c)}
+g.position.set(x,0,z);W.add(g);VS.push({t:T,x,z,ang:rnd(0,6.28),sp:0,m:g})}
+function spot(){for(let i=0;i<60;i++){const x=rnd(-M.s+4,M.s-4),z=rnd(-M.s+4,M.s-4);if(!BX.some(c=>c.h>.4&&x>c.a-2&&x<c.b+2&&z>c.c-2&&z<c.d+2))return{x,z}}return{x:0,z:0}}
+const MP=[
+['🏫 Skolen',45,0xa9d4f5,0x5f9f4b,()=>{H(0,-30,44,5,12,0x8b2d2a);H(-28,-10,12,4.5,34,0x8b2d2a);H(28,-10,12,4.5,34,0x8b2d2a);SG('ANDEBU SKOLE',0,3.2,-23.9,14,2.4,'#8b2d2a','#fff');B(0,8,10,.4,10,0x2fb5a0);B(0,8,1.2,3.2,1.2,0xff7a3d);B(-6,12,3,.9,3,0xff7a3d);B(6,12,3,1.4,3,0xff7a3d);V(0,-8,22);V(1,10,26);V(2,-12,14)},12,8],
+['🛹 Skolegården',40,0x9fd0f0,0x6e9a5a,()=>{H(-30,-26,14,6,16,0x8b2d2a);H(30,-26,14,6,16,0x7a2a28);B(0,0,8,.4,8,0xbcbcbc);B(0,0,4.5,.8,4.5,0xbcbcbc);B(0,0,2,1.2,2,0xbcbcbc);B(-12,5,10,.4,3,0xbcbcbc);B(-12,5,3,.9,3,0xbcbcbc);B(14,8,3.2,.9,3.2,0xe0508a);B(14,6.2,3.2,3.4,.7,0xe0508a);B(25,-4,1,3.2,1,0xff7a3d);B(25,-4,7,.3,7,0x2fb5a0);V(1,-8,15);V(2,8,-8);V(0,-20,10)},14,8],
+['🌳 Parken',42,0xa9d4f5,0x62a84f,()=>{B(10,10,18,.15,14,0x3a80c0);B(10,10,3,.5,17,0x8a6a40);B(-28,-26,9,7,16,0xf3f3ef);B(-28,-36,5,13,5,0xf3f3ef);Cn(-28,13,-36,3.6,7,0x333333,4);SG('ANDEBU KIRKE',-28,4,-17.9,6,1.2,'#f3f3ef','#555');[[-16,4],[-8,4],[-16,10],[-8,10]].forEach(p=>B(p[0],p[1],.6,3.2,.6,0x8a6a40));B(-12,7,10,.3,8,0x8a6a40,3.2);V(1,-5,-5);V(2,5,-12);V(0,20,-5)},36,5],
+['🛒 Kiwi',40,0xb7d7f0,0x5b5e63,()=>{B(0,-28,40,8,14,0xe9e6df);B(0,-20.2,40,.5,3.6,0xb02a2a,4.6);[-19,-7,7,19].forEach(x=>B(x,-19,.5,4.6,.5,0xb02a2a));SG('KIWI mini pris',0,6.6,-20.9,16,2.4,'#25a244','#fff');SG('7-23',14,6.6,-20.9,4,2.4,'#fff','#25a244');B(34,-8,10,9,24,0xd8a24a);
+for(let i=0;i<5;i++){B(-30+i*9,-5,2,1.4,4.2,[0x2255aa,0xcccccc,0x222222,0xaa2222,0x228844][i]);B(-30+i*9+4,8,2,1.4,4.2,[0xcccccc,0x884422,0x222222,0x2255aa,0xddaa22][i])}[-6,-4,-2].forEach(x=>B(x,-17,1,1.2,1.6,0x2fa33f));V(0,0,14);V(1,-10,0);V(2,12,2)},6,5],
+['📚 Biblioteket',30,0xcfd8e0,0xcfc7b8,()=>{B(0,-30,62,9,1.4,0x9c7b52);B(-30,0,1.4,9,62,0x9c7b52);B(30,0,1.4,9,62,0x9c7b52);B(0,30,62,9,1.4,0x9fd0e0,0,.35);[[-12,-10],[12,-10],[-12,12],[12,12]].forEach(p=>B(p[0],p[1],1.4,9,1.4,0xffffff));
+[-22,-14,-6].forEach(z=>[-18,18].forEach(x=>{B(x,z,16,2.6,1.4,0x7a5a3a);for(let k=0;k<8;k++)B(x-7+k*2,z,1.6,.6,1.2,[0xc0392b,0x2980b9,0xf1c40f,0x27ae60][k%4],2.6)}));
+[[-10,14],[10,14],[0,22]].forEach(p=>B(p[0],p[1],5,.9,2.5,0xd9c9a8));B(0,-8,3,1.6,1.2,0xd9a441);SG('ANDEBU BIBLIOTEK',0,6,-29.2,20,2.6,'#2b2f33','#fff');SG('NYE BØKER',0,2.1,-8.65,3,.7,'#d9a441','#222');V(1,0,2);V(2,-6,20);V(1,8,26)},0,5],
+['⚽ Fotballarena',48,0x8fc1ee,0x3f8f3a,()=>{for(let i=0;i<8;i+=2)B(-28+i*8+4,0,8,.05,56,0x479f43);B(0,-28,70,.06,.3,0xffffff);B(0,28,70,.06,.3,0xffffff);B(0,0,.3,.06,56,0xffffff);
+[-32,32].forEach(x=>{B(x,-3.6,.3,2.4,.3,0xffffff);B(x,3.6,.3,2.4,.3,0xffffff);B(x,0,.3,.3,7.5,0xffffff,2.4)});
+for(let i=0;i<4;i++)for(let k=0;k<13;k++)B(-24+k*4,-34-i*2,4,.6+.6*i,2,(k*7+i*3)%5<3?0x2330e0:0xb5412c);B(0,-43,56,9,1.4,0x7a3b32);SG('ANDEBU IL FOTBALL',0,6,-42.2,16,2.4,'#1f3fbf','#fff');[-42,42].forEach(x=>B(x,-30,.8,16,.8,0x777777));V(1,-10,12);V(2,10,-12);V(0,0,25)},0,6],
+['🏎️ Gokartbanen',50,0xa9d4f5,0x4f8a42,()=>{const r=(a,b,c,y)=>{const m=new THREE.Mesh(new THREE.RingGeometry(a,b,64),mat(c));m.rotation.x=-PI/2;m.position.y=y;m.receiveShadow=true;W.add(m)};r(18,30,0x3a3d42,.03);r(17.4,18,0xd62839,.04);r(30,30.6,0xffffff,.04);
+for(let i=0;i<44;i++){const a=i/44*PI*2;B(Math.cos(a)*16.8,Math.sin(a)*16.8,1.3,.9,1.3,0x1a1a1a);B(Math.cos(a)*31.2,Math.sin(a)*31.2,1.3,.9,1.3,0x1a1a1a)}
+H(0,0,14,4.5,10,0x9a9a9a);SG('NMK ANDEBU',0,2.8,5.1,10,2,'#d62839','#fff');V(3,24,0);V(3,24,4);V(3,24,-4);V(0,-24,0);V(1,0,14)},8,0]];
+const mp=$('maps');let sel=0;MP.forEach((m,i)=>{const b=document.createElement('button');b.textContent=m[0];b.onclick=()=>{sel=i;[...mp.children].forEach((c,j)=>c.className=j==i?'s':'')};mp.appendChild(b)});mp.children[0].className='s';
+const md=$('mode');for(let k=10;k<=100;k+=10)md.add(new Option('Først til '+k+' kills',k));md.add(new Option('5 minutters kamp',0));md.value=30;
+function push(o,r){let h=0;const y=o.y||0;for(const c of BX){if(c.h<=y+.6||(c.lo!==undefined&&y+1.8<c.lo))continue;const cx=cl(o.x,c.a,c.b),cz=cl(o.z,c.c,c.d);let dx=o.x-cx,dz=o.z-cz,d=Math.hypot(dx,dz);if(d<r){h=1;if(d<1e-4){o.x+=r;continue}o.x+=dx/d*(r-d);o.z+=dz/d*(r-d)}}
+const a=M.s;if(Math.abs(o.x)>a){o.x=cl(o.x,-a,a);h=1}if(Math.abs(o.z)>a){o.z=cl(o.z,-a,a);h=1}return h}
+function gh(x,z,y){let m=0;for(const c of BX)if(c.h<=y+.6&&c.h>m&&x>c.a&&x<c.b&&z>c.c&&z<c.d)m=c.h;return m}
+function los(ax,az,bx,bz){const d=Math.hypot(bx-ax,bz-az),n=Math.ceil(d/1);for(let i=1;i<n;i++){const x=ax+(bx-ax)*i/n,z=az+(bz-az)*i/n;for(const c of BX)if(c.h>1.3&&c.lo===undefined&&x>c.a&&x<c.b&&z>c.c&&z<c.d)return 0}return 1}
+function mkBot(){const g=new THREE.Group(),col=[0xe74c3c,0x9b59b6,0xf39c12,0x1abc9c,0xe84393][Math.floor(rnd(0,5))],a=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;g.add(m)};
+a(.7,.95,.4,col,0,1.15,0);a(.6,.7,.3,0x223344,0,.35,0);a(.1,.12,.6,0x222222,.35,1.2,.4);const h=new THREE.Mesh(new THREE.SphereGeometry(.25),mat(0xf0c8a0));h.position.y=1.82;g.add(h);W.add(g);return{mesh:g,x:0,z:0,hp:100,dead:0,t:0,cd:1,st:0,sd:1}}
+function sp(b){let p;for(let i=0;i<20;i++){p=spot();if(Math.hypot(p.x-P.x,p.z-P.z)>22)break}b.x=p.x;b.z=p.z;b.hp=100;b.dead=0;b.mesh.visible=true}
+function start(){const m=MP[sel];M={s:m[1]};if(W)S.remove(W);W=new THREE.Group();S.add(W);BX=[];VS=[];bots=[];S.background=new THREE.Color(m[2]);S.fog=new THREE.Fog(m[2],45,140);
+const g=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(m[3]));g.rotation.x=-PI/2;g.receiveShadow=true;W.add(g);m[4]();
+for(let k=0;k<m[5];k++){const p=spot();T(p.x,p.z)}for(let k=0;k<m[6];k++){const p=spot();B(p.x,p.z,rnd(2,3.5),rnd(1.2,2),rnd(2,3.5),0xb08850)}
+if(m[5])for(let k=0;k<30;k++){const a=k/30*PI*2;Cn(Math.cos(a)*(m[1]+12),0,Math.sin(a)*(m[1]+12),6,18,0x2d6a3a)}
+const p=spot();P={x:p.x,z:p.z,y:0,vy:0,yaw:rnd(0,6),pitch:0,veh:null};G={on:1,k:0,target:+md.value,t:0,hp:100,dead:0,fc:0,deaths:0};
+for(let i=0;i<6;i++){const b=mkBot();sp(b);bots.push(b)}
+$('menu').style.display='none';$('hud').style.display='block';gun.visible=true;if(!touch)R.domElement.requestPointerLock()}
+function end(win){G.on=0;document.exitPointerLock&&document.exitPointerLock();$('hud').style.display='none';$('menu').style.display='flex';
+$('msg').textContent=(G.target?(win?'🏆 SEIER! ':'Tiden er ute. '):'⏱️ Tiden er ute! ')+G.k+' kills · '+G.deaths+' ganger tatt ut'}
+function kill(b){b.dead=1;b.t=3;b.mesh.visible=false;G.k++;if(G.target&&G.k>=G.target)end(1)}
+function hurt(n){if(G.dead)return;G.hp-=n;$('v').style.opacity=1;setTimeout(()=>$('v').style.opacity=0,120);if(G.hp<=0){G.dead=2.2;G.deaths++;if(P.veh){P.veh.sp=0;P.veh=null}$('dead').style.display='flex'}}
+const D=new THREE.Vector3();
+function shoot(){if(G.fc>0||G.dead||P.veh)return;G.fc=.11;P.pitch+=.012;C.getWorldDirection(D);D.x+=rnd(-.006,.006);D.y+=rnd(-.006,.006);let best=null,bt=1e9,hs=0;const q=C.position,rad=touch?.85:.5;
+for(const b of bots){if(b.dead)continue;const t=(b.x-q.x)*D.x+(1-q.y)*D.y+(b.z-q.z)*D.z;if(t<0||t>90||t>bt)continue;const px=q.x+D.x*t,py=q.y+D.y*t,pz=q.z+D.z*t;
+if(Math.hypot(px-b.x,pz-b.z)<rad&&py>-.2&&py<2.1&&los(q.x,q.z,b.x,b.z)){best=b;bt=t;hs=py>1.6}}
+if(best){best.hp-=hs?100:34;$('x').className='h';setTimeout(()=>$('x').className='',100);if(best.hp<=0)kill(best)}}
+function update(dt){G.t+=dt;G.fc-=dt;fl.visible=G.fc>.06;const pr=$('pr');pr.style.display='none';
+if(G.dead>0){G.dead-=dt;if(G.dead<=0){G.dead=0;G.hp=100;const p=spot();P.x=p.x;P.z=p.z;P.y=0;$('dead').style.display='none'}}
+const v=P.veh;
+if(v&&!G.dead){const ac=(keys.KeyW?1:0)-(keys.KeyS?1:0)-jy,st=(keys.KeyA?1:0)-(keys.KeyD?1:0)-jx;
+if(Math.abs(ac)>.05)v.sp+=(cl(ac,-1,1)*v.t.mx-v.sp)*dt*1.1;else v.sp*=1-dt*.9;v.ang+=st*dt*1.7*cl(v.sp/6,-1,1);
+v.x+=-Math.sin(v.ang)*v.sp*dt;v.z+=-Math.cos(v.ang)*v.sp*dt;if(push(v,1.1))v.sp*=-.3;v.m.position.set(v.x,0,v.z);v.m.rotation.y=v.ang;
+P.x=v.x;P.z=v.z;P.y=0;P.yaw+=(v.ang-P.yaw)*Math.min(1,dt*8);C.fov=75+Math.abs(v.sp)*.8;C.updateProjectionMatrix();pr.textContent='E: gå av '+v.t.n;pr.style.display='block'}
+else if(!G.dead){C.fov=75;let mx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+jx,mz=(keys.KeyS?1:0)-(keys.KeyW?1:0)+jy;const l=Math.hypot(mx,mz);if(l>1){mx/=l;mz/=l}const s=(keys.ShiftLeft?10:6.5)*dt,f=-mz;
+P.x+=(-Math.sin(P.yaw)*f+Math.cos(P.yaw)*mx)*s;P.z+=(-Math.cos(P.yaw)*f-Math.sin(P.yaw)*mx)*s;push(P,.4);
+P.vy-=22*dt;P.y+=P.vy*dt;const g=gh(P.x,P.z,P.y);let on=0;if(P.y<=g){P.y=g;P.vy=0;on=1}if(on&&(keys.Space||jump))P.vy=8;
+let nv=null,nd=4;for(const w of VS){const d=Math.hypot(w.x-P.x,w.z-P.z);if(d<nd){nd=d;nv=w}}G.nv=nv;if(nv){pr.textContent='E: sett deg på '+nv.t.n;pr.style.display='block'}
+if(fire||keys.Mouse)shoot()}
+if(G.eKey){G.eKey=0;if(P.veh){const w=P.veh;P.x=w.x+Math.cos(w.ang)*2;P.z=w.z-Math.sin(w.ang)*2;w.sp=0;P.veh=null}else if(G.nv&&!G.dead)P.veh=G.nv}
+if(P.veh&&Math.abs(P.veh.sp)>7)for(const b of bots)if(!b.dead&&Math.hypot(P.veh.x-b.x,P.veh.z-b.z)<2.3)kill(b);
+for(const b of bots){if(b.dead){b.t-=dt;if(b.t<=0)sp(b);continue}const dx=P.x-b.x,dz=P.z-b.z,d=Math.hypot(dx,dz)||1;b.mesh.rotation.y=Math.atan2(dx,dz);
+const mv=d>14?1:(d<7?-.6:0);b.st-=dt;if(b.st<0){b.st=rnd(1,2.5);b.sd=Math.random()<.5?1:-1}const s=(b.spd||4.2)*dt;b.x+=(dx/d*mv-dz/d*b.sd*.7)*s;b.z+=(dz/d*mv+dx/d*b.sd*.7)*s;push(b,.5);b.mesh.position.set(b.x,0,b.z);
+b.cd-=dt;if(!G.dead&&d<45&&b.cd<=0&&los(b.x,b.z,P.x,P.z)){b.cd=rnd(.9,1.8)/(AR.dfr||1);if(Math.random()<(.19-d/300)*(b.acc||1)*(AR.dfa||1))hurt(10*(b.dm||1))}}
+C.position.set(P.x,P.y+(v?v.t.e:1.7),P.z);C.rotation.set(cl(P.pitch,-1.4,1.4),P.yaw,0);gun.visible=!v;
+$('hp').style.width=Math.max(0,G.hp)+'%';const tl=Math.max(0,(G.dur||300)-G.t);$('top').textContent='🎯 '+G.k+(G.target?' / '+G.target:'')+'   ⏱️ '+(G.target?Math.floor(G.t/60)+':'+String(Math.floor(G.t%60)).padStart(2,'0'):Math.floor(tl/60)+':'+String(Math.floor(tl%60)).padStart(2,'0'));
+if(!G.target&&tl<=0)end(0)}
+let last=performance.now();(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;if(G.on)update(dt);if(W)R.render(S,C)})(last);
+$('go').onclick=start;
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='KeyE')G.eKey=1;if(e.code=='Space')e.preventDefault()});addEventListener('keyup',e=>keys[e.code]=0);
+addEventListener('mousemove',e=>{if(document.pointerLockElement&&G.on){P.yaw-=e.movementX*.0025;P.pitch=cl(P.pitch-e.movementY*.0025,-1.4,1.4)}});
+addEventListener('mousedown',e=>{if(!G.on||touch)return;if(!document.pointerLockElement)R.domElement.requestPointerLock();else keys.Mouse=1});addEventListener('mouseup',()=>keys.Mouse=0);
+const TT={};
+document.addEventListener('touchstart',e=>{if(!G.on)return;for(const t of e.changedTouches){const b=t.target.dataset&&t.target.dataset.b;if(b){e.preventDefault();if(b=='f')fire=1;if(b=='j')jump=1;if(b=='e')G.eKey=1;continue}TT[t.identifier]={x:t.clientX,y:t.clientY,l:t.clientX<innerWidth/2,px:t.clientX,py:t.clientY}}},{passive:false});
+document.addEventListener('touchmove',e=>{if(!G.on)return;e.preventDefault();for(const t of e.changedTouches){const o=TT[t.identifier];if(!o)continue;if(o.l){jx=cl((t.clientX-o.x)/45,-1,1);jy=cl((t.clientY-o.y)/45,-1,1)}else{P.yaw-=(t.clientX-o.px)*.007;P.pitch=cl(P.pitch-(t.clientY-o.py)*.007,-1.4,1.4);o.px=t.clientX;o.py=t.clientY}}},{passive:false});
+document.addEventListener('touchend',e=>{for(const t of e.changedTouches){const o=TT[t.identifier];if(o&&o.l)jx=jy=0;delete TT[t.identifier];const b=t.target.dataset&&t.target.dataset.b;if(b=='f')fire=0;if(b=='j')jump=0}});
 </script>
-</body>
-</html>
+<script>
+let SP=1,PT=[],TR=[],lx=0,lz=0,gph=0;touch=false;addEventListener('touchstart',()=>{touch=true},{once:true});
+R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=.95;
+document.head.insertAdjacentHTML('beforeend','<style>#top{font-style:italic;font-size:24px;letter-spacing:1px;background:linear-gradient(90deg,#1d6fe0cc,#e0302ecc);border:2px solid #fff8}h1{font-style:italic;background:linear-gradient(#fff,#8fd0ff);-webkit-background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 4px 0 #1b4fb0)}#x{border-width:3px}</style>');
+const sd=document.createElement('select');[['Fart: Normal',1],['Fart: Rapid',1.4],['Fart: Ultra',1.9]].forEach(a=>sd.add(new Option(a[0],a[1])));$('mode').parentNode.append(' ',sd);
+/* mus: skyt alltid, se deg rundt (med låst mus, eller hold inne knappen) */
+addEventListener('mousedown',e=>{if(G.on&&e.button==0)keys.Mouse=1});
+addEventListener('mousemove',e=>{if(G.on&&!document.pointerLockElement&&e.buttons){P.yaw-=e.movementX*.004;P.pitch=cl(P.pitch-e.movementY*.004,-1.4,1.4)}});
+/* pistol i Rivals-stil */
+while(gun.children.length)gun.remove(gun.children[0]);
+const gm=(c,e=0)=>new THREE.MeshStandardMaterial({color:c,roughness:.45,emissive:c,emissiveIntensity:e}),bx=(w,h,d)=>new THREE.BoxGeometry(w,h,d),gp=(g,m,x,y,z)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);gun.add(o);return o},OR=gm(0xf59a14,.25),BK=gm(0x18181f),YL=gm(0xffd21f,.25);
+gp(bx(.15,.17,.7),OR,0,0,0);gp(bx(.1,.05,.55),BK,0,.11,-.03);gp(bx(.06,.06,.45),BK,0,.03,-.55);gp(bx(.1,.24,.13),YL,0,-.19,.08);gp(bx(.11,.13,.3),YL,0,-.02,.5);
+gp(new THREE.TorusGeometry(.05,.014,6,12),BK,0,.19,.2);gp(new THREE.TorusGeometry(.04,.012,6,12),BK,0,.17,-.45);gp(bx(.22,.22,.5),gm(0x2f9a3d,.15),-.08,-.14,.4).rotation.z=.2;
+gun.position.set(.34,-.3,-.8);gun.rotation.y=.06;fl.geometry=new THREE.SphereGeometry(.12);fl.position.set(0,.03,-.9);gun.add(fl);
+/* fiender som løper og hopper */
+mkBot=function(){const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0xff3b4a,emissive:0xaa1020,emissiveIntensity:.55,roughness:.5}),
+p=(w,h,d,x,y,z,mt=m)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mt);o.position.set(x,y,z);o.castShadow=true;return o},
+leg=x=>{const l=new THREE.Group();l.position.set(x,.75,0);l.add(p(.28,.75,.3,0,-.375,0));g.add(l);return l},
+arm=(x,r)=>{const a=new THREE.Group();a.position.set(x,1.5,0);a.add(p(.2,.7,.2,0,-.35,0));a.rotation.set(-1.3,r,0);g.add(a);return a};
+g.add(p(.7,.8,.4,0,1.15,0),p(.45,.45,.45,0,1.8,0),p(.1,.12,.75,.12,1.2,.5,new THREE.MeshStandardMaterial({color:0x222222})));
+const o={mesh:g,x:0,z:0,y:0,vy:0,px:0,pz:0,ph:0,hp:100,dead:0,t:0,cd:1,st:0,sd:1,mm:m,legL:leg(-.18),legR:leg(.18)};arm(.45,-.3);arm(-.45,.5);W.add(g);return o};
+function burst(x,y,z){const m0=new THREE.MeshBasicMaterial({color:0xff5060});for(let i=0;i<12;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.2),m0);m.position.set(x,y,z);W.add(m);PT.push({m,l:.7,v:new THREE.Vector3(rnd(-4,4),rnd(2,7),rnd(-4,4))})}}
+const _k=kill;kill=function(b){burst(b.x,b.y+1,b.z);_k(b)};
+function tracer(len){const a=C.localToWorld(new THREE.Vector3(.3,-.25,-1)),b=C.position.clone().addScaledVector(D,len),m=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,1),new THREE.MeshBasicMaterial({color:0xffe9b0,transparent:true,blending:THREE.AdditiveBlending,fog:false}));
+m.position.copy(a).add(b).multiplyScalar(.5);m.scale.z=a.distanceTo(b);m.lookAt(b);W.add(m);TR.push({m,l:.14})}
+shoot=function(){if(G.fc>0||G.dead||P.veh)return;G.fc=.11;P.pitch+=.014;C.getWorldDirection(D);D.x+=rnd(-.006,.006);D.y+=rnd(-.006,.006);D.normalize();
+const q=C.position,rad=touch?.9:.6;let best=null,bt=90,hs=0;
+for(const b of bots){if(b.dead)continue;const t=(b.x-q.x)*D.x+(b.y+1-q.y)*D.y+(b.z-q.z)*D.z;if(t<0||t>bt)continue;const px=q.x+D.x*t,py=q.y+D.y*t,pz=q.z+D.z*t;
+if(Math.hypot(px-b.x,pz-b.z)<rad&&py>b.y-.2&&py<b.y+2.1&&los(q.x,q.z,b.x,b.z)){best=b;bt=t;hs=py>b.y+1.55}}
+tracer(best?bt:60);if(best){best.hp-=hs?100:34;best.mm.emissive.setHex(0xffffff);setTimeout(()=>best.mm.emissive.setHex(0xaa1020),80);$('x').className='h';setTimeout(()=>$('x').className='',100);if(best.hp<=0)kill(best)}};
+/* fart + animasjon */
+const _u=update;update=function(dt){_u(dt*SP);if(!G.on)return;G.t+=dt-dt*SP;const ds=dt*SP;
+bots.forEach(b=>{if(b.dead){b.y=0;b.vy=0;return}const v=Math.hypot(b.x-b.px,b.z-b.pz)/Math.max(ds,1e-3);b.px=b.x;b.pz=b.z;
+if(b.y<=0&&v>1&&Math.random()<ds*(b.jmp===undefined?.6:b.jmp))b.vy=7.5;b.vy-=22*ds;b.y=Math.max(0,b.y+b.vy*ds);if(b.y==0)b.vy=0;
+b.ph+=v*ds*1.5;const k=Math.min(1,v/3),air=b.y>.05;b.legL.rotation.x=air?-.7:Math.sin(b.ph)*.9*k;b.legR.rotation.x=air?.5:-Math.sin(b.ph)*.9*k;b.mesh.position.y=b.y});
+PT=PT.filter(p=>{p.l-=ds;p.m.position.addScaledVector(p.v,ds);p.v.y-=18*ds;p.m.scale.setScalar(Math.max(.01,p.l/.7));if(p.l<=0){W.remove(p.m);return false}return true});
+TR=TR.filter(t=>{t.l-=dt;t.m.material.opacity=Math.max(0,t.l/.14);if(t.l<=0){W.remove(t.m);return false}return true});
+const mv=P.veh?0:Math.hypot(P.x-lx,P.z-lz)/Math.max(ds,1e-3);lx=P.x;lz=P.z;gph+=Math.min(mv,14)*ds*1.1;const k=Math.min(1,mv/6);
+gun.position.set(.34+Math.sin(gph)*.012*k,-.3+Math.abs(Math.sin(gph))*.018*k,-.8+Math.max(0,G.fc)/.11*.07)};
+/* himmel, skyer og tegneserie-kanter */
+const LM=new THREE.LineBasicMaterial({color:0x1b2a50,transparent:true,opacity:.3});
+function sky(){const d=new THREE.Mesh(new THREE.SphereGeometry(250,24,12),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:new THREE.Color(0x2b78e4)},h:{value:new THREE.Color(MP[sel][2])}},
+vertexShader:'varying float y;void main(){y=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform vec3 t,h;varying float y;void main(){gl_FragColor=vec4(mix(h,t,pow(max(y,0.),.6)),1.);}'}));W.add(d);
+const cm=new THREE.MeshBasicMaterial({color:0xffffff,fog:false});for(let i=0;i<18;i++){const g=new THREE.Group(),a=rnd(0,6.28),r=rnd(110,200);for(let k=0;k<5;k++){const s=new THREE.Mesh(new THREE.SphereGeometry(rnd(8,14),8,6),cm);s.position.set(k*10-20,rnd(-2,3),rnd(-4,4));s.scale.y=.55;g.add(s)}g.position.set(Math.cos(a)*r,rnd(45,85),Math.sin(a)*r);g.rotation.y=-a;W.add(g)}}
+const _s=start;start=function(){SP=+sd.value;_s();PT=[];TR=[];sky();W.children.slice().forEach(m=>{if(m.isMesh&&m.geometry.type=='BoxGeometry'&&!m.material.transparent)m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),LM))})};$('go').onclick=start;
+</script>
+<script>
+let L='no',DFv=1;try{L=localStorage.getItem('arL')||'no'}catch(e){}
+const MN=MP.map(m=>m[0]),lg=document.createElement('select');lg.add(new Option('🇳🇴 Norsk','no'));lg.add(new Option('🇬🇧 English','en'));$('menu').children[0].after(lg);
+const df=document.createElement('select');[0,1,2,3].forEach(i=>df.add(new Option('',i)));df.value=1;$('mode').parentNode.append(' ',df);
+const TX={no:{go:'SPILL!',dead:'Du ble tatt ut…',dl:'Vanskelighet: ',df:['Lett','Middels','Vanskelig','Godlike'],sl:'Fart: ',k:n=>'Først til '+n+' kills',m5:'5 minutters kamp',b:['SKYT','HOPP','BRUK'],v:['bil','elsparkesykkel','sykkel','gokart'],maps:MN,
+help:'PC: WASD gå · mus sikte · klikk skyt · Mellomrom hopp · Shift løp · Mobil: pinne til venstre, dra til høyre for å se seg rundt. Du får tilbake helse når du ikke blir truffet.'},
+en:{go:'PLAY!',dead:'You got taken out…',dl:'Difficulty: ',df:['Easy','Medium','Hard','Godlike'],sl:'Speed: ',k:n=>'First to '+n+' kills',m5:'5-minute match',b:['SHOOT','JUMP','USE'],v:['car','e-scooter','bike','go-kart'],maps:['🏫 School','🛹 Schoolyard','🌳 Park','🛒 Kiwi store','📚 Library','⚽ Football arena','🏎️ Go-kart track'],
+help:'PC: WASD move · mouse aim · click to shoot · Space jump · Shift run · Mobile: stick on the left, drag on the right to look around. You regain health when you are not being hit.'}};
+function setLang(l){L=l;try{localStorage.setItem('arL',l)}catch(e){}const t=TX[l];lg.value=l;$('go').textContent=t.go;$('dead').textContent=t.dead;
+[...df.options].forEach((o,i)=>o.text=t.dl+t.df[i]);[...sd.options].forEach((o,i)=>o.text=t.sl+['Normal','Rapid','Ultra'][i]);[...md.options].forEach(o=>o.text=+o.value?t.k(o.value):t.m5);
+[...mp.children].forEach((b,i)=>b.textContent=t.maps[i]);VT.forEach((v,i)=>v.n=t.v[i]);['f','j','e'].forEach((k,i)=>{const e=document.querySelector('[data-b='+k+']');if(e)e.textContent=t.b[i]});$('menu').querySelector('small').textContent=t.help}
+lg.onchange=()=>setLang(lg.value);
+/* vanskelighetsgrad: treffsikkerhet, skade og antall fiender */
+const DFS=[{h:.3,d:.5,b:4,a:.85,r:1},{h:.5,d:.65,b:6,a:1,r:1.05},{h:.8,d:.85,b:8,a:1.3,r:1.2},{h:1,d:2,b:16,a:2.8,r:2.4}];
+const _h=hurt;hurt=function(n){if(AR.online){G.lh=G.t;_h(n);return}const f=DFS[DFv];if(Math.random()>f.h)return;G.lh=G.t;_h(n*f.d)};
+const _u2=update;update=function(dt){_u2(dt);if(!G.on)return;if(G.hp<100&&!G.dead&&G.t-(G.lh||0)>3)G.hp=Math.min(100,G.hp+dt*14);const p=$('pr');if(L=='en')p.textContent=p.textContent.replace('E: sett deg på ','E: get on ').replace('E: gå av ','E: get off ')};
+const _e=end;end=function(w){_e(w);if(L=='en')$('msg').textContent=(G.target?(w?'🏆 VICTORY! ':'Time is up. '):'⏱️ Time is up! ')+G.k+' kills · taken out '+G.deaths+' times'};
+const _s2=start;start=function(){DFv=+df.value;AR.dfa=DFS[DFv].a;AR.dfr=DFS[DFv].r;_s2();const n=DFS[DFv].b;while(bots.length>n){const b=bots.pop();W.remove(b.mesh)}while(bots.length<n){const b=mkBot();sp(b);bots.push(b)}};$('go').onclick=start;setLang(L);
+</script>
+<script>
+/* ===== A: Kiwi innendørs, items (pickups), hjelpere ===== */
+const AR={zone:null,PU:[],WI:1,Z:0,tt:0,door:null};
+(()=>{
+const PC=['#e63946','#f4a261','#2a9d8f','#e9c46a','#457b9d','#8ac926','#ff7bac','#ffffff','#6a4c93','#ffbe0b'];
+const tex=(f,w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t};
+const prodTex=()=>tex((g,w,h)=>{g.fillStyle='#9aa3b5';g.fillRect(0,0,w,h);const th=h/3;for(let t=0;t<3;t++){const y=t*th;g.fillStyle='#6f7788';g.fillRect(0,y+th-8,w,8);for(let x=4;x<w-12;){const bw=rnd(14,30),bh=rnd(th*.45,th*.78);g.fillStyle=PC[Math.floor(rnd(0,PC.length))];g.fillRect(x,y+th-8-bh,bw,bh);g.fillStyle='#ffffff66';g.fillRect(x+2,y+th-8-bh+3,bw-4,5);x+=bw+3}}},512,160);
+AR.tex=tex;
+function kiwi(){
+const Wl=0xe9e6df,RD=0xb02a2a,pt1=prodTex(),pt2=prodTex();
+B(-14.5,-8,23,8,1,Wl);B(14.5,-8,23,8,1,Wl);B(0,-8,6,2.2,1,Wl,5.8);B(0,-38,52,8,1,Wl);B(-26,-23,1,8,30,Wl);B(26,-23,1,8,30,Wl);
+B(0,-23,53.5,.5,31.5,0x8d8d88,8);
+B(-14.5,-7.4,17,2.6,.1,0x9fd0e0,1.4,.35);B(14.5,-7.4,17,2.6,.1,0x9fd0e0,1.4,.35);
+const fm=new THREE.Mesh(new THREE.PlaneGeometry(52,30),new THREE.MeshStandardMaterial({map:tex((g,w,h)=>{g.fillStyle='#ebe8e0';g.fillRect(0,0,w,h);g.strokeStyle='#c9c5bb';g.lineWidth=4;g.strokeRect(0,0,w,h)},128,128),roughness:.3}));
+fm.material.map.wrapS=fm.material.map.wrapT=THREE.RepeatWrapping;fm.material.map.repeat.set(13,7.5);fm.rotation.x=-PI/2;fm.position.set(0,.03,-23);fm.receiveShadow=true;W.add(fm);
+for(let i=0;i<6;i++)for(let j=0;j<3;j++){const p=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({color:0xffffff}));p.rotation.x=PI/2;p.position.set(-20+i*8,7.85,-14-j*10);W.add(p)}
+[-30,-16].forEach(z=>{const l=new THREE.PointLight(0xfff0d8,.8,45);l.position.set(0,6.4,z);W.add(l)});
+const DG=new THREE.Group();DG.position.set(0,0,-8);W.add(DG);
+const gl=new THREE.MeshStandardMaterial({color:0xaee3f5,transparent:true,opacity:.35,side:THREE.DoubleSide,roughness:.1});
+[PI/4,5*PI/4].forEach(a=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,4,16,1,true,a,PI/2),gl);m.position.y=2;DG.add(m)});
+const top=new THREE.Mesh(new THREE.CylinderGeometry(2.7,2.7,.25,16),mat(0x2b2f33));top.position.y=4.1;DG.add(top);
+AR.door=new THREE.Group();[0,PI/2].forEach(a=>{const b=new THREE.Mesh(new THREE.BoxGeometry(5.2,3.8,.08),gl);b.position.y=1.95;b.rotation.y=a;AR.door.add(b)});
+const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,4,8),mat(0x2b2f33));pole.position.y=2;AR.door.add(pole);DG.add(AR.door);
+B(0,-5.4,10,.3,5,RD,4.4);[-4.6,4.6].forEach(x=>B(x,-3.1,.35,4.4,.35,RD));
+SG('KIWI mini pris',-11,6,-7.45,13,2.6,'#25a244','#ffffff');SG('7-23',11,6,-7.45,5,2.6,'#ffffff','#25a244');
+SG('PRISKUTT!',-6.5,2.6,-7.45,3.4,1.3,'#2fb34a','#ffffff');SG('ALDRI PÅ PRIS!',-19,2.2,-7.45,7,2.2,'#7a4fc9','#ffffff');SG('ALDRI PÅ PRIS!',19,2.2,-7.45,7,2.2,'#7a4fc9','#ffffff');
+const shelf=(x,z,len)=>{B(x,z,len,2.9,1.3,0x7d8597);[1,-1].forEach(s=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(len,2.6),new THREE.MeshStandardMaterial({map:s>0?pt1:pt2}));m.position.set(x,1.5,z+s*.66);if(s<0)m.rotation.y=PI;W.add(m)});B(x,z,len+.2,.25,1.5,0xe74c3c,2.9)};
+[-20,-26,-32].forEach(z=>{shelf(-14,z,16);shelf(14,z,16)});
+B(0,-37,50,2.6,1.2,0xdfe9f0);const fr=new THREE.Mesh(new THREE.PlaneGeometry(50,2.2),new THREE.MeshStandardMaterial({map:pt1}));fr.position.set(0,1.4,-36.35);W.add(fr);
+[-20,-12,12,20].forEach(x=>{B(x,-12,1.4,1,5,0x30343a);B(x+1.2,-14.4,.8,1.6,.8,0x25a244);B(x,-9.8,1.2,.3,.6,0x111111,1)});
+B(-7,-12,3,.9,3,0xb07a3f);B(-7,-12,2.6,.25,2.6,0xe63946,.9);B(7,-12,3,.9,3,0xb07a3f);B(7,-12,2.6,.25,2.6,0xf4a261,.9);
+[-23,23].forEach(x=>{B(x,-35,3,1.3,3,0xc9a66b);B(x,-35,2,1.2,2,0xe0b84a,1.3)});B(0,-24,2.4,1.1,2.4,0xc9a66b);B(0,-30,2.4,1.1,2.4,0xc9a66b);
+for(let x=-30;x<=30;x+=6)B(x,16,.2,.02,6,0xffffff);
+[[-8,-3],[-10,-1.4],[9,-2]].forEach(p=>B(p[0],p[1],1,1,1.6,0x2fa33f));B(7.5,-5.6,.9,1.2,.9,0x2fa33f);
+[-20,20,-34,34].forEach(x=>{B(x,-2,.3,7,.3,0x555555);B(x,-2,1,.3,1,0xfff3b0,7)});
+[[-26,10,0x2255aa],[26,14,0xaa2222],[-30,20,0x228844],[30,24,0xdddddd]].forEach(c=>B(c[0],c[1],2,1.4,4.2,c[2],.2));
+V(0,10,12);V(1,-9,8);V(2,12,6);V(3,-20,14)}
+MP[3][4]=kiwi;MP[3][1]=44;MP[3][5]=0;MP[3][6]=0;
+const _spot=spot;spot=function(){const z=AR.zone;if(z&&Math.random()<.75){for(let i=0;i<40;i++){const x=rnd(z[0],z[1]),q=rnd(z[2],z[3]);if(!BX.some(c=>c.h>.4&&x>c.a-1.5&&x<c.b+1.5&&q>c.c-1.5&&q<c.d+1.5))return{x,z:q}}}return _spot()};
+const _gh=gh;gh=function(x,z,y){let m=_gh(x,z,y);if(AR.slabs)for(const q of AR.slabs)if(y>=q.y-.6&&x>q.x0&&x<q.x1&&z>q.z0&&z<q.z1&&!q.h.some(h=>x>h[0]&&x<h[1]&&z>h[2]&&z<h[3]))m=Math.max(m,q.y);return m};
+/* items */
+$('hud').insertAdjacentHTML('beforeend','<div id="toast" style="position:absolute;left:50%;top:16%;transform:translateX(-50%);font-size:26px;font-weight:900;text-shadow:0 2px 6px #000;opacity:0;transition:opacity .3s;white-space:nowrap"></div>');
+let tT=0;AR.toast=(no,en)=>{const e=$('toast');e.textContent=L=='en'?en:no;e.style.opacity=1;clearTimeout(tT);tT=setTimeout(()=>e.style.opacity=0,1600)};
+const COL={hp:0x2ee86a,jet:0xff6a1a,wp:0xffd21f,sh:0x34c8ff};
+function mkPU(type){const g=new THREE.Group(),c=COL[type],M1=(x,e)=>new THREE.MeshStandardMaterial({color:x,emissive:c,emissiveIntensity:e,roughness:.3});
+const core=new THREE.Mesh(type=='jet'?new THREE.CylinderGeometry(.22,.22,.9,10):type=='sh'?new THREE.IcosahedronGeometry(.42,1):new THREE.BoxGeometry(.7,.7,.7),M1(type=='hp'?0xffffff:c,type=='hp'?.15:.5));core.castShadow=true;g.add(core);
+const add=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);g.add(o);return o};
+if(type=='hp'){add(new THREE.BoxGeometry(.8,.22,.74),new THREE.MeshBasicMaterial({color:0x1fd35c}),0,0,0);add(new THREE.BoxGeometry(.22,.8,.74),new THREE.MeshBasicMaterial({color:0x1fd35c}),0,0,0)}
+if(type=='jet'){add(new THREE.ConeGeometry(.22,.4,10),M1(0xffffff,.2),0,.65,0);add(new THREE.ConeGeometry(.2,.5,8),new THREE.MeshBasicMaterial({color:0x66ccff}),0,-.7,0).rotation.x=PI;[0,PI/2,PI,3*PI/2].forEach(a=>add(new THREE.BoxGeometry(.04,.4,.3),M1(0x222222,0),Math.sin(a)*.25,-.3,Math.cos(a)*.25).rotation.y=a)}
+if(type=='wp'){add(new THREE.BoxGeometry(.76,.14,.76),M1(0x222222,0),0,0,0)}
+add(new THREE.CylinderGeometry(.55,.55,16,10,1,true),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}),0,8,0);
+add(new THREE.SphereGeometry(.9,12,8),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.2,blending:THREE.AdditiveBlending,depthWrite:false}),0,0,0);
+g.userData={type,t:0,core};W.add(g);return g}
+function place(g){const p=spot();g.position.set(p.x,p.y||0,p.z)}
+AR.spawnPU=()=>{AR.PU=[];[['hp',3],['jet',2],['wp',3],['sh',2]].forEach(a=>{for(let i=0;i<a[1];i++){const g=mkPU(a[0]);place(g);AR.PU.push(g)}})};
+AR.puUpdate=dt=>{AR.tt+=dt;if(AR.door)AR.door.rotation.y+=dt*1.1;
+for(const g of AR.PU){const u=g.userData;if(u.t>0){u.t-=dt;if(u.t<=0){place(g);g.visible=true}continue}
+g.children.forEach((c,i)=>{if(i<4)c.rotation.y+=dt*1.8});u.core.position.y=1.1+Math.sin(AR.tt*2.4+g.position.x)*.2;g.children.forEach((c,i)=>{if(i<4&&c!==u.core)c.position.y+=0});
+if(!G.dead&&Math.hypot(g.position.x-P.x,g.position.z-P.z)<1.7&&Math.abs(P.y-g.position.y)<2.6){u.t=25;g.visible=false;AR.take(u.type)}}};
+AR.take=t=>{if(t=='hp'){G.hp=Math.min(100,G.hp+50);AR.toast('+ HELSE','+ HEALTH')}
+else if(t=='sh'){G.sh=Math.min(100,(G.sh||0)+50);AR.toast('+ SKJOLD','+ SHIELD')}
+else if(t=='jet'){G.jet=Math.min(60,(G.jet||0)+30);AR.toast('🦘 HOPPEPAKKE! Hopp høyt!','🦘 JUMP PACK! Jump high!')}
+else{const o=[2,3,4].filter(i=>!G.has[i]),i=(o.length?o:[2,3,4])[Math.floor(rnd(0,o.length||3))];G.has[i]=1;if(i==4)G.rk=(G.rk||0)+4;AR.setW(i);AR.toast('NYTT VÅPEN: '+WPN[i][0],'NEW WEAPON: '+WPN[i][1])}};
+})();
+</script>
+<script>
+const WPN=[['Pistol','Pistol'],['Maskinpistol','SMG'],['Haglegevær','Shotgun'],['Snikskytter','Sniper'],['Rakettkaster','Rocket launcher']];
+</script>
+<script>
+/* ===== B: våpen, jetpack, lyd ===== */
+(()=>{
+const M2=(c,e=0)=>new THREE.MeshStandardMaterial({color:c,roughness:.4,emissive:c,emissiveIntensity:e});
+const bxg=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+function wm(i,arm){const g=new THREE.Group(),a=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o},
+DK=M2(0x18181f),OR=M2(0xf59a14,.3),YL=M2(0xffd21f,.3),GN=M2(0x2f9a3d,.15),GR=M2(0xaab4c8,.1),BR=M2(0x9a5b2b,.1),DG=M2(0x2e6b3a,.1);
+if(i==0){a(bxg(.1,.14,.42),GR,0,0,0);a(bxg(.09,.06,.44),DK,0,.09,-.01);a(bxg(.08,.2,.1),DK,0,-.15,.14).rotation.x=.2}
+if(i==1){a(bxg(.15,.17,.7),OR,0,0,0);a(bxg(.1,.05,.55),DK,0,.11,-.03);a(bxg(.06,.06,.45),DK,0,.03,-.55);a(bxg(.1,.24,.13),YL,0,-.19,.08);a(bxg(.11,.13,.3),YL,0,-.02,.5);a(new THREE.TorusGeometry(.05,.014,6,12),DK,0,.19,.2);a(new THREE.TorusGeometry(.04,.012,6,12),DK,0,.17,-.45)}
+if(i==2){a(bxg(.13,.15,.5),BR,0,0,.2);a(bxg(.07,.07,.95),DK,0,.03,-.45);a(bxg(.07,.07,.9),GR,0,-.05,-.42);a(bxg(.13,.1,.3),BR,0,-.06,-.3);a(bxg(.1,.17,.35),BR,0,-.04,.55)}
+if(i==3){a(bxg(.1,.14,.85),DG,0,0,.1);a(bxg(.045,.045,1.05),DK,0,.03,-.8);const s=a(new THREE.CylinderGeometry(.045,.05,.42,10),DK,0,.15,-.05);s.rotation.x=PI/2;a(new THREE.CylinderGeometry(.06,.06,.04,10),M2(0x66ccff,.6),0,.15,-.27).rotation.x=PI/2;a(bxg(.09,.2,.4),DG,0,-.03,.65);a(bxg(.08,.18,.12),DK,0,-.16,.1)}
+if(i==4){a(new THREE.CylinderGeometry(.13,.13,1.1,12),M2(0x4b5a3a),0,0,-.1).rotation.x=PI/2;a(new THREE.ConeGeometry(.15,.32,12),M2(0xff6a1a,.5),0,0,-.8).rotation.x=-PI/2;a(new THREE.CylinderGeometry(.17,.13,.2,12),DK,0,0,.5).rotation.x=PI/2;a(bxg(.08,.2,.1),DK,0,-.17,.05);a(bxg(.06,.1,.3),DK,0,.14,-.1)}
+if(arm)a(bxg(.22,.22,.5),GN,-.08,-.14,.4).rotation.z=.2;return g}
+AR.wm=wm;
+const MZ=[-.32,-.88,-1.35,-1.35,-.95];
+gun.children.slice().forEach(c=>{if(c!==fl)gun.remove(c)});
+const FP=[0,1,2,3,4].map(i=>{const m=wm(i,true);m.visible=false;gun.add(m);return m});
+const hud=$('hud');
+hud.insertAdjacentHTML('afterbegin','<div id="scope" style="position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(circle at center,transparent 30%,#000 31%)"></div>');
+hud.insertAdjacentHTML('beforeend','<div id="wp" style="position:absolute;right:14px;top:12px;text-align:right;font-weight:900;font-size:20px;text-shadow:0 2px 4px #000;font-style:italic"></div><div id="shw" style="position:absolute;left:14px;bottom:58px;width:200px;height:10px;background:#0008;border-radius:6px;overflow:hidden;display:none"><div id="sh" style="height:100%;background:#34c8ff"></div></div><div id="jetw" style="position:absolute;left:14px;bottom:38px;width:200px;height:10px;background:#0008;border-radius:6px;overflow:hidden;display:none"><div id="jet" style="height:100%;background:linear-gradient(90deg,#ff7a1a,#ffd21f)"></div></div><button class="tc" data-b="w" style="right:22px;bottom:200px;width:70px;height:70px">BYTT</button>');
+let wl='';
+function refresh(){const s=WPN.map((w,i)=>'<span style="opacity:'+(G.has[i]?(i==AR.WI?1:.55):.15)+';'+(i==AR.WI?'color:#ffd21f':'')+'">'+(i+1)+'</span>').join(' ')+'<br>'+WPN[AR.WI][L=='en'?1:0]+(AR.WI==4?' ×'+(G.rk||0):'');if(s!=wl){wl=s;$('wp').innerHTML=s}}
+AR.setW=i=>{AR.WI=i;FP.forEach((m,k)=>m.visible=k==i);fl.position.set(0,.03,MZ[i]);keys.Zoom=0;G.fc=Math.max(G.fc||0,.15);refresh()};
+AR.cycle=d=>{for(let k=1;k<=5;k++){const j=(AR.WI+d*k+10)%5;if(G.has[j]){AR.setW(j);return}}};
+let AC=null;
+function sfx(d,f,v){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const n=Math.floor(AC.sampleRate*d),b=AC.createBuffer(1,n,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);const s=AC.createBufferSource(),q=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;q.type='lowpass';q.frequency.value=f;g.gain.value=v||.25;s.connect(q);q.connect(g);g.connect(AC.destination);s.start()}catch(e){}}
+AR.sfx=sfx;
+const WS=[{r:.3,d:45,h:2.3,p:1,s:.003,g:100,k:.02,a:[.09,2600]},{r:.09,d:30,h:2.5,p:1,s:.012,g:100,k:.012,a:[.07,3500]},{r:.8,d:20,h:1.5,p:9,s:.06,g:40,k:.07,a:[.22,1800]},{r:1.1,d:100,h:2,p:1,s:0,g:200,k:.05,a:[.3,1500]},{r:1.3,d:0,h:1,p:1,s:0,g:90,k:.05,a:[.4,900]}];
+const flash=new THREE.MeshBasicMaterial({color:0xff9a30});
+function wallT(o,d,rg){const st=rg>60?1:.5;for(let t=st;t<rg;t+=st){const x=o.x+d.x*t,y=o.y+d.y*t,z=o.z+d.z*t;if(y<0)return t;for(const c of BX)if(y<c.h&&(c.lo===undefined||y>=c.lo)&&x>c.a&&x<c.b&&z>c.c&&z<c.d)return t}return rg}
+function hitBot(o,d,mx,rad){let best=null,bt=mx,hs=0;for(const b of bots.concat(AR.RP||[])){if(b.dead)continue;const t=(b.x-o.x)*d.x+(b.y+1-o.y)*d.y+(b.z-o.z)*d.z;if(t<0||t>bt)continue;const px=o.x+d.x*t,py=o.y+d.y*t,pz=o.z+d.z*t;if(Math.hypot(px-b.x,pz-b.z)<rad*(b.sz||1)&&py>b.y-.2&&py<b.y+2.15*(b.sz||1)){best=b;bt=t;hs=py>b.y+1.66*(b.sz||1)&&Math.hypot(px-b.x,pz-b.z)<.4*(b.sz||1)}}return{b:best,t:bt,hs}}
+function boom(e){e.y=Math.max(e.y,.4);for(let i=0;i<22;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,.3),flash);m.position.copy(e);W.add(m);PT.push({m,l:.8,v:new THREE.Vector3(rnd(-8,8),rnd(0,9),rnd(-8,8))})}
+const s=new THREE.Mesh(new THREE.SphereGeometry(3,14,10),new THREE.MeshBasicMaterial({color:0xffc060,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));s.position.copy(e);W.add(s);TR.push({m:s,l:.25});sfx(.6,600,.5);
+for(const b of bots.concat(AR.RP||[])){if(b.dead)continue;const d=Math.hypot(b.x-e.x,b.y+1-e.y,b.z-e.z);if(d<6){const dm=130*(1-d/6);b.hp-=dm;if(b.rp)AR.mpHit(b,dm,0);else if(b.hp<=0)kill(b)}}
+const dp=Math.hypot(P.x-e.x,P.y+1-e.y,P.z-e.z);if(dp<5)hurt(40*(1-dp/5))}
+function fireRocket(o,d){const wt=wallT(o,d,90),h=hitBot(o,d,wt,1),t=h.b?h.t:wt;tracer(t);boom(o.clone().addScaledVector(d,Math.max(0,t-.4)))}
+shoot=function(){if(G.fc>0||G.dead||P.veh)return;const w=WS[AR.WI];if(AR.WI==4&&!(G.rk>0))return;G.fc=w.r;G.fl=.05;P.pitch+=w.k;sfx(w.a[0],w.a[1]);
+const o=C.position.clone();C.getWorldDirection(D);const base=D.clone().normalize();
+if(AR.WI==4){G.rk--;refresh();D.copy(base);fireRocket(o,base);return}
+const rad=(touch?.95:.6)*(AR.WI==3?1.15:1);
+for(let p=0;p<w.p;p++){const d=base.clone();d.x+=rnd(-w.s,w.s);d.y+=rnd(-w.s,w.s);d.z+=rnd(-w.s,w.s);d.normalize();const wt=wallT(o,d,w.g),h=hitBot(o,d,wt,rad);D.copy(d);if(p<4)tracer(h.b?h.t:Math.min(wt,70));
+if(h.b){const b=h.b;const dm=w.d*(h.hs?w.h:1);b.hp-=dm;if(b.rp)AR.mpHit(b,dm,h.hs);else if(b.hp<=0)AR.hs=h.hs;b.mm.emissive.setHex(0xffffff);setTimeout(()=>b.mm.emissive.setHex(b.em),80);$('x').className='h';setTimeout(()=>$('x').className='',100);if(!b.rp&&b.hp<=0)kill(b)}}};
+const _hB=hurt;hurt=function(n){if(G.sh>0){const a=Math.min(G.sh,n*.7);G.sh-=a;n-=a}_hB(n)};
+function jetFx(){const m=new THREE.Mesh(new THREE.BoxGeometry(.15,.15,.15),flash);m.position.set(P.x+rnd(-.2,.2),P.y+.3,P.z+rnd(-.2,.2));W.add(m);PT.push({m,l:.5,v:new THREE.Vector3(rnd(-1,1),-6,rnd(-1,1))})}
+addEventListener('wheel',e=>{if(G.on)AR.cycle(e.deltaY>0?1:-1)},{passive:true});
+addEventListener('keydown',e=>{if(!G.on)return;if(e.code=='ArrowUp'){AR.cycle(-1);e.preventDefault()}else if(e.code=='ArrowDown'){AR.cycle(1);e.preventDefault()}else if(/^Digit[1-5]$/.test(e.code)){const i=+e.code[5]-1;if(G.has[i])AR.setW(i)}});
+addEventListener('mousedown',e=>{if(e.button==2){e.stopImmediatePropagation();keys.Zoom=1}},true);addEventListener('mouseup',e=>{if(e.button==2){e.stopImmediatePropagation();keys.Zoom=0}},true);addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('touchstart',e=>{if(G.on)for(const t of e.changedTouches)if(t.target.dataset&&t.target.dataset.b=='w')AR.cycle(1)});
+const _uB=update;update=function(dt){_uB(dt);if(!G.on)return;const ds=dt*SP;fl.visible=(G.fl||0)>0;G.fl=(G.fl||0)-dt;
+const up=keys.Space||jump;if(G.jet>0&&!P.veh&&!G.dead){G.jet=Math.max(0,G.jet-dt);if(up&&P.vy>7.9&&P.vy<8.1){P.vy=17;jetFx()}}
+if(P.y>38){P.y=38;P.vy=Math.min(0,P.vy)}
+if(AR.slabs&&!P.veh)for(const q of AR.slabs){if(P.x>q.x0&&P.x<q.x1&&P.z>q.z0&&P.z<q.z1&&P.y>q.y-1.9&&P.y<q.y-.6&&!q.h.some(h=>P.x>h[0]&&P.x<h[1]&&P.z>h[2]&&P.z<h[3])){P.y=q.y-1.9;P.vy=Math.min(0,P.vy)}}
+if(!P.veh){const z=AR.WI==3&&keys.Zoom&&!G.dead;C.fov=z?24:75;$('scope').style.opacity=z?1:0;if(z)gun.visible=false}C.updateProjectionMatrix();
+AR.puUpdate(dt);refresh();
+$('jetw').style.display=G.jet>0?'block':'none';$('jet').style.width=Math.min(100,G.jet/30*100)+'%';$('shw').style.display=G.sh>0?'block':'none';$('sh').style.width=Math.min(100,G.sh)+'%'};
+})();
+</script>
+<script>
+/* ===== C: fiender med masker, rustning, våpen og jetpack ===== */
+(()=>{
+const SUIT=[0xe63946,0x7b2ff7,0xff9f1c,0x2ec4b6,0xff4d9d,0x3a86ff,0x8ac926,0xf72585,0x222233,0xeeeeee],ARMC=[0xffd166,0x06d6a0,0x118ab2,0xef476f,0xc0c0c0,0x8d99ae,0xff6a1a],HM=[0xffffff,0xe9e4d2,0xc4262e,0xff8a1a,0x9aa5b1,0x111111,0x6fd36f,0x8a9a6b,0x3b3f4a,0x8e5bd8,0x7d8896];
+const FT={};
+function face(t){if(FT[t])return FT[t];const T=AR.tex((g,w,h)=>{g.fillStyle=['#ffffff','#e9e4d2','#c4262e','#ff8a1a','#9aa5b1','#111111','#6fd36f','#8a9a6b','#3b3f4a','#8e5bd8','#7d8896'][t];g.fillRect(0,0,w,h);
+const fc=(c,x,y,r)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()},fr=(c,x,y,a,b)=>{g.fillStyle=c;g.fillRect(x,y,a,b)};
+if(t==0){fc('#ff2a2a',128,140,26);[[70,95],[186,95]].forEach(e=>{g.fillStyle='#1d6fe0';g.beginPath();g.moveTo(e[0],e[1]-34);g.lineTo(e[0]+22,e[1]);g.lineTo(e[0],e[1]+34);g.lineTo(e[0]-22,e[1]);g.fill()});g.strokeStyle='#ff2a2a';g.lineWidth=16;g.lineCap='round';g.beginPath();g.arc(128,235,75,PI+.35,PI*2-.35);g.stroke()}
+if(t==1){fc('#111',80,100,34);fc('#111',176,100,34);g.fillStyle='#111';g.beginPath();g.moveTo(128,135);g.lineTo(108,175);g.lineTo(148,175);g.fill();for(let i=0;i<6;i++)fr('#111',70+i*24,200,10,40)}
+if(t==2){fr('#ffe000',50,80,60,26);fr('#ffe000',146,80,60,26);fr('#111',70,170,116,50);for(let i=0;i<4;i++){g.fillStyle='#fff';g.beginPath();g.moveTo(80+i*28,170);g.lineTo(92+i*28,192);g.lineTo(104+i*28,170);g.fill()}}
+if(t==3){g.fillStyle='#2a1200';[[60,70],[150,70]].forEach(e=>{g.beginPath();g.moveTo(e[0],e[1]+50);g.lineTo(e[0]+25,e[1]);g.lineTo(e[0]+50,e[1]+50);g.fill()});g.beginPath();g.moveTo(50,170);for(let i=0;i<8;i++)g.lineTo(50+i*22,i%2?170:205);g.lineTo(206,215);g.lineTo(50,215);g.fill()}
+if(t==4){fr('#111',30,80,196,70);fr('#22e0ff',38,90,180,50);for(let i=0;i<8;i++)fr('#cfd6df',40+i*24,175,12,30)}
+if(t==5){fr('#e0b88a',30,90,196,50);fc('#111',90,115,12);fc('#111',166,115,12);fr('#e63946',0,45,256,26)}
+if(t==6){g.fillStyle='#111';[[75,115],[181,115]].forEach(e=>{g.beginPath();g.ellipse(e[0],e[1],36,52,e[0]<128?.5:-.5,0,7);g.fill()})}
+if(t==7){fc('#fff',80,100,22);fc('#fff',176,100,22);fc('#111',80,100,9);fc('#111',176,100,9);fr('#222',60,180,136,10);for(let i=0;i<7;i++)fr('#222',66+i*19,168,6,34);fr('#aa3333',30,40,196,10)}
+if(t==8){fr('#111',20,70,216,80);fr('#ff9f1c',28,78,200,64);fr('#ffffff55',28,78,200,16)}
+if(t==9){fc('#fff',128,110,70);fc('#2ec4b6',128,110,40);fc('#111',128,110,20);fr('#111',60,200,136,12)}
+if(t==10){fr('#4b5360',0,0,256,26);fr('#4b5360',128,26,128,230);fr('#9aa5b3',134,34,116,44);for(let i=0;i<5;i++)fr('#2b3039',138+i*22,150,3,86);fr('#1a1d24',40,92,70,34);fr('#1a1d24',146,92,70,34);g.fillStyle='#ff2a1a';g.shadowColor='#ff2a1a';g.shadowBlur=20;g.beginPath();g.arc(75,109,17,0,7);g.fill();g.fillStyle='#35d0ff';g.shadowColor='#35d0ff';g.fillRect(156,102,50,14);g.shadowBlur=0;fr('#22262e',60,176,70,36);for(let i=0;i<5;i++)fr('#8892a0',66+i*12,180,5,28);g.strokeStyle='#35d0ff';g.lineWidth=3;g.beginPath();g.moveTo(10,60);g.lineTo(70,60);g.lineTo(90,80);g.moveTo(246,150);g.lineTo(190,150);g.lineTo(170,130);g.stroke()}
+if(t!=4&&t!=8&&t!=10){g.lineCap='round';g.strokeStyle='#ff2a1a';g.lineWidth=26;g.beginPath();g.moveTo(34,38);g.lineTo(112,84);g.moveTo(222,38);g.lineTo(144,84);g.stroke();g.strokeStyle='#150000';g.lineWidth=16;g.beginPath();g.moveTo(36,40);g.lineTo(110,82);g.moveTo(220,40);g.lineTo(146,82);g.stroke()}
+if(t==4||t==8){g.fillStyle='#150000';g.beginPath();g.moveTo(14,30);g.lineTo(242,30);g.lineTo(242,50);g.lineTo(128,96);g.lineTo(14,50);g.fill()}},256,256);FT[t]=T;return T}
+mkBot=function(){const g=new THREE.Group(),sc=SUIT[Math.floor(rnd(0,SUIT.length))],ac=ARMC[Math.floor(rnd(0,ARMC.length))],ty=AR.cyb?10:Math.floor(rnd(0,10));
+const mm=new THREE.MeshStandardMaterial({color:sc,emissive:sc,emissiveIntensity:.4,roughness:.5}),am=new THREE.MeshStandardMaterial({color:ac,emissive:ac,emissiveIntensity:.25,roughness:.3,metalness:.3}),dk=new THREE.MeshStandardMaterial({color:0x1b1b22,roughness:.6});
+const p=(w,h,d,x,y,z,m,par)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m||mm);o.position.set(x,y,z);o.castShadow=true;(par||g).add(o);return o};
+const cn=(r,h,x,y,z,c,par,rx,rz)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),new THREE.MeshStandardMaterial({color:c,roughness:.5}));o.position.set(x,y,z);o.rotation.set(rx||0,0,rz||0);(par||g).add(o);return o};
+const sp2=(r,x,y,z,c,par)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),new THREE.MeshStandardMaterial({color:c,roughness:.5}));o.position.set(x,y,z);(par||g).add(o);return o};
+p(.7,.8,.4,0,1.15,0);p(.76,.46,.45,0,1.3,0,am);p(.72,.12,.42,0,.78,0,dk);[-.46,.46].forEach(x=>p(.3,.2,.36,x,1.55,0,am));
+const leg=x=>{const l=new THREE.Group();l.position.set(x,.75,0);p(.28,.75,.3,0,-.375,0,mm,l);p(.3,.2,.42,0,-.68,.06,dk,l);p(.32,.16,.34,0,-.3,.02,am,l);g.add(l);return l};
+const arm=(x,r)=>{const a=new THREE.Group();a.position.set(x,1.5,0);p(.2,.7,.2,0,-.35,0,mm,a);p(.22,.2,.22,0,-.72,0,dk,a);a.rotation.set(-1.3,r,0);g.add(a)};arm(.45,-.35);arm(-.45,.55);
+const wi=Math.floor(rnd(0,5)),wg=AR.wm(wi,false);wg.rotation.y=PI;wg.scale.setScalar(1.8);wg.position.set(.14,1.28,.55);g.add(wg);const mf=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),new THREE.MeshBasicMaterial({color:0xffdd55}));mf.position.set(.14,1.3,.55+[.32,.88,1.35,1.35,.95][wi]*1.8);mf.visible=false;g.add(mf);
+const head=new THREE.Group();head.position.y=1.8;g.add(head);p(.5,.5,.5,0,0,0,new THREE.MeshStandardMaterial({color:HM[ty],roughness:.6}),head);
+const fp=new THREE.Mesh(new THREE.PlaneGeometry(.5,.5),new THREE.MeshStandardMaterial({map:face(ty),roughness:.6}));fp.position.z=.256;head.add(fp);
+if(ty==0){sp2(.2,-.34,.05,0,0xff3b30,head);sp2(.2,.34,.05,0,0x2ecc40,head);sp2(.1,0,-.02,.28,0xff2a2a,head);cn(.15,.34,0,.4,0,0xffd21f,head,0,.2)}
+if(ty==2){cn(.07,.3,-.17,.38,0,0x222222,head,0,.3);cn(.07,.3,.17,.38,0,0x222222,head,0,-.3)}
+if(ty==3)p(.08,.14,.08,0,.3,0,new THREE.MeshStandardMaterial({color:0x2e8b2e}),head);
+if(ty==4){p(.03,.3,.03,.15,.4,0,dk,head);sp2(.05,.15,.57,0,0xff3030,head)}
+if(ty==5)p(.54,.1,.54,0,.12,0,new THREE.MeshStandardMaterial({color:0xe63946}),head);
+if(ty==6)head.scale.set(1.15,1.35,1.15);
+if(ty==7){[-.3,.3].forEach(x=>p(.1,.1,.1,x,-.05,0,dk,head))}
+if(ty==8||ty==1)p(.56,.16,.56,0,.28,0,am,head);
+if(ty==9)cn(.12,.25,0,.38,0,0xff5ac8,head);
+if(ty==10){p(.04,.34,.04,-.18,.42,0,dk,head);sp2(.05,-.18,.62,0,0xff2a1a,head);p(.54,.12,.54,0,.3,0,dk,head);p(.1,.3,.52,.28,-.02,0,dk,head)}
+const jp=new THREE.Group();jp.position.set(0,1.3,-.34);[-.16,.16].forEach(x=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.6,10),new THREE.MeshStandardMaterial({color:0x888c99,metalness:.5,roughness:.3}));c.position.x=x;jp.add(c);const f=new THREE.Mesh(new THREE.ConeGeometry(.1,.5,8),new THREE.MeshBasicMaterial({color:0xff8a1a}));f.position.set(x,-.52,0);f.rotation.x=PI;jp.add(f)});jp.visible=false;g.add(jp);
+W.add(g);return{mf,pcd:0,fl2:0,mesh:g,x:0,z:0,y:0,vy:0,px:0,pz:0,ph:0,hp:100,dead:0,t:0,cd:1,st:0,sd:1,mm,em:sc,legL:leg(-.18),legR:leg(.18),jp,fly:0,ft:rnd(1,6),ty:3}};
+const _sp=sp;sp=function(b){_sp(b);const r=Math.random();b.spd=4.2;b.jmp=.6;b.acc=1;b.cover=0;b.cb=null;b.cs=0;b.cv=0;if(r<.25){b.spd=6.4;b.jmp=1.7;b.acc=.8}else if(r<.5){b.spd=2.4;b.jmp=.05;b.acc=1.1}else if(r<.75){b.cover=1;b.spd=4;b.jmp=.2}b.fly=0;b.hj=0;b.y=0;b.vy=0;b.ft=rnd(2,8);b.jp.visible=false};
+const _uC=update;update=function(dt){_uC(dt);if(!G.on)return;const ds=dt*SP;
+for(const b of bots){if(b.dead){b.fly=0;b.jp.visible=false;continue}b.ft-=ds;if(b.mf){if(b.cd>b.pcd+.3)b.fl2=.08;b.pcd=b.cd;b.fl2-=ds;b.mf.visible=b.fl2>0}
+if(b.cover&&b.fly<=0){b.cv-=ds;if(b.cv<=0){b.cs=!b.cs;b.cv=b.cs?rnd(1.4,2.2):rnd(2.2,3.4)}if(!b.cb||b.cbt<=0){b.cbt=4;let best=null,bd=30;for(const c of BX){if(c.h<1.5||c.lo!==undefined)continue;const cx=(c.a+c.b)/2,cz=(c.c+c.d)/2,dd=Math.hypot(cx-b.x,cz-b.z);if(dd<bd&&dd>2&&Math.hypot(cx-P.x,cz-P.z)>6){bd=dd;best=c}}b.cb=best}b.cbt-=ds;
+if(b.cb){const c=b.cb,cx=(c.a+c.b)/2,cz=(c.c+c.d)/2,h2=Math.max(c.b-c.a,c.d-c.c)/2+1.3;let ux=cx-P.x,uz=cz-P.z;const l=Math.hypot(ux,uz)||1;ux/=l;uz/=l;let tx=cx+ux*h2,tz=cz+uz*h2;if(b.cs){tx+=-uz*(h2+1.2);tz+=ux*(h2+1.2)}const dx=tx-b.x,dz=tz-b.z,dd=Math.hypot(dx,dz);if(dd>.4){const st=Math.min(dd,7*ds);b.x+=dx/dd*st;b.z+=dz/dd*st;b.mesh.position.x=b.x;b.mesh.position.z=b.z}}}
+if(b.hj>0){b.hj-=ds;if(b.vy>7.4&&b.vy<7.6)b.vy=15;if(b.hj<=0)b.jmp=b.jb}
+else if(b.ft<=0){b.ft=rnd(6,14);if(Math.random()<.45){b.hj=rnd(7,13);b.jb=b.jmp;b.jmp=2.2}}
+b.jp.visible=b.hj>0&&b.y>.4}};
+})();
+</script>
+<script>
+/* ===== D: start, ESC til hovedmeny, språk ===== */
+(()=>{
+$('hud').insertAdjacentHTML('beforeend','<div id="hint" style="position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-size:12px;opacity:.75;white-space:nowrap;text-shadow:0 1px 3px #000"></div>');
+const _s=start;start=function(){AR.zone=(AR.zones||{})[sel]||null;AR.slabs=null;AR.up=0;AR.door=null;_s();
+G.has=[1,1,0,0,0];G.rk=0;G.jet=0;G.sh=0;G.pl=0;AR.WI=1;AR.setW(1);AR.spawnPU();
+if(AR.spawns&&AR.spawns[sel]){const q=AR.spawns[sel];P.x=q[0];P.z=q[1];P.yaw=q[2];P.pitch=0;P.y=0}
+bots.forEach(b=>sp(b));$('scope').style.opacity=0};
+$('go').onclick=start;
+function toMenu(){if(!G.on)return;G.on=0;try{document.exitPointerLock&&document.exitPointerLock()}catch(e){}$('hud').style.display='none';$('menu').style.display='flex';$('msg').textContent='';keys.Mouse=0;keys.Zoom=0;fire=0;jump=0;jx=0;jy=0}
+addEventListener('keydown',e=>{if(e.code=='Escape')toMenu()});
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement)G.pl=1;else if(G.on&&G.pl&&!touch)toMenu()});
+const _sl=setLang;setLang=function(l){_sl(l);const en=l=='en';
+$('hint').textContent=en?'ESC = menu · scroll / ↑↓ / 1-5 = switch weapon · right mouse = zoom (sniper)':'ESC = meny · scroll / ↑↓ / 1-5 = bytt våpen · høyre mus = zoom (snikskytter)';
+const b=document.querySelector('[data-b=w]');if(b)b.textContent=en?'SWITCH':'BYTT';
+$('menu').querySelector('small').textContent+=en?' Pick up items: 🦘 jump pack (jump extra high), green health box, blue shield, gold crate = new weapon. Switch weapon with the scroll wheel, arrow keys up/down or 1-5. ESC takes you back to the main menu. In the Kiwi level: enter through the revolving door!':' Plukk opp items: 🦘 hoppepakke (hopp ekstra høyt), grønn helsekasse, blå skjold, gullkasse = nytt våpen. Bytt våpen med musehjul, piler opp/ned eller tallene 1–5. ESC tar deg til hovedmenyen. På Kiwi-banen: gå inn gjennom svingdøra!'};
+setLang(L);
+})();
+</script>
+<script>
+/* ===== E: musikk, stemme, kill-serier, trapper/plattformer, grafikk ===== */
+AR.mus=1;AR.voice=1;AR.ks=[];
+(()=>{
+document.head.insertAdjacentHTML('beforeend','<style>canvas{filter:saturate(1.18) contrast(1.06)}#ann{position:absolute;left:50%;top:26%;transform:translateX(-50%);font-size:clamp(28px,6vw,64px);font-weight:900;font-style:italic;letter-spacing:2px;color:#ffd21f;text-shadow:0 4px 0 #7a0d1a,0 0 24px #ff3b30;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}#vg{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 160px 30px #0007}</style>');
+$('hud').insertAdjacentHTML('afterbegin','<div id="vg"></div><div id="ann"></div>');
+/* musikk: egen action-loop (WebAudio) */
+let MA=null,mg=null,st=0,nt=0,tmr=null,nb=null;
+const fq=m=>440*Math.pow(2,(m-69)/12),ROOT=[40,36,38,35],ARP=[0,3,7,12,7,3,10,7];
+function osc(type,f,t,d,v,fc){const o=MA.createOscillator(),g=MA.createGain(),q=MA.createBiquadFilter();o.type=type;o.frequency.value=f;q.type='lowpass';q.frequency.value=fc;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(g);g.connect(mg);o.start(t);o.stop(t+d+.02)}
+function nz(t,d,v,hp){const s=MA.createBufferSource(),q=MA.createBiquadFilter(),g=MA.createGain();s.buffer=nb;q.type='highpass';q.frequency.value=hp;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(q);q.connect(g);g.connect(mg);s.start(t);s.stop(t+d)}
+function kick(t){const o=MA.createOscillator(),g=MA.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(40,t+.14);g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.25)}
+function sched(){const sp=60/(142+(SP-1)*14)/4;while(nt<MA.currentTime+.25){const s=st%16,bar=Math.floor(st/16)%4,r=ROOT[bar],t=nt;
+if(s%4==0||s==10)kick(t);if(s==4||s==12){nz(t,.16,.5,1200);osc('triangle',190,t,.1,.3,900)}if(s%2==0)nz(t,.04,.18,7000);if(s%4==2)nz(t,.07,.12,9000);
+if(s%2==0||s==15)osc('sawtooth',fq(r+(s==14||s==6?12:0)),t,sp*1.8,.55,420+((st/16)%2)*300);
+if(st%32>=16)osc('square',fq(r+24+ARP[s%8]),t,sp*1.6,.1,2600);
+if(s==0&&bar%2==0)osc('sawtooth',fq(r+12),t,sp*8,.13,900);
+nt+=sp;st++}}
+AR.musicStart=()=>{try{if(!AR.mus)return;if(!MA){MA=new(window.AudioContext||window.webkitAudioContext)();mg=MA.createGain();mg.gain.value=.2;mg.connect(MA.destination);const n=MA.sampleRate;nb=MA.createBuffer(1,n,n);const a=nb.getChannelData(0);for(let i=0;i<n;i++)a[i]=Math.random()*2-1}
+if(MA.state=='suspended')MA.resume();if(!tmr){nt=MA.currentTime+.1;tmr=setInterval(()=>{if(!MA)return;if(!G.on||!AR.mus){if(MA.state=='running')MA.suspend();return}if(MA.state=='suspended')MA.resume();else sched()},40)}}catch(e){}};
+/* stemme + kill-serier */
+function say(t,pitch,rate){return;try{const u=new SpeechSynthesisUtterance(t),vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));u.voice=vs.find(v=>/male|daniel|david|alex|fred|george|google uk english male/i.test(v.name))||vs[0]||null;u.lang='en-US';u.pitch=pitch||.2;u.rate=rate||.82;u.volume=1;speechSynthesis.speak(u)}catch(e){}}
+let aT=0;function ann(t,big){const e=$('ann');e.textContent=t;e.style.fontSize=big?'clamp(46px,11vw,120px)':'';e.style.color=big?'#ff2a2a':'';e.style.transform='translateX(-50%) scale('+(big?1.15:1)+')';e.style.opacity=1;clearTimeout(aT);aT=setTimeout(()=>e.style.opacity=0,big?1100:1700)}
+AR.say=say;AR.ann=ann;
+
+const _k=kill;kill=function(b){const hs=AR.hs;AR.hs=false;if(b.rp)return;_k(b);const n=performance.now()/1000;AR.ks=AR.ks.filter(t=>n-t<10);AR.ks.push(n);const c=AR.ks.length;
+if(hs){if(window.speechSynthesis)speechSynthesis.cancel();say('HEADSHOT!',.9,1.05);ann('HEADSHOT!!',1);AR.sfx&&AR.sfx(.25,2200,.35)}
+if(c>=5){AR.sfx&&(AR.sfx(.9,450,.9),AR.sfx(.35,3500,.5));ann('MONSTER KILL!!!');AR.ks=[]}};
+addEventListener('keydown',e=>{if(e.code=='KeyM'&&G.on){AR.mus=!AR.mus;if(AR.mus)AR.musicStart();ann(AR.mus?'🎵 ON':'🎵 OFF')}});
+/* menyvalg musikk/stemme */
+const mk=(l)=>{const s=document.createElement('select');s.add(new Option('',1));s.add(new Option('',0));return s},ms=mk(),vs=mk();$('mode').parentNode.append(' ',ms,' ',vs);
+ms.onchange=()=>AR.mus=+ms.value;vs.onchange=()=>AR.voice=+vs.value;
+const _sl=setLang;setLang=function(l){_sl(l);const en=l=='en';ms.options[0].text=en?'🎵 Music: On':'🎵 Musikk: På';ms.options[1].text=en?'🎵 Music: Off':'🎵 Musikk: Av';vs.options[0].text=en?'🗣️ Voice: On':'🗣️ Stemme: På';vs.options[1].text=en?'🗣️ Voice: Off':'🗣️ Stemme: Av'};setLang(L);
+/* trapper og plattformer */
+function plat(cx,cz,s,n,side,col){const H=.55,c=col||0x9aa3b0,top=n*H,w=3.4;B(cx,cz,s,top,s,c);B(cx,cz,s+.2,.12,s+.2,0xffd21f,top);
+for(let j=1;j<n;j++){const d=s/2+(j-.5)*1.2,h=(n-j)*H;const x=side=='x+'?cx+d:side=='x-'?cx-d:cx,z=side=='z+'?cz+d:side=='z-'?cz-d:cz;B(x,z,side[0]=='x'?1.2:w,h,side[0]=='x'?w:1.2,0xb9bcc2)}}
+AR.plat=plat;
+const EX={0:()=>{plat(-14,6,7,5,'z+');plat(15,0,8,9,'x-',0x8aa0b8);plat(-30,-6,6,7,'z+')},1:()=>{plat(0,-12,8,6,'z+');plat(-20,8,6,4,'x+');plat(22,12,7,8,'z-',0x8aa0b8)},2:()=>{plat(0,-16,9,7,'z+',0x8a7a5a);plat(26,10,7,5,'x-');plat(-26,12,6,8,'z-',0x8aa0b8)},5:()=>{plat(-32,18,8,6,'x+');plat(32,-18,8,9,'x-',0x8aa0b8);plat(0,24,6,4,'z-')},6:()=>{plat(-38,18,8,6,'x+');plat(38,-16,8,9,'x-',0x8aa0b8);plat(0,-40,10,5,'z+')}};
+Object.keys(EX).forEach(i=>{const f=MP[i][4];MP[i][4]=()=>{f();EX[i]()}});
+/* bakke-tekstur, start av musikk */
+const _s=start;start=function(){_s();AR.ks=[];const g=W.children[0];if(g&&g.geometry&&g.geometry.parameters&&g.geometry.parameters.width==400){const col='#'+MP[sel][3].toString(16).padStart(6,'0');const t=AR.tex((c,w,h)=>{c.fillStyle=col;c.fillRect(0,0,w,h);for(let i=0;i<1400;i++){c.fillStyle=Math.random()<.5?'#00000014':'#ffffff12';c.fillRect(Math.random()*w,Math.random()*h,rnd(1,4),rnd(2,7))}},256,256);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(70,70);g.material=new THREE.MeshStandardMaterial({map:t,roughness:.95})}
+AR.musicStart();if(window.speechSynthesis)speechSynthesis.getVoices()};
+$('go').onclick=start;
+})();
+</script>
+<script>
+/* ===== G: stor Kiwi + 2-etasjers bibliotek ===== */
+AR.zones={3:[-34,34,-48,-10],4:[-28,28,-44,-10]};AR.spawns={3:[0,9,0],4:[0,9,0]};
+(()=>{
+const PCl=['#e63946','#f4a261','#2a9d8f','#e9c46a','#457b9d','#8ac926','#ff7bac','#ffffff','#6a4c93','#ffbe0b'],BCl=['#8b2d2a','#2b4a7a','#2d6a4f','#c9a227','#5b3a29','#7a3b8c','#c4572b','#1f2f3f','#d9d2b6','#a33b4d'];
+const prodTex=()=>AR.tex((g,w,h)=>{g.fillStyle='#9aa3b5';g.fillRect(0,0,w,h);const th=h/3;for(let t=0;t<3;t++){const y=t*th;g.fillStyle='#6f7788';g.fillRect(0,y+th-8,w,8);for(let x=4;x<w-12;){const bw=rnd(14,30),bh=rnd(th*.45,th*.78);g.fillStyle=PCl[Math.floor(rnd(0,10))];g.fillRect(x,y+th-8-bh,bw,bh);g.fillStyle='#ffffff66';g.fillRect(x+2,y+th-8-bh+3,bw-4,5);x+=bw+3}}},512,160);
+const bookTex=()=>AR.tex((g,w,h)=>{g.fillStyle='#4a3424';g.fillRect(0,0,w,h);const th=h/4;for(let t=0;t<4;t++){const y=t*th;g.fillStyle='#2b1d12';g.fillRect(0,y+th-6,w,6);for(let x=3;x<w-10;){const bw=rnd(7,17),bh=rnd(th*.62,th-12);g.fillStyle=BCl[Math.floor(rnd(0,10))];g.fillRect(x,y+th-6-bh,bw,bh);g.fillStyle='#ffffff55';g.fillRect(x+2,y+th-6-bh+6,bw-4,3);g.fillStyle='#00000033';g.fillRect(x,y+th-6-bh,2,bh);x+=bw+1}}},512,256);
+const U=(x,z,w,h,d,c,lo)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,lo+h/2,z);m.castShadow=m.receiveShadow=true;W.add(m);BX.push({a:x-w/2,b:x+w/2,c:z-d/2,d:z+d/2,h:lo+h,lo})};
+const shelf=(x,z,len,lo,t1,t2)=>{(lo?U:(a,b,c,d,e,f)=>B(a,b,c,d,e,f))(x,z,len,2.9,1.3,0x7d8597,lo);[1,-1].forEach(s=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(len,2.6),new THREE.MeshStandardMaterial({map:s>0?t1:t2}));m.position.set(x,lo+1.5,z+s*.66);if(s<0)m.rotation.y=PI;W.add(m)});B(x,z,len+.2,.25,1.5,0xe74c3c,lo+2.9)};
+const panels=(x0,x1,z0,z1,y,nx,nz)=>{for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){const p=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({color:0xffffff}));p.rotation.x=PI/2;p.position.set(x0+(i+.5)*(x1-x0)/nx,y,z0+(j+.5)*(z1-z0)/nz);W.add(p)}};
+const floor=(w,d,cx,cz,y,c1,c2,rp)=>{const t=AR.tex((g,s,h)=>{g.fillStyle=c1;g.fillRect(0,0,s,h);g.strokeStyle=c2;g.lineWidth=4;g.strokeRect(0,0,s,h)},128,128);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(w/rp,d/rp);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshStandardMaterial({map:t,roughness:.35}));m.rotation.x=-PI/2;m.position.set(cx,y,cz);m.receiveShadow=true;W.add(m)};
+const plight=(x,y,z,i)=>{const l=new THREE.PointLight(0xfff0d8,i,46);l.position.set(x,y,z);W.add(l)};
+const lot=(n)=>{for(let x=-50;x<=50;x+=6)B(x,16,.2,.02,6,0xffffff);[[-8,-3],[-10,-1.4],[9,-2]].forEach(p=>B(p[0],p[1],1,1,1.6,0x2fa33f));[-24,24,-44,44].forEach(x=>{B(x,-2,.3,7,.3,0x555555);B(x,-2,1,.3,1,0xfff3b0,7)});[[-30,10,0x2255aa],[32,14,0xaa2222],[-36,24,0x228844],[38,28,0xdddddd]].forEach(c=>B(c[0],c[1],2,1.4,4.2,c[2],.2))};
+function door(Wl,RD){const DG=new THREE.Group();DG.position.set(0,0,-8);W.add(DG);const gl=new THREE.MeshStandardMaterial({color:0xaee3f5,transparent:true,opacity:.35,side:THREE.DoubleSide,roughness:.1});
+[PI/4,5*PI/4].forEach(a=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,4,16,1,true,a,PI/2),gl);m.position.y=2;DG.add(m)});const top=new THREE.Mesh(new THREE.CylinderGeometry(2.7,2.7,.25,16),mat(0x2b2f33));top.position.y=4.1;DG.add(top);
+AR.door=new THREE.Group();[0,PI/2].forEach(a=>{const b=new THREE.Mesh(new THREE.BoxGeometry(5.2,3.8,.08),gl);b.position.y=1.95;b.rotation.y=a;AR.door.add(b)});const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,4,8),mat(0x2b2f33));pole.position.y=2;AR.door.add(pole);DG.add(AR.door);
+B(0,-5.4,10,.3,5,RD,4.4);[-4.6,4.6].forEach(x=>B(x,-3.1,.35,4.4,.35,RD))}
+function kiwi2(){AR.up=0;const Wl=0xe9e6df,RD=0xb02a2a,p1=prodTex(),p2=prodTex();
+B(-19.5,-8,33,8,1,Wl);B(19.5,-8,33,8,1,Wl);B(0,-8,6,2.2,1,Wl,5.8);B(0,-50,72,8,1,Wl);B(-36,-29,1,8,42,Wl);B(36,-29,1,8,42,Wl);B(0,-29,73.5,.5,43.5,0x8d8d88,8);
+AR.slabs=[{x0:-36,x1:36,z0:-50,z1:-8,y:8,h:[]}];B(-19.5,-7.4,29,2.6,.1,0x9fd0e0,1.4,.35);B(19.5,-7.4,29,2.6,.1,0x9fd0e0,1.4,.35);
+floor(72,42,0,-29,.03,'#ebe8e0','#c9c5bb',4);panels(-36,36,-50,-8,7.85,9,4);[-24,0,24].forEach(x=>plight(x,6.4,-30,.7));door(Wl,RD);
+SG('KIWI mini pris',-16,6,-7.45,14,2.6,'#25a244','#ffffff');SG('7-23',16,6,-7.45,5,2.6,'#ffffff','#25a244');SG('PRISKUTT!',-7,2.6,-7.45,3.4,1.3,'#2fb34a','#ffffff');SG('ALDRI PÅ PRIS!',-28,2.2,-7.45,7,2.2,'#7a4fc9','#ffffff');SG('ALDRI PÅ PRIS!',28,2.2,-7.45,7,2.2,'#7a4fc9','#ffffff');
+[[-27,-9,9,27,-22],[-18,0,18,0,-31],[-27,-9,9,27,-40]].forEach(r=>{const z=r[4];r.slice(0,4).forEach((x,i)=>{if(!(r[2]==18&&i==3))shelf(x,z,10,0,p1,p2)})});
+B(0,-49,70,2.6,1.2,0xdfe9f0);let f=new THREE.Mesh(new THREE.PlaneGeometry(70,2.2),new THREE.MeshStandardMaterial({map:p1}));f.position.set(0,1.4,-48.35);W.add(f);
+[-35,35].forEach(x=>{B(x+(x<0?.5:-.5),-29,1.2,2.6,24,0xdfe9f0);const m=new THREE.Mesh(new THREE.PlaneGeometry(24,2.2),new THREE.MeshStandardMaterial({map:p2}));m.position.set(x+(x<0?1.15:-1.15),1.4,-29);m.rotation.y=x<0?PI/2:-PI/2;W.add(m)});
+[-30,-23,-16,16,23,30].forEach(x=>{B(x,-13,1.4,1,5,0x30343a);B(x+1.2,-15.4,.8,1.6,.8,0x25a244);B(x,-10.8,1.2,.3,.6,0x111111,1)});
+B(-8,-12,3,.9,3,0xb07a3f);B(-8,-12,2.6,.25,2.6,0xe63946,.9);B(8,-12,3,.9,3,0xb07a3f);B(8,-12,2.6,.25,2.6,0xf4a261,.9);
+[-33,33].forEach(x=>{B(x,-26,3,1.3,3,0xc9a66b);B(x,-26,2,1.2,2,0xe0b84a,1.3)});B(0,-25,2.4,1.1,2.4,0xc9a66b);B(0,-36,2.4,1.1,2.4,0xc9a66b);
+AR.plat(-31,-46,6,6,'x+');AR.plat(31,-46,6,6,'x-',0x8aa0b8);lot();V(0,10,14);V(1,-9,10);V(2,14,6);V(3,-22,18)}
+function lib(){AR.up=1;const Wl=0xd9d2c3,t1=bookTex(),t2=bookTex(),t3=bookTex(),t4=bookTex(),H=11.2;
+B(-16.5,-8,27,H,1,Wl);B(16.5,-8,27,H,1,Wl);B(0,-8,6,H-4.2,1,Wl,4.2);B(0,-46,60,H,1,Wl);B(-30,-27,1,H,38,Wl);B(30,-27,1,H,38,Wl);
+B(0,-27,61.5,.5,39.5,0x6b6b66,H);
+AR.slabs=[{x0:-30,x1:30,z0:-46,z1:-8,y:5.5,h:[[20,28,-21,-9],[-28,-20,-21,-9]]},{x0:-30,x1:30,z0:-46,z1:-8,y:H,h:[]}];
+B(-16.5,-7.4,24,3.4,.1,0x9fd0e0,1,.35);B(16.5,-7.4,24,3.4,.1,0x9fd0e0,1,.35);B(-16.5,-7.4,24,3.4,.1,0x9fd0e0,6.5,.35);B(16.5,-7.4,24,3.4,.1,0x9fd0e0,6.5,.35);
+floor(60,38,0,-27,.03,'#c9a77a','#a9875a',4);
+const slab=(x0,x1,z0,z1)=>B((x0+x1)/2,(z0+z1)/2,x1-x0,.4,z1-z0,0xc9a77a,5.1);slab(-30,30,-46,-21);slab(-30,-28,-21,-8);slab(-20,20,-21,-8);slab(28,30,-21,-8);
+floor(60,38,0,-27,5.55,'#c9a77a','#a9875a',4);
+[1,-1].forEach(sx=>{for(let j=1;j<=9;j++)B(sx*24,-10-(j-.5)*1.2,7,j*.55,1.2,0xb9bcc2);[sx*20,sx*28].forEach(x=>B(x,-15,.15,1,12,0x333840,5.5))});
+panels(-30,30,-46,-8,5.1,8,4);panels(-30,30,-46,-8,10.95,8,4);[-18,18].forEach(x=>{plight(x,4.6,-27,.6);plight(x,10.2,-27,.6)});
+SG('ANDEBU BIBLIOTEK',0,9,-7.45,24,2.6,'#2b2f33','#ffffff');SG('SANDEFJORD KOMMUNE',-20,6.2,-7.45,10,1.2,'#8b6b3a','#ffffff');
+[0,5.5].forEach(lo=>{[-18,0,18].forEach(x=>shelf(x,-26,10,lo,t1,t2));[-24,-8,8,24].forEach(x=>shelf(x,-34,10,lo,t3,t4));
+B(0,-45,58,2.9,.9,0x7d8597,lo);const m=new THREE.Mesh(new THREE.PlaneGeometry(58,2.6),new THREE.MeshStandardMaterial({map:t1}));m.position.set(0,lo+1.5,-44.5);W.add(m)});
+SG('FAGBØKER',0,3.9,-45.4,12,1.1,'#2b4a7a','#fff');SG('BARNEAVDELING',0,9.4,-45.4,16,1.4,'#e67e22','#fff');SG('NYE BØKER',0,2.4,-11.6,6,1,'#d9a441','#222');
+B(0,-14,8,1.1,2,0xd9a441);B(0,-14,3,.4,1,0x2b2f33,1.1);[-10,10].forEach(x=>{B(x,-12,4,1,1.6,0x9c7b52);for(let k=0;k<6;k++)B(x-1.6+k*.64,-12,.5,.5,1.1,BCl[k%10]?parseInt(BCl[k%10].slice(1),16):0xcc4444,1)});
+[-9,9].forEach(x=>{B(x,-18,4.2,.9,2.2,0xd9c9a8);[-1.6,1.6].forEach(dx=>B(x+dx,-15.9,1,.6,1,0x2b4a7a));[-1.6,1.6].forEach(dx=>B(x+dx,-20.1,1,.6,1,0x2b4a7a))});
+[-12,12].forEach(x=>U(x,-17,4.2,.9,2.2,0xd9c9a8,5.5));U(0,-14,6,.9,2,0xd9a441,5.5);
+for(let x=-50;x<=50;x+=10)B(x,16,.2,.02,6,0xffffff);[-22,22,-42,42].forEach(x=>{B(x,-2,.3,7,.3,0x555555);B(x,-2,1,.3,1,0xfff3b0,7)});
+[[-40,6],[40,10],[-38,26],[42,30],[-46,-20],[46,-24]].forEach(p=>T(p[0],p[1]));V(1,-12,10);V(2,12,8);V(0,-24,20);V(1,24,24)}
+MP[3][4]=kiwi2;MP[3][1]=58;MP[4][4]=lib;MP[4][1]=48;MP[4][3]=0x9a9a92;MP[4][5]=0;MP[4][6]=0;
+const _los=los;los=function(ax,az,bx,bz){if(AR.up&&AR.slabs){const b=bots.find(q=>q.x==ax&&q.z==az);if(b&&((b.y>4.5)!=(P.y>4.5)))return 0}return _los(ax,az,bx,bz)};
+const _sp=spot;spot=function(){const p=_sp();if(AR.up&&Math.random()<.4){for(let i=0;i<30;i++){const x=rnd(-28,28),z=rnd(-44,-10);if(((x>19&&x<29)||(x<-19&&x>-29))&&z>-22)continue;if(!BX.some(c=>c.h>.4&&x>c.a-1.5&&x<c.b+1.5&&z>c.c-1.5&&z<c.d+1.5))return{x,z,y:5.5}}}return p};
+})();
+</script>
+<script>
+/* ===== Supabase-rom for flerspiller (erstatter PeerJS når URL og nøkkel er fylt inn) ===== */
+AR.SUPA={url:'',key:''};
+AR.makeSupaPeer=function(sb){
+class Em{constructor(){this.h={}}on(e,f){(this.h[e]=this.h[e]||[]).push(f);return this}emit(e,...a){(this.h[e]||[]).slice().forEach(f=>{try{f(...a)}catch(x){console.error(x)}})}}
+class Cn extends Em{constructor(p,r){super();this.p=p;this.r=r;this.open=false;this.last=Date.now()}
+send(d){if(this.open)this.p._q(this.r,{d})}
+close(){if(this.open){this.p._q(this.r,{bye:1});this.p._flush()}this._gone()}
+_gone(){if(this.gone)return;this.gone=1;this.open=false;delete this.p.conns[this.r];this.emit('close')}}
+return class SP extends Em{
+constructor(id){super();this.id=id||('c'+Math.random().toString(36).slice(2,9));this.isHost=!!id;this.conns={};this.buf=[];this.dead=false;this.ch=null;
+this.tm=setInterval(()=>{this._flush()},70);
+this.ka=setInterval(()=>{const n=Date.now();for(const k in this.conns){const c=this.conns[k];if(c.open){this._q(k,{ka:1});if(n-c.last>9000)c._gone()}}},2000);
+if(this.isHost)this._join(id.slice(13),()=>this.emit('open',this.id));else setTimeout(()=>this.emit('open',this.id),0)}
+_join(code,cb){const ch=sb.channel('ar-'+code,{config:{broadcast:{self:false,ack:false}}});this.ch=ch;
+ch.on('broadcast',{event:'m'},p=>this._rx(p.payload));
+ch.subscribe(st=>{if(this.dead)return;if(st==='SUBSCRIBED'){if(cb){const f=cb;cb=null;f()}}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){if(cb){cb=null;this.emit('error',{type:'server-error'})}else this.emit('error',{type:'network'})}})}
+_q(to,o){this.buf.push(Object.assign({to,f:this.id},o))}
+_flush(){if(!this.buf.length||!this.ch)return;const b=this.buf;this.buf=[];try{this.ch.send({type:'broadcast',event:'m',payload:{b}})}catch(e){}}
+_rx(p){if(!p||!p.b)return;for(const m of p.b){if(m.to!==this.id)continue;let c=this.conns[m.f];
+if(m.hi&&this.isHost){if(!c){c=new Cn(this,m.f);this.conns[m.f]=c;this.emit('connection',c);setTimeout(()=>{if(!c.gone){c.open=true;c.emit('open')}},0)}this._q(m.f,{ack:1});continue}
+if(!c)continue;c.last=Date.now();
+if(m.ack&&!c.open){c.open=true;c.emit('open')}
+else if(m.bye)c._gone();
+else if(m.d!==undefined)c.emit('data',m.d)}}
+connect(hid){const c=new Cn(this,hid);this.conns[hid]=c;
+this._join(hid.slice(13),()=>{let n=0;const t=setInterval(()=>{if(c.open||c.gone||this.dead){clearInterval(t);return}if(++n>10){clearInterval(t);this.emit('error',{type:'peer-unavailable'});return}this._q(hid,{hi:1})},700);this._q(hid,{hi:1})});return c}
+destroy(){if(this.dead)return;for(const k in this.conns){const c=this.conns[k];if(c.open)this._q(k,{bye:1})}this._flush();this.dead=true;clearInterval(this.tm);clearInterval(this.ka);const ch=this.ch;setTimeout(()=>{try{sb.removeChannel(ch)}catch(e){}},150)}}};
+AR.loadSupa=function(cb){const go=()=>{try{const sb=window.supabase.createClient(AR.SUPA.url,AR.SUPA.key,{realtime:{params:{eventsPerSecond:30}}});window.Peer=AR.makeSupaPeer(sb);AR.usingSupa=1;cb(1)}catch(e){console.error(e);cb(0)}};
+if(window.supabase&&window.supabase.createClient)return go();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=go;s.onerror=()=>cb(0);document.head.appendChild(s)};
+</script>
+<script>
+/* ===== F: alias, resultattavle, online flerspiller (2-4) ===== */
+const NET={on:0,host:0,me:0,peer:null,conns:{},conn:null,players:[],scores:{},deaths:{},code:''};
+(()=>{
+const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+const T2=(no,e)=>L=='en'?e:no,esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const box=document.createElement('div');box.style.cssText='display:flex;flex-direction:column;gap:8px;align-items:center;width:min(640px,100%)';
+box.innerHTML='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"><input id="alias" maxlength="14" style="font:inherit;font-weight:800;padding:10px;border-radius:12px;border:0;text-align:center;width:170px"><select id="gm"></select><select id="dm"></select><button id="hsb">🏆</button></div><div id="mpp" style="display:none;background:#0007;padding:10px;border-radius:12px;width:100%"><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center"><button id="mkr"></button><span id="or"></span><input id="code" maxlength="4" style="font:inherit;font-weight:900;padding:10px;border-radius:12px;border:0;text-align:center;width:90px;text-transform:uppercase;letter-spacing:4px"><button id="jn"></button></div><div id="mps" style="margin-top:8px;font-weight:800"></div><div id="mpl" style="margin:6px 0;text-align:left;display:inline-block"></div><div><button id="mst" style="display:none;background:#27ae60;font-size:20px;padding:12px 30px"></button></div></div>';
+$('maps').after(box);
+$('hud').insertAdjacentHTML('beforeend','<div id="sb" style="position:absolute;left:14px;top:12px;font-weight:800;font-size:14px;text-shadow:0 1px 3px #000;line-height:1.35"></div>');
+document.body.insertAdjacentHTML('beforeend','<div id="hsm" style="display:none;position:fixed;inset:0;background:#000c;align-items:center;justify-content:center;z-index:9"><div id="hsc" style="background:#13233a;padding:18px;border-radius:16px;max-width:96vw;max-height:90vh;overflow:auto;text-align:center"></div></div>');
+$('alias').value=LS('arAlias')||('Spiller'+Math.floor(rnd(100,999)));$('alias').oninput=()=>LS('arAlias',$('alias').value);
+AR.name=()=>($('alias').value.trim()||'Spiller').slice(0,14);
+const gm=$('gm'),dm=$('dm');gm.add(new Option('',0));gm.add(new Option('',1));dm.add(new Option('',5));dm.add(new Option('',10));
+[...md.options].forEach(o=>{if(+o.value==0)o.remove()});md.value=30;
+function upd(){const on=+gm.value==1;md.style.display=on?'':'none';dm.style.display=on?'none':'';$('mpp').style.display=on?'block':'none';$('go').style.display=on?'none':''}
+gm.onchange=upd;
+const _sl=setLang;setLang=function(l){_sl(l);gm.options[0].text=T2('🤖 Mot datamaskin','🤖 Vs computer');gm.options[1].text=T2('🌐 Online (2–4 spillere)','🌐 Online (2–4 players)');dm.options[0].text=T2('⏱️ 5 minutter','⏱️ 5 minutes');dm.options[1].text=T2('⏱️ 10 minutter','⏱️ 10 minutes');
+$('alias').placeholder=T2('Ditt alias','Your alias');$('mkr').textContent=T2('Lag rom','Create room');$('or').textContent=T2('eller kode:','or code:');$('jn').textContent=T2('Bli med','Join');$('mst').textContent=T2('START KAMP','START MATCH');$('hsb').title=T2('Resultattavle','Leaderboard')};
+setLang(L);upd();
+/* ---- statistikk og resultattavle ---- */
+const pts=g=>Math.max(0,g.k*100+(g.hsk||0)*50+(g.bs||0)*25-g.deaths*10);
+const HS=()=>{try{return JSON.parse(LS('arHS')||'[]')}catch(e){return[]}};
+function hsTable(rows,n){return '<table style="margin:6px auto;border-collapse:collapse;font-size:15px"><tr style="opacity:.7"><td></td><td>'+T2('Alias','Alias')+'</td><td>'+T2('Poeng','Score')+'</td><td>Kills</td><td>HS</td><td>'+T2('Serie','Streak')+'</td><td>'+T2('Bane','Map')+'</td></tr>'+rows.slice(0,n).map((r,i)=>'<tr style="'+(r.me?'color:#ffd21f;font-weight:900':'')+'"><td style="padding:3px 8px">'+(i+1)+'.</td><td style="padding:3px 8px">'+esc(r.name)+'</td><td style="padding:3px 8px">'+r.pts+'</td><td>'+r.k+'</td><td>'+r.hsk+'</td><td>'+r.bs+'</td><td style="padding:3px 8px;font-size:12px">'+esc(r.map)+' · '+r.dur+'m</td></tr>').join('')+'</table>'}
+$('hsb').onclick=()=>{$('hsc').innerHTML='<h2 style="margin:0 0 6px">🏆 '+T2('Resultattavle','Leaderboard')+'</h2>'+(HS().length?hsTable(HS(),10):'<div>'+T2('Ingen kamper spilt ennå','No matches yet')+'</div>')+'<button id="hsx" style="margin-top:8px">OK</button>';$('hsm').style.display='flex';$('hsx').onclick=()=>$('hsm').style.display='none'};
+const _k=kill;kill=function(b){const hs=AR.hs;if(!b.rp){G.st=(G.st||0)+1;G.bs=Math.max(G.bs||0,G.st);if(hs)G.hsk=(G.hsk||0)+1}_k(b)};
+/* ---- nettverk ---- */
+function status(t){$('mps').textContent=t}
+AR.rt=0;const retry=(fn,e)=>{if(['server-error','network','socket-error','socket-closed','server-error'].includes(e.type)&&AR.rt<4){AR.rt++;status(T2('Får ikke kontakt med tjenesten, prøver igjen (','No contact with the service, retrying (')+AR.rt+'/4)…');setTimeout(fn,1800);return true}return false};
+const neterr=e=>['server-error','network','socket-error','socket-closed'].includes(e.type)?T2('Får ikke kontakt med den gratis nettverkstjenesten (PeerJS). Prøv igjen om litt, eller bytt nett (mobildata/Wi-Fi).','Cannot reach the free network service (PeerJS). Try again shortly, or switch network (mobile data/Wi-Fi).'):T2('Feil: ','Error: ')+e.type;
+function plist(){$('mpl').innerHTML=NET.players.map(p=>'👤 '+esc(p.name)+(p.id==0?(L=='en'?' (host)':' (vert)'):'')+(p.id==NET.me?' ⭐':'')).join('<br>')}
+function loadPeer(cb){if(AR.SUPA.url&&AR.SUPA.key&&!AR.usingSupa)return AR.loadSupa(ok=>ok?cb(1):cb(0));if(window.Peer)return cb(1);const s=document.createElement('script');s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';s.onload=()=>cb(1);s.onerror=()=>cb(0);document.head.appendChild(s)}
+const code4=()=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c};
+function cleanup(){if(NET.peer){try{NET.peer.destroy()}catch(e){}}Object.assign(NET,{on:0,host:0,me:0,peer:null,conns:{},conn:null,players:[]});$('mst').style.display='none';plist()}
+function send(m){m.from=NET.me;if(NET.host){if(m.to!==undefined&&m.to!=0){const c=NET.conns[m.to];c&&c.open&&c.send(m)}else if(m.to===undefined)for(const k in NET.conns){const c=NET.conns[k];c&&c.open&&c.send(m)}}else if(NET.conn&&NET.conn.open)NET.conn.send(m)}
+function drop(id){delete NET.conns[id];NET.players=NET.players.filter(p=>p.id!=id);plist();if(NET.host)send({t:'players',list:NET.players});const i=(AR.RP||[]).findIndex(r=>r.pid==id);if(i>=0){W.remove(AR.RP[i].mesh);AR.RP.splice(i,1)}}
+function host(){loadPeer(ok=>{if(!ok)return status(T2('Fikk ikke kontakt med nettverkstjenesten','Could not reach the network service'));cleanup();const code=code4(),peer=new Peer('andeburivals-'+code);NET.peer=peer;
+peer.on('open',()=>{NET.on=1;NET.host=1;NET.me=0;NET.code=code;NET.players=[{id:0,name:AR.name()}];status(T2('Romkode: ','Room code: ')+code+T2(' – del den med de andre!',' – share it with the others!'));plist();$('mst').style.display=''});
+peer.on('connection',c=>{if(NET.players.length>=4||AR.running){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),400)});return}
+const id=[1,2,3].find(i=>!NET.players.some(p=>p.id==i)&&!NET.conns[i]);let joined=0;NET.conns[id]=c;
+c.on('data',m=>{if(m.t=='hello'&&!joined){joined=1;NET.players.push({id,name:m.name});c.send({t:'welcome',id,list:NET.players});send({t:'players',list:NET.players});plist()}else if(joined){m.from=id;if(m.to!==undefined){if(m.to==0)handle(m);else{const q=NET.conns[m.to];q&&q.open&&q.send(m)}}else{for(const k in NET.conns)if(k!=id){const q=NET.conns[k];q&&q.open&&q.send(m)}handle(m)}}});
+c.on('close',()=>drop(id))});
+peer.on('error',e=>{if(e.type=='unavailable-id')host();else if(!retry(host,e))status(neterr(e))})})}
+function join(){const code=$('code').value.trim().toUpperCase();if(code.length!=4)return status(T2('Skriv inn 4-tegns romkode','Enter the 4-character room code'));
+loadPeer(ok=>{if(!ok)return status(T2('Fikk ikke kontakt med nettverkstjenesten','Could not reach the network service'));cleanup();const peer=new Peer();NET.peer=peer;
+peer.on('open',()=>{const c=peer.connect('andeburivals-'+code,{reliable:true});NET.conn=c;c.on('open',()=>{NET.on=1;NET.host=0;c.send({t:'hello',name:AR.name()});status(T2('Koblet til! Venter på at verten starter…','Connected! Waiting for the host to start…'))});
+c.on('data',m=>{if(m.t=='welcome'){NET.me=m.id;NET.players=m.list;plist()}else if(m.t=='players'){NET.players=m.list;plist()}else if(m.t=='go')go(m.cfg);else if(m.t=='full')status(T2('Rommet er fullt eller kampen har startet','The room is full or the match has started'));else handle(m)});
+c.on('close',()=>{status(T2('Frakoblet fra rommet','Disconnected from the room'));NET.on=0})});
+peer.on('error',e=>{if(e.type=='peer-unavailable')status(T2('Fant ikke rommet – sjekk koden','Room not found – check the code'));else if(!retry(join,e))status(neterr(e))})})}
+$('mkr').onclick=()=>{AR.rt=0;host()};$('jn').onclick=()=>{AR.rt=0;join()};
+$('mst').onclick=()=>{if(NET.players.length<2)return status(T2('Vent på minst 1 spiller til','Wait for at least 1 more player'));const cfg={sel,target:+md.value,sp:+sd.value};send({t:'go',cfg});go(cfg)};
+function go(cfg){sel=cfg.sel;md.value=cfg.target;sd.value=cfg.sp;AR.online=1;NET.scores={};NET.deaths={};NET.players.forEach(p=>{NET.scores[p.id]=0;NET.deaths[p.id]=0});start()}
+/* ---- fjernspillere ---- */
+function tag(name){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.font='bold 38px Arial';g.textAlign='center';g.fillStyle='#0008';g.fillRect(8,8,240,48);g.fillStyle='#fff';g.fillText(name.slice(0,12),128,46);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(2.4,.6,1);s.position.y=2.7;return s}
+function makeRP(pl){AR.cyb=1;const b=mkBot();AR.cyb=0;b.rp=1;b.pid=pl.id;b.name=pl.name;b.tx=0;b.ty3=0;b.tz=0;b.tyaw=0;b.mesh.add(tag(pl.name));b.mesh.visible=false;return b}
+function tracerAB(o,d){const a=new THREE.Vector3(o[0],o[1],o[2]),e=a.clone().addScaledVector(new THREE.Vector3(d[0],d[1],d[2]),50),m=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,1),new THREE.MeshBasicMaterial({color:0xffe9b0,transparent:true,blending:THREE.AdditiveBlending,fog:false}));m.position.copy(a).add(e).multiplyScalar(.5);m.scale.z=a.distanceTo(e);m.lookAt(e);W.add(m);TR.push({m,l:.14})}
+AR.mpHit=(b,dm,hs)=>{send({t:'hit',to:b.pid,d:dm,hs:hs?1:0});if(hs&&b.hp<=0){if(window.speechSynthesis)speechSynthesis.cancel();AR.say('HEADSHOT!',.9,1.05);AR.ann('HEADSHOT!!',1)}};
+function finish(w){const n=(NET.players.find(p=>p.id==w)||{}).name||'?';end(w==NET.me?1:0);$('msg').innerHTML=(w==NET.me?'🏆 '+T2('DU VANT!','YOU WIN!'):'🏁 '+T2('Vinneren er ','Winner: ')+esc(n))+ranking();AR.running=0}
+function ranking(){const rows=NET.players.slice().sort((a,b)=>(NET.scores[b.id]||0)-(NET.scores[a.id]||0));return '<table style="margin:8px auto;font-size:17px">'+rows.map((p,i)=>'<tr style="'+(p.id==NET.me?'color:#ffd21f;font-weight:900':'')+'"><td style="padding:2px 10px">'+(i+1)+'.</td><td style="padding:2px 10px">'+esc(p.name)+'</td><td style="padding:2px 10px">'+(NET.scores[p.id]||0)+' kills</td><td style="padding:2px 10px;opacity:.7">'+(NET.deaths[p.id]||0)+' ☠</td></tr>').join('')+'</table>'}
+function handle(m){const r=(AR.RP||[]).find(q=>q.pid==m.from);
+if(m.t=='s'&&r){r.tx=m.x;r.ty3=m.y;r.tz=m.z;r.tyaw=m.yaw;r.jf=m.j;r.hp=m.hp;r.dead=m.dead?1:0;if(!r.mesh.visible&&!r.dead){r.x=m.x;r.y=m.y;r.z=m.z}r.mesh.visible=!r.dead}
+else if(m.t=='f')tracerAB(m.o,m.d);
+else if(m.t=='hit'){AR.lastBy=m.from;hurt(m.d)}
+else if(m.t=='dead'){if(m.by!=m.id)NET.scores[m.by]=(NET.scores[m.by]||0)+1;NET.deaths[m.id]=(NET.deaths[m.id]||0)+1;if(r){burst(r.x,r.y+1,r.z);r.mesh.visible=false;r.dead=1}
+if(m.by==NET.me&&m.by!=m.id){G.k=NET.scores[NET.me];const n=performance.now()/1000;AR.ks=AR.ks.filter(t=>n-t<10);AR.ks.push(n);if(AR.ks.length>=5){AR.sfx&&(AR.sfx(.9,450,.9),AR.sfx(.35,3500,.5));AR.ann('MONSTER KILL!!!');AR.ks=[]}}
+if(G.on&&G.target&&m.by!=m.id&&NET.scores[m.by]>=G.target)finish(m.by)}}
+AR.handle=handle;
+/* ---- start / oppdatering / slutt ---- */
+const _s=start;start=function(){const on=AR.online&&NET.on;AR.online=on?1:0;_s();AR.RP=[];G.dur=on?0:(+dm.value)*60;G.target=on?+md.value:0;G.hsk=0;G.st=0;G.bs=0;G.t0=Date.now();
+if(on){AR.running=1;bots.forEach(b=>W.remove(b.mesh));bots.length=0;NET.players.forEach(p=>{if(p.id!=NET.me)AR.RP.push(makeRP(p))});G.k=0}$('sb').style.display=on?'block':'none'};
+$('go').onclick=()=>{AR.online=0;start()};
+let sT=0,sbT=0;const _u=update;update=function(dt){_u(dt);if(!G.on||!AR.online)return;
+if(G.dead>0&&!G._d){G._d=1;G.st=0;send({t:'dead',id:NET.me,by:AR.lastBy===undefined?NET.me:AR.lastBy});handle({t:'dead',id:NET.me,by:AR.lastBy===undefined?NET.me:AR.lastBy,from:NET.me});AR.lastBy=undefined}else if(!(G.dead>0))G._d=0;
+sT-=dt;if(sT<=0){sT=.08;send({t:'s',x:P.x,y:P.y,z:P.z,yaw:P.yaw,hp:G.hp,j:(keys.Space||jump)&&G.jet>0?1:0,dead:G.dead>0?1:0})}
+for(const b of AR.RP){const k=Math.min(1,dt*12),ox=b.x,oz=b.z;b.x+=(b.tx-b.x)*k;b.z+=(b.tz-b.z)*k;b.y+=(b.ty3-b.y)*k;let dy=b.tyaw+PI-b.mesh.rotation.y;dy=Math.atan2(Math.sin(dy),Math.cos(dy));b.mesh.rotation.y+=dy*k;b.mesh.position.set(b.x,b.y,b.z);
+const v=Math.hypot(b.x-ox,b.z-oz)/Math.max(dt,1e-3);b.ph+=v*dt*1.5;const air=b.jf||b.y>.1,a=Math.min(1,v/3);b.legL.rotation.x=air?-.6:Math.sin(b.ph)*.9*a;b.legR.rotation.x=air?.4:-Math.sin(b.ph)*.9*a;b.jp.visible=!!b.jf}
+sbT-=dt;if(sbT<=0){sbT=.5;$('sb').innerHTML='<div style="opacity:.8">'+T2('Først til ','First to ')+G.target+'</div>'+NET.players.slice().sort((a,b)=>(NET.scores[b.id]||0)-(NET.scores[a.id]||0)).map(p=>(p.id==NET.me?'<b style="color:#ffd21f">':'<b>')+esc(p.name)+'</b> '+(NET.scores[p.id]||0)).join('<br>')}};
+const _sh=shoot;shoot=function(){const f0=G.fc;_sh();if(AR.online&&G.fc>f0+.001){const o=C.position;send({t:'f',o:[o.x,o.y,o.z],d:[D.x,D.y,D.z]})}};
+const _e=end;end=function(w){const was=G.on;_e(w);if(!was)return;AR.running=0;const g=G,map=MP[sel][0].replace(/^\S+\s/,'');
+if(AR.online){$('msg').innerHTML=(g.target?'':'')+ranking();return}
+const row={name:AR.name(),pts:pts(g),k:g.k,hsk:g.hsk||0,bs:g.bs||0,map,dur:(g.dur||300)/60,d:g.deaths,me:1},all=HS();all.push(row);all.sort((a,b)=>b.pts-a.pts);const rec=all[0]===row,top=all.slice(0,20);top.forEach(r=>delete r.me);LS('arHS',JSON.stringify(top));
+const shown=top.slice(0,5).map(r=>Object.assign({},r,{me:r.name==row.name&&r.pts==row.pts&&r.k==row.k}));
+$('msg').innerHTML='<div style="font-size:26px">⏱️ '+T2('Kampen er over, ','Match over, ')+esc(row.name)+'!</div><div style="margin:6px 0">🎯 '+row.k+' kills · 💀 '+row.hsk+' headshots · 🔥 '+T2('beste serie ','best streak ')+row.bs+' · ☠ '+row.d+'</div><div style="font-size:30px;color:#ffd21f;font-weight:900">'+row.pts+' '+T2('poeng','points')+(rec?' 🏅 '+T2('NY REKORD!','NEW RECORD!'):'')+'</div><div style="font-size:12px;opacity:.7">'+T2('Poeng = kills×100 + headshots×50 + beste serie×25 − dødsfall×10','Score = kills×100 + headshots×50 + best streak×25 − deaths×10')+'</div>'+hsTable(shown,5)};
+})();
+</script>
+<script>
+/* ===== H: moderne grafikk (bloom, miljølys, neon, sol, partikler) ===== */
+AR.hq=0;
+(()=>{
+const hq=document.createElement('select');hq.add(new Option('',1));hq.add(new Option('',0));hq.value=AR.hq;$('mode').parentNode.append(' ',hq);hq.onchange=()=>{AR.hq=+hq.value;if(AR.hq)loadFx()};
+const _sl=setLang;setLang=function(l){_sl(l);const en=l=='en';hq.options[0].text=en?'✨ Graphics: High (bloom)':'✨ Grafikk: Høy (bloom)';hq.options[1].text=en?'✨ Graphics: Normal':'✨ Grafikk: Normal'};setLang(L);
+sun.color.setHex(0xfff0d2);sun.intensity=1.1;sun.shadow.bias=-.0004;sun.shadow.normalBias=.03;R.toneMappingExposure=1;
+let envOk=1;function env(){if(envOk)return;envOk=1;try{const sc=new THREE.Scene(),m=new THREE.Mesh(new THREE.SphereGeometry(50,24,12),new THREE.ShaderMaterial({side:THREE.BackSide,vertexShader:'varying float y;void main(){y=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying float y;void main(){vec3 t=vec3(.2,.45,.9),h=vec3(.85,.93,1.),g=vec3(.35,.4,.3);gl_FragColor=vec4(y>0.?mix(h,t,pow(y,.6)):mix(h,g,min(1.,-y*3.)),1.);}'}));sc.add(m);const pm=new THREE.PMREMGenerator(R);S.environment=pm.fromScene(sc,0).texture;pm.dispose()}catch(e){}}
+/* bloom via EffectComposer (lastes fra nett, faller tilbake til vanlig grafikk) */
+let comp=null,busy=0,loading=0;const base='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/',files=['shaders/CopyShader.js','shaders/LuminosityHighPassShader.js','shaders/GammaCorrectionShader.js','postprocessing/EffectComposer.js','postprocessing/MaskPass.js','postprocessing/ShaderPass.js','postprocessing/RenderPass.js','postprocessing/UnrealBloomPass.js'];
+function build(){try{const pr=R.getPixelRatio(),rt=new THREE.WebGLMultisampleRenderTarget(innerWidth*pr,innerHeight*pr,{format:THREE.RGBAFormat});comp=new THREE.EffectComposer(R,rt);comp.addPass(new THREE.RenderPass(S,C));comp.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.38,.55,.88));comp.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));comp.setSize(innerWidth,innerHeight)}catch(e){comp=null}}
+function loadFx(){if(loading||comp)return;loading=1;(function ld(i){if(i>=files.length){build();return}const s=document.createElement('script');s.src=base+files[i];s.onload=()=>ld(i+1);s.onerror=()=>{loading=0};document.head.appendChild(s)})(0)}
+const _r=R.render.bind(R);R.render=function(s,c){if(comp&&!busy&&AR.hq&&s===S){busy=1;try{comp.render()}catch(e){comp=null;busy=0;_r(s,c);return}busy=0}else _r(s,c)};
+addEventListener('resize',()=>{if(comp)try{comp.setSize(innerWidth,innerHeight)}catch(e){}});
+/* sol, partikler, neon-striper */
+const sunTex=AR.tex((g,w,h)=>{const q=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);q.addColorStop(0,'#fff');q.addColorStop(.18,'#fff4c8');q.addColorStop(.5,'#ffd27a55');q.addColorStop(1,'#ffd27a00');g.fillStyle=q;g.fillRect(0,0,w,h)},256,256);
+let dust=null;const NEON=[0x00e5ff,0xff3df2,0xffd21f,0x7cff6b];
+const _s=start;start=function(){if(AR.hq)loadFx();_s();
+W.traverse(o=>{if(o.material&&o.material.isMeshStandardMaterial)o.material.envMapIntensity=.5});
+const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:sunTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));sp.position.copy(sun.position).normalize().multiplyScalar(220);sp.scale.set(90,90,1);W.add(sp);
+const g=new THREE.BufferGeometry(),n=160,a=new Float32Array(n*3);for(let i=0;i<n;i++){a[i*3]=rnd(-40,40);a[i*3+1]=rnd(.3,12);a[i*3+2]=rnd(-40,40)}g.setAttribute('position',new THREE.BufferAttribute(a,3));dust=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:.14,transparent:true,opacity:.45,blending:THREE.AdditiveBlending,depthWrite:false}));W.add(dust);
+let cnt=0,col=NEON[sel%4];BX.slice().forEach(c=>{if(cnt>=26||c.h<6||c.lo!==undefined)return;const lx=c.b-c.a,lz=c.d-c.c;if(Math.max(lx,lz)<8)return;const m=new THREE.Mesh(new THREE.BoxGeometry(lx+.12,.16,lz+.12),new THREE.MeshBasicMaterial({color:col}));m.position.set((c.a+c.b)/2,c.h-.5,(c.c+c.d)/2);W.add(m);cnt++})};
+$('go').onclick=()=>{AR.online=0;start()};
+const _u=update;update=function(dt){_u(dt);if(dust&&G.on){dust.position.set(P.x,0,P.z);dust.rotation.y+=dt*.03}};
+})();
+</script>
+<script>
+/* ===== I: hovedmeny i moderne konsoll-stil (Wåle Production 2026) ===== */
+(()=>{
+document.head.insertAdjacentHTML('beforeend','<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&display=swap" rel="stylesheet"><style>'+
+'#menu[style*="display: none"],#menu[style*="display:none"]{display:none!important}#menu{display:block!important;padding:0!important;overflow:hidden!important;background:#05070d;font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;text-transform:uppercase;letter-spacing:1.5px}'+
+'#hero{position:absolute;inset:0;background-color:#0b1424;background-image:url(bakgrunn.jpg),radial-gradient(circle at 72% 38%,#ff6a1355,#0000 45%),linear-gradient(135deg,#0b1424,#1a2a4a 55%,#0b1424);background-position:50% 35%,0 0,0 0;background-size:cover,cover,cover;background-repeat:no-repeat;filter:brightness(.62) saturate(1.25);transform:scale(1.12);animation:pan 40s ease-in-out infinite alternate}'+
+'@keyframes pan{to{transform:scale(1.22) translate(-2%,1%)}}'+
+'#hs{position:absolute;inset:0;background:linear-gradient(90deg,#000f 0,#000d 30%,#0005 62%,#0009 100%),repeating-linear-gradient(0deg,#0000 0 2px,#0000000d 2px 3px)}'+
+'#panel{position:absolute;left:0;top:0;bottom:44px;width:min(410px,100%);padding:26px 22px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;animation:slide .6s both}'+
+'@keyframes slide{from{opacity:0;transform:translateX(-30px)}}'+
+'#panel .hd{border-bottom:4px solid #ff6a13;padding-bottom:8px;margin-bottom:6px}'+
+'#panel h1{margin:0;font-size:clamp(40px,9vw,58px);font-style:italic;font-weight:800;line-height:.95;letter-spacing:1px;color:#fff;text-shadow:0 3px 0 #0008;filter:none;background:none;-webkit-text-fill-color:#fff}'+
+'#panel .tag{font-size:13px;font-weight:600;letter-spacing:6px;color:#ff8a3d;margin-top:4px}'+
+'#panel .lab{font-size:13px;font-weight:700;letter-spacing:4px;color:#ff8a3d;margin:10px 0 0}'+
+'#maps{display:flex!important;flex-direction:column;gap:6px!important;width:100%!important}'+
+'#maps button{height:auto;text-align:left;padding:11px 16px;border-radius:0;background:#000000bd!important;border:0;border-left:4px solid transparent;font:700 19px "Barlow Condensed","Arial Narrow",Impact,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:#d2d6de;box-shadow:none;outline:none!important;transition:.12s;transform:none}'+
+'#maps button:hover{background:#1d2129f0!important;color:#fff;border-left-color:#ff6a13;transform:translateX(4px)}'+
+'#maps button.s{background:linear-gradient(90deg,#ff6a13,#c2410c)!important;color:#fff;border-left-color:#fff;transform:translateX(6px)}'+
+'#panel>div:not(.hd):not(.lab):not(#msg){background:#000000bd;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}'+
+'#panel button,#panel select,#panel input{font:700 16px "Barlow Condensed","Arial Narrow",Impact,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#fff;background:#1a1d25;border:0;border-bottom:2px solid #ffffff22;border-radius:0;padding:9px 12px}'+
+'#panel select{max-width:100%}#panel option{background:#12151c}#panel input::placeholder{color:#fff7}#panel button:hover,#panel select:hover{background:#2a2e38;border-bottom-color:#ff6a13}'+
+'#go,#mst{background:#ff6a13!important;color:#fff!important;font:800 28px "Barlow Condensed","Arial Narrow",Impact,sans-serif!important;letter-spacing:6px!important;padding:13px!important;border:0!important;border-radius:0!important;width:100%;clip-path:polygon(0 0,100% 0,100% 68%,95% 100%,0 100%);transition:.15s}'+
+'#go{position:sticky;bottom:0;z-index:3;flex-shrink:0;box-shadow:0 -14px 18px #000a}'+
+'#go:hover,#mst:hover{background:#ff7f33!important;letter-spacing:8px!important}'+
+'#msg{background:#000000cc;border-left:4px solid #ff6a13;padding:12px 14px;font-size:20px;font-weight:700;text-transform:none;letter-spacing:.5px}#msg:empty{display:none}'+
+'#panel small{font:500 13px "Barlow Condensed",sans-serif;text-transform:none;letter-spacing:.3px;opacity:.6;line-height:1.35}'+
+'#menu>select{position:absolute;top:14px;right:14px;z-index:5;font:700 15px "Barlow Condensed",sans-serif;background:#000000b0;color:#fff;border:0;border-bottom:2px solid #ff6a13;padding:8px 12px;border-radius:0}'+
+'#brand{position:absolute;right:5vw;bottom:90px;text-align:right;pointer-events:none;animation:slide .9s .2s both}#brand b{display:block;font-size:clamp(70px,13vw,190px);font-style:italic;font-weight:800;line-height:.82;color:transparent;-webkit-text-stroke:2px #ffffffcc;text-shadow:0 0 60px #ff6a1366}#brand i{font-size:clamp(16px,2.2vw,28px);font-weight:700;letter-spacing:14px;color:#ff8a3d;font-style:normal}'+
+'#credit{position:absolute;left:0;right:0;bottom:0;height:44px;display:flex;align-items:center;justify-content:center;gap:14px;font:700 14px "Barlow Condensed",sans-serif;letter-spacing:7px;color:#e5e7eb;background:linear-gradient(0deg,#000e,#0000);z-index:4}#credit::before,#credit::after{content:"";width:40px;height:2px;background:#ff6a13}'+
+'@media(max-width:820px){#brand{display:none}#hs{background:linear-gradient(90deg,#000e,#000b)}}'+
+'</style>');
+const m=$('menu'),box=$('alias').parentNode.parentNode,lg=[...m.children].find(c=>c.tagName=='SELECT'),h=m.querySelector('h1'),sm=m.querySelector('small');
+const hero=document.createElement('div');hero.id='hero';const hs=document.createElement('div');hs.id='hs';
+const panel=document.createElement('div');panel.id='panel';
+const hd=document.createElement('div');hd.className='hd';hd.appendChild(h);hd.insertAdjacentHTML('beforeend','<div class="tag">ANDEBU EDITION · FPS · 2026</div>');
+const lab=t=>{const d=document.createElement('div');d.className='lab';d.textContent=t;return d};
+[hd,$('msg'),lab('BANE · MAP'),$('maps'),lab('SPILLER · PLAYER'),box,lab('INNSTILLINGER · SETTINGS'),$('mode').parentNode,$('go'),sm].forEach(e=>panel.appendChild(e));
+m.insertAdjacentElement('afterbegin',hs);m.insertAdjacentElement('afterbegin',hero);m.appendChild(panel);
+m.insertAdjacentHTML('beforeend','<div id="brand"><i>ANDEBU</i><b>RIVALS</b></div><div id="credit">WÅLE PRODUCTION 2026</div>');
+if(lg)m.appendChild(lg);
+})();
+</script>
+<script>
+/* ===== J: MONSTER-KLOVN (sjefsfiende) ===== */
+(()=>{
+const M=(c,e,m)=>new THREE.MeshStandardMaterial({color:c,emissive:e||0,emissiveIntensity:.45,roughness:.45,metalness:m||.25});
+function mkBoss(){const g=new THREE.Group(),red=M(0xb3121f,0x5a0000),yel=M(0xe0b020,0x3a2a00),dk=M(0x24242c,0,.5),wh=M(0xe9e4da,0x222222,.05),
+p=(w,h,d,x,y,z,m,par)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;(par||g).add(o);return o},
+cn=(r,h,x,y,z,m,par,rx,rz)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),m);o.position.set(x,y,z);o.rotation.set(rx||0,0,rz||0);(par||g).add(o);return o},
+sp2=(r,x,y,z,m,par)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,12,10),m);o.position.set(x,y,z);(par||g).add(o);return o};
+const glow=c=>new THREE.MeshBasicMaterial({color:c});
+p(.95,.95,.6,0,1.2,0,red);p(.8,.5,.66,0,1.35,.02,red);p(.9,.14,.62,0,.78,0,dk);
+[-.68,.68].forEach(x=>{p(.5,.34,.55,x,1.62,0,yel);cn(.13,.4,x,1.95,0,dk,g,0,0)});
+[-.2,.2].forEach(x=>p(.1,.5,.04,x,1.3,.34,glow(0xff3322)));
+const leg=x=>{const l=new THREE.Group();l.position.set(x,.75,0);p(.36,.75,.38,0,-.375,0,red,l);p(.4,.22,.55,0,-.68,.08,dk,l);p(.42,.2,.44,0,-.3,.02,yel,l);g.add(l);return l};
+[-.72,.72].forEach(x=>{p(.3,.8,.3,x,1.1,.1,yel)});
+const cb=new THREE.Mesh(new THREE.CylinderGeometry(.27,.3,1.25,14),red);cb.rotation.x=PI/2;cb.position.set(.12,1.2,.85);cb.castShadow=true;g.add(cb);
+const rg=new THREE.Mesh(new THREE.TorusGeometry(.3,.06,8,16),yel);rg.position.set(.12,1.2,.55);g.add(rg);const rg2=rg.clone();rg2.position.z=1.1;g.add(rg2);
+sp2(.2,.12,1.2,1.5,glow(0xff4a2a),g);const mf=sp2(.36,.12,1.2,1.62,glow(0xffe266),g);mf.visible=false;
+p(.34,.3,.4,.5,1.15,.35,yel);p(.34,.3,.4,-.2,1.15,.2,yel);
+const head=new THREE.Group();head.position.y=1.95;g.add(head);p(.62,.62,.6,0,0,0,wh,head);
+sp2(.22,-.4,.05,0,M(0xcc1f1f,0x330000),head);sp2(.22,.4,.05,0,M(0x1f9d2f,0x002200),head);
+cn(.17,.38,0,.5,0,M(0xe0b020,0x332200),head,0,.2);
+[-.16,.16].forEach(x=>{const e=new THREE.Mesh(new THREE.PlaneGeometry(.17,.17),glow(0x33d0ff));e.position.set(x,.08,.31);e.rotation.z=PI/4;head.add(e)});
+sp2(.1,0,-.04,.32,M(0xff2a2a,0x660000),head);
+const mo=new THREE.Mesh(new THREE.PlaneGeometry(.4,.1),glow(0xff2a1a));mo.position.set(0,-.2,.31);head.add(mo);
+[-.15,0,.15].forEach(x=>cn(.04,.08,x,-.15,.31,wh,head,PI,0));
+const jp=new THREE.Group();jp.visible=false;g.add(jp);
+g.scale.setScalar(1.5);W.add(g);
+return{mf,pcd:0,fl2:0,mesh:g,x:0,z:0,y:0,vy:0,px:0,pz:0,ph:0,hp:500,dead:0,t:0,cd:1,st:0,sd:1,mm:red,em:0x5a0000,legL:leg(-.25),legR:leg(.25),jp,fly:0,ft:rnd(3,9),ty:3,boss:1,sz:1.5}}
+AR.mkBoss=mkBoss;
+const _sp=sp;sp=function(b){_sp(b);if(b.boss){b.spd=3.4;b.jmp=.15;b.acc=1.3;b.cover=0;b.hp=500;b.dm=1.8}};
+const _k=kill;kill=function(b){_k(b);if(b.boss){b.t=30;G.k+=2;}};
+const _s=start;start=function(){_s();if(!AR.online){const b=mkBoss();sp(b);bots.push(b);AR.toast&&AR.toast('👹 MONSTER-KLOVNEN jakter deg!','👹 MONSTER CLOWN is hunting you!')}};
+$('go').onclick=()=>{AR.online=0;start()};
+})();
+</script></body></html>
